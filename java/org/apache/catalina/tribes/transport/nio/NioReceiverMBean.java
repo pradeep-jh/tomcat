@@ -14,65 +14,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.transport.nio;
 
 
 public interface NioReceiverMBean {
 
     // Receiver Attributes
-    String getAddress();
+    public String getAddress();
 
-    boolean getDirect();
+    public boolean getDirect();
 
-    int getPort();
+    public int getPort();
 
-    int getAutoBind();
+    public int getAutoBind();
 
-    int getSecurePort();
+    public int getSecurePort();
 
-    int getUdpPort();
+    public int getUdpPort();
 
-    long getSelectorTimeout();
+    public long getSelectorTimeout();
 
-    int getMaxThreads();
+    public int getMaxThreads();
 
-    int getMinThreads();
+    public int getMinThreads();
 
-    long getMaxIdleTime();
+    public long getMaxIdleTime();
 
-    boolean getOoBInline();
+    public boolean getOoBInline();
 
-    int getRxBufSize();
+    public int getRxBufSize();
 
-    int getTxBufSize();
+    public int getTxBufSize();
 
-    int getUdpRxBufSize();
+    public int getUdpRxBufSize();
 
-    int getUdpTxBufSize();
+    public int getUdpTxBufSize();
 
-    boolean getSoKeepAlive();
+    public boolean getSoKeepAlive();
 
-    boolean getSoLingerOn();
+    public boolean getSoLingerOn();
 
-    int getSoLingerTime();
+    public int getSoLingerTime();
 
-    boolean getSoReuseAddress();
+    public boolean getSoReuseAddress();
 
-    boolean getTcpNoDelay();
+    public boolean getTcpNoDelay();
 
-    int getTimeout();
+    public int getTimeout();
 
-    boolean getUseBufferPool();
+    public boolean getUseBufferPool();
 
-    boolean isListening();
+    public boolean isListening();
 
     // pool stats
-    int getPoolSize();
+    public int getPoolSize();
 
-    int getActiveCount();
+    public int getActiveCount();
 
-    long getTaskCount();
+    public long getTaskCount();
 
-    long getCompletedTaskCount();
+    public long getCompletedTaskCount();
 
 }

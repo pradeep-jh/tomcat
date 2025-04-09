@@ -14,18 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 
 /**
- * Representation of the multipart configuration for a servlet.
+ * Representation of a the multipart configuration for a servlet.
  */
 public class MultipartDef implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -100,9 +100,10 @@ public class MultipartDef implements Serializable {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof MultipartDef other)) {
+        if (!(obj instanceof MultipartDef)) {
             return false;
         }
+        MultipartDef other = (MultipartDef) obj;
         if (fileSizeThreshold == null) {
             if (other.fileSizeThreshold != null) {
                 return false;
@@ -125,10 +126,13 @@ public class MultipartDef implements Serializable {
             return false;
         }
         if (maxRequestSize == null) {
-            return other.maxRequestSize == null;
-        } else {
-            return maxRequestSize.equals(other.maxRequestSize);
+            if (other.maxRequestSize != null) {
+                return false;
+            }
+        } else if (!maxRequestSize.equals(other.maxRequestSize)) {
+            return false;
         }
+        return true;
     }
 
 }

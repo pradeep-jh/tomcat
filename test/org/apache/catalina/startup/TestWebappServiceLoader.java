@@ -17,7 +17,6 @@
 package org.apache.catalina.startup;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,11 +24,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import jakarta.servlet.ServletContainerInitializer;
-import jakarta.servlet.ServletContext;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,7 +41,7 @@ import org.easymock.IMocksControl;
 
 public class TestWebappServiceLoader {
     private static final String CONFIG_FILE =
-            "META-INF/services/jakarta.servlet.ServletContainerInitializer";
+            "META-INF/services/javax.servlet.ServletContainerInitializer";
     private IMocksControl control;
     private ClassLoader cl;
     private ClassLoader parent;
@@ -83,7 +79,7 @@ public class TestWebappServiceLoader {
     @Test
     @SuppressWarnings("unchecked")
     public void testInitializerFromClasspath() throws IOException {
-        URL url = URI.create("file://test").toURL();
+        URL url = new URL("file://test");
         loader = EasyMock.createMockBuilder(WebappServiceLoader.class)
                 .addMockedMethod("parseConfigFile", LinkedHashSet.class, URL.class)
                 .withConstructor(context).createMock(control);
@@ -102,10 +98,10 @@ public class TestWebappServiceLoader {
     @Test
     @SuppressWarnings("unchecked")
     public void testWithOrdering() throws IOException {
-        URL url1 = URI.create("file://jar1.jar").toURL();
-        URL sci1 = URI.create("jar:file://jar1.jar!/" + CONFIG_FILE).toURL();
-        URL url2 = URI.create("file://dir/").toURL();
-        URL sci2 = URI.create("file://dir/" + CONFIG_FILE).toURL();
+        URL url1 = new URL("file://jar1.jar");
+        URL sci1 = new URL("jar:file://jar1.jar!/" + CONFIG_FILE);
+        URL url2 = new URL("file://dir/");
+        URL sci2 = new URL("file://dir/" + CONFIG_FILE);
         loader = EasyMock.createMockBuilder(WebappServiceLoader.class)
                 .addMockedMethod("parseConfigFile", LinkedHashSet.class, URL.class)
                 .withConstructor(context).createMock(control);
@@ -166,7 +162,7 @@ public class TestWebappServiceLoader {
         try {
             loader.loadServices(ServletContainerInitializer.class, names);
         } catch (IOException e) {
-            assertThat(e.getCause(), instanceOf(ClassCastException.class));
+            Assert.assertTrue(e.getCause() instanceof ClassCastException);
         } finally {
             control.verify();
         }
@@ -185,7 +181,7 @@ public class TestWebappServiceLoader {
         try {
             loader.loadServices(ServletContainerInitializer.class, names);
         } catch (IOException e) {
-            assertThat(e.getCause(), instanceOf(ReflectiveOperationException.class));
+            Assert.assertTrue(e.getCause() instanceof ReflectiveOperationException);
         } finally {
             control.verify();
         }
@@ -196,7 +192,7 @@ public class TestWebappServiceLoader {
         private final ClassLoader parent;
         private final WebResourceRoot resources;
 
-        ExtendedTesterContext(ServletContext servletContext, ClassLoader parent) {
+        public ExtendedTesterContext(ServletContext servletContext, ClassLoader parent) {
             this.servletContext = servletContext;
             this.parent = parent;
             // Empty resources - any non-null returns will be mocked on the

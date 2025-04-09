@@ -14,14 +14,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.tribes.demos;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Hashtable;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -35,14 +35,15 @@ public final class IntrospectionUtils {
     private static final Log log = LogFactory.getLog(IntrospectionUtils.class);
 
     /*
-     * Find a method with the right name If found, call the method ( if param is int or boolean we'll convert value to
-     * the right type before) - that means you can have setDebug(1).
+     * Find a method with the right name If found, call the method ( if param is
+     * int or boolean we'll convert value to the right type before) - that means
+     * you can have setDebug(1).
      */
     @SuppressWarnings("null")
     public static boolean setProperty(Object o, String name, String value) {
-        if (log.isDebugEnabled()) {
-            log.debug("IntrospectionUtils: setProperty(" + o.getClass() + " " + name + "=" + value + ")");
-        }
+        if (log.isDebugEnabled())
+            log.debug("IntrospectionUtils: setProperty(" +
+                    o.getClass() + " " + name + "=" + value + ")");
 
         String setter = "set" + capitalize(name);
 
@@ -54,10 +55,10 @@ public final class IntrospectionUtils {
             // First, the ideal case - a setFoo( String ) method
             for (Method item : methods) {
                 Class<?> paramT[] = item.getParameterTypes();
-                if (setter.equals(item.getName()) && paramT.length == 1 &&
-                        "java.lang.String".equals(paramT[0].getName())) {
+                if (setter.equals(item.getName()) && paramT.length == 1
+                        && "java.lang.String".equals(paramT[0].getName())) {
 
-                    item.invoke(o, new Object[] { value });
+                    item.invoke(o, new Object[]{value});
                     return true;
                 }
             }
@@ -65,21 +66,25 @@ public final class IntrospectionUtils {
             // Try a setFoo ( int ) or ( boolean )
             for (Method method : methods) {
                 boolean ok = true;
-                if (setter.equals(method.getName()) && method.getParameterTypes().length == 1) {
+                if (setter.equals(method.getName())
+                        && method.getParameterTypes().length == 1) {
 
                     // match - find the type and invoke it
                     Class<?> paramType = method.getParameterTypes()[0];
                     Object params[] = new Object[1];
 
                     // Try a setFoo ( int )
-                    if ("java.lang.Integer".equals(paramType.getName()) || "int".equals(paramType.getName())) {
+                    if ("java.lang.Integer".equals(paramType.getName())
+                            || "int".equals(paramType.getName())) {
                         try {
                             params[0] = Integer.valueOf(value);
                         } catch (NumberFormatException ex) {
                             ok = false;
                         }
                         // Try a setFoo ( long )
-                    } else if ("java.lang.Long".equals(paramType.getName()) || "long".equals(paramType.getName())) {
+                    }
+                    else if ("java.lang.Long".equals(paramType.getName())
+                            || "long".equals(paramType.getName())) {
                         try {
                             params[0] = Long.valueOf(value);
                         } catch (NumberFormatException ex) {
@@ -87,26 +92,28 @@ public final class IntrospectionUtils {
                         }
 
                         // Try a setFoo ( boolean )
-                    } else if ("java.lang.Boolean".equals(paramType.getName()) ||
-                            "boolean".equals(paramType.getName())) {
+                    }
+                    else if ("java.lang.Boolean".equals(paramType.getName())
+                            || "boolean".equals(paramType.getName())) {
                         params[0] = Boolean.valueOf(value);
 
                         // Try a setFoo ( InetAddress )
-                    } else if ("java.net.InetAddress".equals(paramType.getName())) {
+                    }
+                    else if ("java.net.InetAddress".equals(paramType
+                            .getName())) {
                         try {
                             params[0] = InetAddress.getByName(value);
                         } catch (UnknownHostException exc) {
-                            if (log.isDebugEnabled()) {
+                            if (log.isDebugEnabled())
                                 log.debug("IntrospectionUtils: Unable to resolve host name:" + value);
-                            }
                             ok = false;
                         }
 
                         // Unknown type
                     } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("IntrospectionUtils: Unknown type " + paramType.getName());
-                        }
+                        if (log.isDebugEnabled())
+                            log.debug("IntrospectionUtils: Unknown type " +
+                                    paramType.getName());
                     }
 
                     if (ok) {
@@ -133,14 +140,15 @@ public final class IntrospectionUtils {
                 params[1] = value;
                 if (setPropertyMethodBool != null) {
                     try {
-                        return ((Boolean) setPropertyMethodBool.invoke(o, params)).booleanValue();
-                    } catch (IllegalArgumentException biae) {
-                        // the boolean method had the wrong
-                        // parameter types. lets try the other
-                        if (setPropertyMethodVoid != null) {
+                        return ((Boolean) setPropertyMethodBool.invoke(o,
+                                params)).booleanValue();
+                    }catch (IllegalArgumentException biae) {
+                        //the boolean method had the wrong
+                        //parameter types. lets try the other
+                        if (setPropertyMethodVoid!=null) {
                             setPropertyMethodVoid.invoke(o, params);
                             return true;
-                        } else {
+                        }else {
                             throw biae;
                         }
                     }
@@ -153,24 +161,24 @@ public final class IntrospectionUtils {
         } catch (IllegalArgumentException ex2) {
             log.warn("IAE " + o + " " + name + " " + value, ex2);
         } catch (SecurityException ex1) {
-            if (log.isDebugEnabled()) {
-                log.debug("IntrospectionUtils: SecurityException for " + o.getClass() + " " + name + "=" + value + ")",
-                        ex1);
-            }
+            if (log.isDebugEnabled())
+                log.debug("IntrospectionUtils: SecurityException for " +
+                        o.getClass() + " " + name + "=" + value + ")", ex1);
         } catch (IllegalAccessException iae) {
-            if (log.isDebugEnabled()) {
-                log.debug("IntrospectionUtils: IllegalAccessException for " + o.getClass() + " " + name + "=" + value +
-                        ")", iae);
-            }
+            if (log.isDebugEnabled())
+                log.debug("IntrospectionUtils: IllegalAccessException for " +
+                        o.getClass() + " " + name + "=" + value + ")", iae);
         } catch (InvocationTargetException ie) {
             Throwable cause = ie.getCause();
+            if (cause instanceof ThreadDeath) {
+                throw (ThreadDeath) cause;
+            }
             if (cause instanceof VirtualMachineError) {
                 throw (VirtualMachineError) cause;
             }
-            if (log.isDebugEnabled()) {
-                log.debug("IntrospectionUtils: InvocationTargetException for " + o.getClass() + " " + name + "=" +
-                        value + ")", ie);
-            }
+            if (log.isDebugEnabled())
+                log.debug("IntrospectionUtils: InvocationTargetException for " +
+                        o.getClass() + " " + name + "=" + value + ")", ie);
         }
         return false;
     }
@@ -188,18 +196,20 @@ public final class IntrospectionUtils {
     }
 
     // -------------------- other utils --------------------
-
+    /**
+     * @deprecated Not used, but code must be updated to call it
+     */
+    @Deprecated
     public static void clear() {
         objectMethods.clear();
     }
 
-    static Map<Class<?>, Method[]> objectMethods = new ConcurrentHashMap<>();
+    static Hashtable<Class<?>,Method[]> objectMethods = new Hashtable<>();
 
     public static Method[] findMethods(Class<?> c) {
         Method methods[] = objectMethods.get(c);
-        if (methods != null) {
+        if (methods != null)
             return methods;
-        }
 
         methods = c.getMethods();
         objectMethods.put(c, methods);

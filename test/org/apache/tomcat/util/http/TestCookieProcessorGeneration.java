@@ -16,7 +16,7 @@
  */
 package org.apache.tomcat.util.http;
 
-import jakarta.servlet.http.Cookie;
+import javax.servlet.http.Cookie;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,231 +24,332 @@ import org.junit.Test;
 public class TestCookieProcessorGeneration {
 
     @Test
-    public void simpleCookie() {
+    public void v0SimpleCookie() {
         doTest(new Cookie("foo", "bar"), "foo=bar");
     }
 
     @Test
-    public void nullValue() {
-        doTest(new Cookie("foo", null), "foo=");
+    public void v0NullValue() {
+        doTest(new Cookie("foo", null), "foo=\"\"", "foo=");
     }
 
     @Test
-    public void quotedValue() {
+    public void v0QuotedValue() {
         doTest(new Cookie("foo", "\"bar\""), "foo=\"bar\"");
     }
 
     @Test
-    public void valueContainsSemicolon() {
-        doTest(new Cookie("foo", "a;b"), null);
+    public void v0ValueContainsSemicolon() {
+        doTest(new Cookie("foo", "a;b"), "foo=\"a;b\"; Version=1", null);
     }
 
     @Test
-    public void valueContainsComma() {
-        doTest(new Cookie("foo", "a,b"), null);
+    public void v0ValueContainsComma() {
+        doTest(new Cookie("foo", "a,b"), "foo=\"a,b\"; Version=1", null);
     }
 
     @Test
-    public void valueContainsSpace() {
-        doTest(new Cookie("foo", "a b"), null);
+    public void v0ValueContainsSpace() {
+        doTest(new Cookie("foo", "a b"), "foo=\"a b\"; Version=1", null);
     }
 
     @Test
-    public void valueContainsEquals() {
-        doTest(new Cookie("foo", "a=b"), "foo=a=b");
+    public void v0ValueContainsEquals() {
+        Cookie cookie = new Cookie("foo", "a=b");
+        doTestDefaults(cookie, "foo=\"a=b\"; Version=1", "foo=a=b");
+        doTestAllowSeparators(cookie, "foo=a=b", "foo=a=b");
     }
 
     @Test
-    public void valueContainsQuote() {
+    public void v0ValueContainsQuote() {
         Cookie cookie = new Cookie("foo", "a\"b");
-        doTest(cookie, null);
+        doTestDefaults(cookie,"foo=\"a\\\"b\"; Version=1", null);
+        doTestAllowSeparators(cookie,"foo=a\"b", null);
     }
 
     @Test
-    public void valueContainsNonV0Separator() {
+    public void v0ValueContainsNonV0Separator() {
         Cookie cookie = new Cookie("foo", "a()<>@:\\\"/[]?={}b");
-        doTest(cookie, null);
+        doTestDefaults(cookie,"foo=\"a()<>@:\\\\\\\"/[]?={}b\"; Version=1", null);
+        doTestAllowSeparators(cookie,"foo=a()<>@:\\\"/[]?={}b", null);
     }
 
     @Test
-    public void valueContainsBackslash() {
+    public void v0ValueContainsBackslash() {
         Cookie cookie = new Cookie("foo", "a\\b");
-        doTest(cookie, null);
+        doTestDefaults(cookie, "foo=\"a\\\\b\"; Version=1", null);
+        doTestAllowSeparators(cookie, "foo=a\\b", null);
     }
 
     @Test
-    public void valueContainsBackslashAtEnd() {
+    public void v0ValueContainsBackslashAtEnd() {
         Cookie cookie = new Cookie("foo", "a\\");
-        doTest(cookie, null);
+        doTestDefaults(cookie, "foo=\"a\\\\\"; Version=1", null);
+        doTestAllowSeparators(cookie, "foo=a\\", null);
     }
 
     @Test
-    public void valueContainsBackslashAndQuote() {
+    public void v0ValueContainsBackslashAndQuote() {
         Cookie cookie = new Cookie("foo", "a\"b\\c");
-        doTest(cookie, null);
+        doTestDefaults(cookie, "foo=\"a\\\"b\\\\c\"; Version=1", null);
+        doTestAllowSeparators(cookie, "foo=a\"b\\c", null);
     }
 
     @Test
-    public void valueUTF8() {
+    public void v1simpleCookie() {
+        Cookie cookie = new Cookie("foo", "bar");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=bar; Version=1", "foo=bar");
+    }
+
+    @Test
+    public void v1NullValue() {
+        Cookie cookie = new Cookie("foo", null);
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"\"; Version=1", "foo=");
+    }
+
+    @Test
+    public void v1QuotedValue() {
+        Cookie cookie = new Cookie("foo", "\"bar\"");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"bar\"; Version=1", "foo=\"bar\"");
+    }
+
+    @Test
+    public void v1ValueContainsSemicolon() {
+        Cookie cookie = new Cookie("foo", "a;b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a;b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsComma() {
+        Cookie cookie = new Cookie("foo", "a,b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a,b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsSpace() {
+        Cookie cookie = new Cookie("foo", "a b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsEquals() {
+        Cookie cookie = new Cookie("foo", "a=b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a=b\"; Version=1", "foo=a=b");
+    }
+
+    @Test
+    public void v1ValueContainsQuote() {
+        Cookie cookie = new Cookie("foo", "a\"b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a\\\"b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsNonV0Separator() {
+        Cookie cookie = new Cookie("foo", "a()<>@,;:\\\"/[]?={}b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a()<>@,;:\\\\\\\"/[]?={}b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsBackslash() {
+        Cookie cookie = new Cookie("foo", "a\\b");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a\\\\b\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueContainsBackslashAndQuote() {
+        Cookie cookie = new Cookie("foo", "a\"b\\c");
+        cookie.setVersion(1);
+        doTest(cookie, "foo=\"a\\\"b\\\\c\"; Version=1", null);
+    }
+
+    @Test
+    public void v1ValueUTF8() {
         String value = "\u2300";
         Cookie cookie = new Cookie("foo", value);
-        doTest(cookie, "foo=" + value);
+        cookie.setVersion(1);
+        doTest(cookie, (String) null, "foo=" + value);
     }
 
     @Test
-    public void valueNull() {
-        Cookie cookie = new Cookie("foo", "bar");
-        cookie.setAttribute("other", "anything");
-        cookie.setAttribute("other", null);
-        doTest(cookie, "foo=bar");
+    public void v1TestMaxAgePositive() {
+        doV1TestMaxAge(100, "foo=bar; Version=1; Max-Age=100", "foo=bar; Max-Age=100");
     }
 
     @Test
-    public void testMaxAgePositive() {
-        doTestMaxAge(100, "foo=bar; Max-Age=100");
+    public void v1TestMaxAgeZero() {
+        doV1TestMaxAge(0, "foo=bar; Version=1; Max-Age=0",
+                "foo=bar; Max-Age=0; Expires=Thu, 01-Jan-1970 00:00:10 GMT");
     }
 
     @Test
-    public void testMaxAgeZero() {
-        doTestMaxAge(0, "foo=bar; Expires=Thu, 01 Jan 1970 00:00:10 GMT");
+    public void v1TestMaxAgeNegative() {
+        doV1TestMaxAge(-100, "foo=bar; Version=1", "foo=bar");
     }
 
     @Test
-    public void testMaxAgeNegative() {
-        doTestMaxAge(-100, "foo=bar");
+    public void v1TestDomainValid01() {
+        doV1TestDomain("example.com", "foo=bar; Version=1; Domain=example.com",
+                "foo=bar; Domain=example.com");
     }
 
     @Test
-    public void testDomainValid01() {
-        doTestDomain("example.com", "foo=bar; Domain=example.com");
+    public void v1TestDomainValid02() {
+        doV1TestDomain("exa-mple.com", "foo=bar; Version=1; Domain=exa-mple.com",
+                "foo=bar; Domain=exa-mple.com");
     }
 
     @Test
-    public void testDomainValid02() {
-        doTestDomain("exa-mple.com", "foo=bar; Domain=exa-mple.com");
+    public void v1TestDomainInvalid01() {
+        doV1TestDomain("example.com.", "foo=bar; Version=1; Domain=example.com.", null);
     }
 
     @Test
-    public void testDomainInvalid01() {
-        doTestDomain("example.com.", null);
+    public void v1TestDomainInvalid02() {
+        doV1TestDomain("example.com-", "foo=bar; Version=1; Domain=example.com-", null);
     }
 
     @Test
-    public void testDomainInvalid02() {
-        doTestDomain("example.com-", null);
+    public void v1TestDomainInvalid03() {
+        doV1TestDomain(".example.com.", "foo=bar; Version=1; Domain=.example.com.", null);
     }
 
     @Test
-    public void testDomainInvalid03() {
-        doTestDomain(".example.com.", null);
+    public void v1TestDomainInvalid04() {
+        doV1TestDomain("-example.com.", "foo=bar; Version=1; Domain=-example.com.", null);
     }
 
     @Test
-    public void testDomainInvalid04() {
-        doTestDomain("-example.com.", null);
+    public void v1TestDomainInvalid05() {
+        doV1TestDomain("example..com.", "foo=bar; Version=1; Domain=example..com.", null);
     }
 
     @Test
-    public void testDomainInvalid05() {
-        doTestDomain("example..com.", null);
+    public void v1TestDomainInvalid06() {
+        doV1TestDomain("example-.com.", "foo=bar; Version=1; Domain=example-.com.", null);
     }
 
     @Test
-    public void testDomainInvalid06() {
-        doTestDomain("example-.com.", null);
+    public void v1TestDomainInvalid07() {
+        doV1TestDomain("exam$ple.com.", "foo=bar; Version=1; Domain=exam$ple.com.", null);
     }
 
     @Test
-    public void testDomainInvalid07() {
-        doTestDomain("exam$ple.com.", null);
+    public void v1TestPathValid() {
+        doV1TestPath("/example", "foo=bar; Version=1; Path=/example",
+                "foo=bar; Path=/example");
     }
 
     @Test
-    public void testPathValid() {
-        doTestPath("/example", "foo=bar; Path=/example");
-    }
-
-    @Test
-    public void testPathInvalid01() {
-        doTestPath("exa\tmple", null);
+    public void v1TestPathInvalid01() {
+        doV1TestPath("exa\tmple", "foo=bar; Version=1; Path=\"exa\tmple\"", null);
     }
 
     @Test
     public void testSameSiteCookies() {
+        LegacyCookieProcessor legacy = new LegacyCookieProcessor();
         Rfc6265CookieProcessor rfc6265 = new Rfc6265CookieProcessor();
 
         Cookie cookie = new Cookie("foo", "bar");
 
-        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("unset");
         rfc6265.setSameSiteCookies("unset");
 
-        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("none");
         rfc6265.setSameSiteCookies("none");
 
-        Assert.assertEquals("foo=bar; SameSite=None", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; SameSite=None", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; SameSite=None", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("lax");
         rfc6265.setSameSiteCookies("lax");
 
-        Assert.assertEquals("foo=bar; SameSite=Lax", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; SameSite=Lax", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; SameSite=Lax", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("strict");
         rfc6265.setSameSiteCookies("strict");
 
-        Assert.assertEquals("foo=bar; SameSite=Strict", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; SameSite=Strict", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; SameSite=Strict", rfc6265.generateHeader(cookie));
 
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
 
+        legacy.setSameSiteCookies("unset");
         rfc6265.setSameSiteCookies("unset");
 
-        Assert.assertEquals("foo=bar; Secure; HttpOnly", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("none");
         rfc6265.setSameSiteCookies("none");
 
-        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=None", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=None", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=None", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("lax");
         rfc6265.setSameSiteCookies("lax");
 
-        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Lax", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Lax", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Lax", rfc6265.generateHeader(cookie));
 
+        legacy.setSameSiteCookies("strict");
         rfc6265.setSameSiteCookies("strict");
 
-        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Strict", rfc6265.generateHeader(cookie, null));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Strict", legacy.generateHeader(cookie));
+        Assert.assertEquals("foo=bar; Secure; HttpOnly; SameSite=Strict", rfc6265.generateHeader(cookie));
+    }
+
+    private void doTest(Cookie cookie, String expected) {
+        doTest(cookie, expected, expected);
     }
 
 
-    @Test
-    public void testPartitionedCookies() {
-        Rfc6265CookieProcessor rfc6265 = new Rfc6265CookieProcessor();
-
-        Cookie cookie = new Cookie("foo", "bar");
-
-        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie, null));
-
-        rfc6265.setPartitioned(false);
-
-        Assert.assertEquals("foo=bar", rfc6265.generateHeader(cookie, null));
-
-        rfc6265.setPartitioned(true);
-
-        Assert.assertEquals("foo=bar; Partitioned", rfc6265.generateHeader(cookie, null));
-
-        cookie.setSecure(true);
-        cookie.setHttpOnly(true);
-
-        rfc6265.setPartitioned(false);
-
-        Assert.assertEquals("foo=bar; Secure; HttpOnly", rfc6265.generateHeader(cookie, null));
-
-        rfc6265.setPartitioned(true);
-
-        Assert.assertEquals("foo=bar; Secure; HttpOnly; Partitioned", rfc6265.generateHeader(cookie, null));
+    private void doTest(Cookie cookie,
+            String expectedLegacy, String expectedRfc6265) {
+        doTestDefaults(cookie, expectedLegacy, expectedRfc6265);
+        doTestAllowSeparators(cookie, expectedLegacy, expectedRfc6265);
     }
 
 
-    private void doTest(Cookie cookie, String expectedRfc6265) {
+    private void doTestDefaults(Cookie cookie,
+            String expectedLegacy, String expectedRfc6265) {
+        CookieProcessor legacy = new LegacyCookieProcessor();
         CookieProcessor rfc6265 = new Rfc6265CookieProcessor();
+        doTest(cookie, legacy, expectedLegacy, rfc6265, expectedRfc6265);
+    }
+
+
+    private void doTestAllowSeparators(Cookie cookie,
+            String expectedLegacy, String expectedRfc6265) {
+        LegacyCookieProcessor legacy = new LegacyCookieProcessor();
+        legacy.setAllowHttpSepsInV0(true);
+        legacy.setForwardSlashIsSeparator(true);
+        CookieProcessor rfc6265 = new Rfc6265CookieProcessor();
+        doTest(cookie, legacy, expectedLegacy, rfc6265, expectedRfc6265);
+    }
+
+
+    private void doTest(Cookie cookie,
+            CookieProcessor legacy, String expectedLegacy,
+            CookieProcessor rfc6265, String expectedRfc6265) {
+        doTest(cookie, legacy, expectedLegacy);
         doTest(cookie, rfc6265, expectedRfc6265);
     }
 
@@ -267,16 +368,7 @@ public class TestCookieProcessorGeneration {
                     cookie.getMaxAge() > 0) {
                 // Expires attribute will depend on time cookie is generated so
                 // use a modified test
-                String result = cookieProcessor.generateHeader(cookie, null);
-                int posExpiresStart = result.indexOf("Expires");
-                if (posExpiresStart > -1) {
-                    int posExpiresEnd = result.indexOf(';', posExpiresStart);
-                    if (posExpiresEnd > -1) {
-                        // Expires was not at the end of the header - remove it
-                        result = result.substring(0, posExpiresStart -1) + result.substring(posExpiresEnd + 1);
-                    }
-                }
-                Assert.assertTrue(result.startsWith(expected));
+                Assert.assertTrue(cookieProcessor.generateHeader(cookie, null).startsWith(expected));
             } else {
                 Assert.assertEquals(expected, cookieProcessor.generateHeader(cookie, null));
             }
@@ -284,23 +376,32 @@ public class TestCookieProcessorGeneration {
     }
 
 
-    private void doTestMaxAge(int age, String expectedRfc6265) {
+    private void doV1TestMaxAge(int age, String expectedLegacy, String expectedRfc6265) {
+        LegacyCookieProcessor legacy = new LegacyCookieProcessor();
+        legacy.setAlwaysAddExpires(false);
         Cookie cookie = new Cookie("foo", "bar");
+        cookie.setVersion(1);
         cookie.setMaxAge(age);
-        doTest(cookie, new Rfc6265CookieProcessor(), expectedRfc6265);
+        doTest(cookie, legacy, expectedLegacy, new Rfc6265CookieProcessor(), expectedRfc6265);
     }
 
 
-    private void doTestDomain(String domain, String expectedRfc6265) {
+    private void doV1TestDomain(String domain, String expectedLegacy, String expectedRfc6265) {
+        LegacyCookieProcessor legacy = new LegacyCookieProcessor();
+        legacy.setAlwaysAddExpires(false);
         Cookie cookie = new Cookie("foo", "bar");
+        cookie.setVersion(1);
         cookie.setDomain(domain);
-        doTest(cookie, new Rfc6265CookieProcessor(), expectedRfc6265);
+        doTest(cookie, legacy, expectedLegacy, new Rfc6265CookieProcessor(), expectedRfc6265);
     }
 
 
-    private void doTestPath(String path, String expectedRfc6265) {
+    private void doV1TestPath(String path, String expectedLegacy, String expectedRfc6265) {
+        LegacyCookieProcessor legacy = new LegacyCookieProcessor();
+        legacy.setAlwaysAddExpires(false);
         Cookie cookie = new Cookie("foo", "bar");
+        cookie.setVersion(1);
         cookie.setPath(path);
-        doTest(cookie, new Rfc6265CookieProcessor(), expectedRfc6265);
+        doTest(cookie, legacy, expectedLegacy, new Rfc6265CookieProcessor(), expectedRfc6265);
     }
 }

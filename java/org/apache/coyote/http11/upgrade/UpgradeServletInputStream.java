@@ -18,10 +18,10 @@ package org.apache.coyote.http11.upgrade;
 
 import java.io.IOException;
 
-import jakarta.servlet.ReadListener;
-import jakarta.servlet.ServletInputStream;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 
-import org.apache.coyote.Request;
+import org.apache.coyote.ContainerThreadMarker;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
@@ -32,11 +32,11 @@ import org.apache.tomcat.util.res.StringManager;
 public class UpgradeServletInputStream extends ServletInputStream {
 
     private static final Log log = LogFactory.getLog(UpgradeServletInputStream.class);
-    private static final StringManager sm = StringManager.getManager(UpgradeServletInputStream.class);
+    private static final StringManager sm =
+            StringManager.getManager(UpgradeServletInputStream.class);
 
     private final UpgradeProcessorBase processor;
     private final SocketWrapperBase<?> socketWrapper;
-    private final UpgradeInfo upgradeInfo;
 
     private volatile boolean closed = false;
     private volatile boolean eof = false;
@@ -45,18 +45,18 @@ public class UpgradeServletInputStream extends ServletInputStream {
     private volatile ReadListener listener = null;
 
 
-    public UpgradeServletInputStream(UpgradeProcessorBase processor, SocketWrapperBase<?> socketWrapper,
-            UpgradeInfo upgradeInfo) {
+    public UpgradeServletInputStream(UpgradeProcessorBase processor,
+            SocketWrapperBase<?> socketWrapper) {
         this.processor = processor;
         this.socketWrapper = socketWrapper;
-        this.upgradeInfo = upgradeInfo;
     }
 
 
     @Override
     public final boolean isFinished() {
         if (listener == null) {
-            throw new IllegalStateException(sm.getString("upgrade.sis.isFinished.ise"));
+            throw new IllegalStateException(
+                    sm.getString("upgrade.sis.isFinished.ise"));
         }
         return eof;
     }
@@ -65,7 +65,8 @@ public class UpgradeServletInputStream extends ServletInputStream {
     @Override
     public final boolean isReady() {
         if (listener == null) {
-            throw new IllegalStateException(sm.getString("upgrade.sis.isReady.ise"));
+            throw new IllegalStateException(
+                    sm.getString("upgrade.sis.isReady.ise"));
         }
 
         if (eof || closed) {
@@ -89,10 +90,12 @@ public class UpgradeServletInputStream extends ServletInputStream {
     @Override
     public final void setReadListener(ReadListener listener) {
         if (listener == null) {
-            throw new IllegalArgumentException(sm.getString("upgrade.sis.readListener.null"));
+            throw new IllegalArgumentException(
+                    sm.getString("upgrade.sis.readListener.null"));
         }
         if (this.listener != null) {
-            throw new IllegalArgumentException(sm.getString("upgrade.sis.readListener.set"));
+            throw new IllegalArgumentException(
+                    sm.getString("upgrade.sis.readListener.set"));
         }
         if (closed) {
             throw new IllegalStateException(sm.getString("upgrade.sis.read.closed"));
@@ -101,8 +104,7 @@ public class UpgradeServletInputStream extends ServletInputStream {
         this.listener = listener;
 
         // Container is responsible for first call to onDataAvailable().
-        Request request = processor.getRequest();
-        if (request != null && request.isRequestThread()) {
+        if (ContainerThreadMarker.isContainerThread()) {
             processor.addDispatch(DispatchType.NON_BLOCKING_READ);
         } else {
             socketWrapper.registerReadInterest();
@@ -137,13 +139,7 @@ public class UpgradeServletInputStream extends ServletInputStream {
                 break;
             }
         }
-
-        if (count > 0) {
-            upgradeInfo.addBytesReceived(count);
-            return count;
-        } else {
-            return -1;
-        }
+        return count > 0 ? count : -1;
     }
 
 
@@ -155,8 +151,6 @@ public class UpgradeServletInputStream extends ServletInputStream {
             int result = socketWrapper.read(listener == null, b, off, len);
             if (result == -1) {
                 eof = true;
-            } else {
-                upgradeInfo.addBytesReceived(result);
             }
             return result;
         } catch (IOException ioe) {
@@ -164,6 +158,7 @@ public class UpgradeServletInputStream extends ServletInputStream {
             throw ioe;
         }
     }
+
 
 
     @Override
@@ -202,7 +197,6 @@ public class UpgradeServletInputStream extends ServletInputStream {
             eof = true;
             return -1;
         } else {
-            upgradeInfo.addBytesReceived(1);
             return b[0] & 0xFF;
         }
     }
@@ -217,7 +211,7 @@ public class UpgradeServletInputStream extends ServletInputStream {
             onError(e);
         }
         ready = Boolean.TRUE;
-        ClassLoader oldCL = processor.getUpgradeToken().contextBind().bind(null);
+        ClassLoader oldCL = processor.getUpgradeToken().getContextBind().bind(false, null);
         try {
             if (!eof) {
                 listener.onDataAvailable();
@@ -229,23 +223,23 @@ public class UpgradeServletInputStream extends ServletInputStream {
             ExceptionUtils.handleThrowable(t);
             onError(t);
         } finally {
-            processor.getUpgradeToken().contextBind().unbind(oldCL);
+            processor.getUpgradeToken().getContextBind().unbind(false, oldCL);
         }
     }
 
 
-    private void onError(Throwable t) {
+    private final void onError(Throwable t) {
         if (listener == null) {
             return;
         }
-        ClassLoader oldCL = processor.getUpgradeToken().contextBind().bind(null);
+        ClassLoader oldCL = processor.getUpgradeToken().getContextBind().bind(false, null);
         try {
             listener.onError(t);
         } catch (Throwable t2) {
             ExceptionUtils.handleThrowable(t2);
             log.warn(sm.getString("upgrade.sis.onErrorFail"), t2);
         } finally {
-            processor.getUpgradeToken().contextBind().unbind(oldCL);
+            processor.getUpgradeToken().getContextBind().unbind(false, oldCL);
         }
         try {
             close();

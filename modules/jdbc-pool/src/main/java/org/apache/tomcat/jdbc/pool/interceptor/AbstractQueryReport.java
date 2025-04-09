@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.jdbc.pool.interceptor;
 
 import java.lang.reflect.Constructor;
@@ -27,6 +28,7 @@ import java.sql.Statement;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 /**
  * Abstract class that wraps statements and intercepts query executions.
  *
@@ -117,7 +119,7 @@ public abstract class AbstractQueryReport extends AbstractCreateStatementInterce
 
     /**
      * returns the query measure threshold.
-     * This value is in milliseconds. If the query is faster than this threshold than it won't be accounted for
+     * This value is in milliseconds. If the query is faster than this threshold than it wont be accounted for
      * @return the threshold in milliseconds
      */
     public long getThreshold() {
@@ -190,19 +192,13 @@ public abstract class AbstractQueryReport extends AbstractCreateStatementInterce
             //get the name of the method for comparison
             final String name = method.getName();
             //was close invoked?
-            boolean close = compare(CLOSE_VAL, name);
+            boolean close = compare(JdbcInterceptor.CLOSE_VAL,name);
             //allow close to be called multiple times
-            if (close && closed) {
-              return null;
-            }
+            if (close && closed) return null;
             //are we calling isClosed?
-            if (compare(ISCLOSED_VAL, name)) {
-              return Boolean.valueOf(closed);
-            }
+            if (compare(JdbcInterceptor.ISCLOSED_VAL,name)) return Boolean.valueOf(closed);
             //if we are calling anything else, bail out
-            if (closed) {
-              throw new SQLException("Statement closed.");
-            }
+            if (closed) throw new SQLException("Statement closed.");
             boolean process = false;
             //check to see if we are about to execute a query
             process = isExecute( method, process);
@@ -229,9 +225,7 @@ public abstract class AbstractQueryReport extends AbstractCreateStatementInterce
                     //report the slow query
                     reportSlowQuery(query, args, name, start, delta);
                 }catch (Exception t) {
-                    if (log.isWarnEnabled()) {
-                      log.warn("Unable to process slow query",t);
-                    }
+                    if (log.isWarnEnabled()) log.warn("Unable to process slow query",t);
                 }
             } else if (process) {
                 reportQuery(query, args, name, start, delta);

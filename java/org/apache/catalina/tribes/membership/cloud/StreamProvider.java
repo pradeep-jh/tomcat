@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.membership.cloud;
 
 import java.io.IOException;
@@ -23,16 +24,12 @@ import java.util.Map;
 public interface StreamProvider {
     /**
      * Open stream to the specified URL.
-     *
-     * @param url            the url
-     * @param headers        the headers map
+     * @param url the url
+     * @param headers the headers map
      * @param connectTimeout connection timeout in ms
-     * @param readTimeout    read timeout in ms
-     *
+     * @param readTimeout read timeout in ms
      * @return the stream
-     *
      * @throws IOException when an error occurs
      */
-    InputStream openStream(String url, Map<String,String> headers, int connectTimeout, int readTimeout)
-            throws IOException;
+    public InputStream openStream(String url, Map<String, String> headers, int connectTimeout, int readTimeout) throws IOException;
 }

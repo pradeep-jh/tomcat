@@ -26,8 +26,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.apache.tomcat.util.buf.UriUtil;
-
 /**
  * Abstracts configuration file storage. Allows Tomcat embedding using the regular
  * configuration style.
@@ -37,24 +35,22 @@ import org.apache.tomcat.util.buf.UriUtil;
  */
 public interface ConfigurationSource {
 
-    ConfigurationSource DEFAULT = new ConfigurationSource() {
-        private final File userDir = new File(System.getProperty("user.dir"));
-        private final URI userDirUri = userDir.toURI();
+    public static final ConfigurationSource DEFAULT = new ConfigurationSource() {
+        protected final File userDir = new File(System.getProperty("user.dir"));
+        protected final URI userDirUri = userDir.toURI();
         @Override
         public Resource getResource(String name) throws IOException {
-            if (!UriUtil.isAbsoluteURI(name)) {
-                File f = new File(name);
-                if (!f.isAbsolute()) {
-                    f = new File(userDir, name);
-                }
-                if (f.isFile()) {
-                    FileInputStream fis = new FileInputStream(f);
-                    return new Resource(fis, f.toURI());
-                }
+            File f = new File(name);
+            if (!f.isAbsolute()) {
+                f = new File(userDir, name);
             }
-            URI uri;
+            if (f.isFile()) {
+                FileInputStream fis = new FileInputStream(f);
+                return new Resource(fis, f.toURI());
+            }
+            URI uri = null;
             try {
-                uri = userDirUri.resolve(name);
+                uri = getURI(name);
             } catch (IllegalArgumentException e) {
                 throw new FileNotFoundException(name);
             }
@@ -67,14 +63,12 @@ public interface ConfigurationSource {
         }
         @Override
         public URI getURI(String name) {
-            if (!UriUtil.isAbsoluteURI(name)) {
-                File f = new File(name);
-                if (!f.isAbsolute()) {
-                    f = new File(userDir, name);
-                }
-                if (f.isFile()) {
-                    return f.toURI();
-                }
+            File f = new File(name);
+            if (!f.isAbsolute()) {
+                f = new File(userDir, name);
+            }
+            if (f.isFile()) {
+                return f.toURI();
             }
             return userDirUri.resolve(name);
         }
@@ -84,7 +78,7 @@ public interface ConfigurationSource {
      * Represents a resource: a stream to the resource associated with
      * its URI.
      */
-    class Resource implements AutoCloseable {
+    public class Resource implements AutoCloseable {
         private final InputStream inputStream;
         private final URI uri;
         public Resource(InputStream inputStream, URI uri) {
@@ -122,7 +116,7 @@ public interface ConfigurationSource {
      * @return the server.xml as an InputStream
      * @throws IOException if an error occurs or if the resource does not exist
      */
-    default Resource getServerXml()
+    public default Resource getServerXml()
             throws IOException {
         return getConfResource("server.xml");
     }
@@ -133,7 +127,7 @@ public interface ConfigurationSource {
      * @return the web.xml as an InputStream
      * @throws IOException if an error occurs or if the resource does not exist
      */
-    default Resource getSharedWebXml()
+    public default Resource getSharedWebXml()
             throws IOException {
         return getConfResource("web.xml");
     }
@@ -144,7 +138,7 @@ public interface ConfigurationSource {
      * @return the resource as an InputStream
      * @throws IOException if an error occurs or if the resource does not exist
      */
-    default Resource getConfResource(String name)
+    public default Resource getConfResource(String name)
             throws IOException {
         String fullName = "conf/" + name;
         return getResource(fullName);
@@ -156,7 +150,7 @@ public interface ConfigurationSource {
      * @return the resource
      * @throws IOException if an error occurs or if the resource does not exist
      */
-    Resource getResource(String name)
+    public Resource getResource(String name)
             throws IOException;
 
     /**
@@ -165,6 +159,6 @@ public interface ConfigurationSource {
      * @param name The resource name
      * @return a URI representing the resource location
      */
-    URI getURI(String name);
+    public URI getURI(String name);
 
 }

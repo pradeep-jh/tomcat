@@ -16,8 +16,6 @@
  */
 package org.apache.naming;
 
-import java.io.Serial;
-
 /**
  * Represents a reference address to a resource environment.
  *
@@ -25,7 +23,6 @@ import java.io.Serial;
  */
 public class ResourceEnvRef extends AbstractRef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 

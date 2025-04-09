@@ -26,7 +26,7 @@ import org.apache.jasper.JspCompilationContext;
  *
  * @author Anil K. Vijendran
  */
-public final class Mark {
+final class Mark {
 
     // position within current stream
     int cursor, line, col;
@@ -42,9 +42,9 @@ public final class Mark {
     /**
      * Constructor
      *
-     * @param reader   JspReader this mark belongs to
+     * @param reader JspReader this mark belongs to
      * @param inStream current stream for this mark
-     * @param name     JSP file name
+     * @param name JSP file name
      */
     Mark(JspReader reader, char[] inStream, String name) {
         this.ctxt = reader.getJspCompilationContext();
@@ -60,7 +60,7 @@ public final class Mark {
      * Constructor
      */
     Mark(Mark other) {
-        init(other, false);
+       init(other, false);
     }
 
     void update(int cursor, int line, int col) {
@@ -105,7 +105,7 @@ public final class Mark {
 
     @Override
     public String toString() {
-        return getFile() + "(" + line + "," + col + ")";
+        return getFile()+"("+line+","+col+")";
     }
 
     public String getFile() {
@@ -125,7 +125,8 @@ public final class Mark {
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof Mark m) {
+        if (other instanceof Mark) {
+            Mark m = (Mark) other;
             return this.cursor == m.cursor && this.line == m.line && this.col == m.col;
         }
         return false;

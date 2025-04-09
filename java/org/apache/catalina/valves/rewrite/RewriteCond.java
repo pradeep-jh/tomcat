@@ -28,7 +28,7 @@ public class RewriteCond {
 
     public static class PatternCondition extends Condition {
         public Pattern pattern;
-        private final ThreadLocal<Matcher> matcher = new ThreadLocal<>();
+        private ThreadLocal<Matcher> matcher = new ThreadLocal<>();
 
         @Override
         public boolean evaluate(String value, Resolver resolver) {
@@ -48,11 +48,9 @@ public class RewriteCond {
 
     public static class LexicalCondition extends Condition {
         /**
-         * <pre>
          * -1: &lt;
-         *  0: =
-         *  1: &gt;
-         * </pre>
+         * 0: =
+         * 1: &gt;
          */
         public int type = 0;
         public String condition;
@@ -60,23 +58,25 @@ public class RewriteCond {
         @Override
         public boolean evaluate(String value, Resolver resolver) {
             int result = value.compareTo(condition);
-            return switch (type) {
-                case -1 -> (result < 0);
-                case 0 -> (result == 0);
-                case 1 -> (result > 0);
-                default -> false;
-            };
+            switch (type) {
+            case -1:
+                return (result < 0);
+            case 0:
+                return (result == 0);
+            case 1:
+                return (result > 0);
+            default:
+                return false;
+            }
 
         }
     }
 
     public static class ResourceCondition extends Condition {
         /**
-         * <pre>
          * 0: -d (is directory ?)
          * 1: -f (is regular file ?)
          * 2: -s (is regular file with size ?)
-         * </pre>
          */
         public int type = 0;
 
@@ -114,7 +114,7 @@ public class RewriteCond {
         this.flagsString = flagsString;
     }
 
-    public void parse(Map<String,RewriteMap> maps) {
+    public void parse(Map<String, RewriteMap> maps) {
         test = new Substitution();
         test.setSub(testString);
         test.parse(maps);
@@ -151,7 +151,7 @@ public class RewriteCond {
             this.condition = ncondition;
         } else {
             PatternCondition ncondition = new PatternCondition();
-            int flags = Pattern.DOTALL;
+            int flags = 0;
             if (isNocase()) {
                 flags |= Pattern.CASE_INSENSITIVE;
             }
@@ -167,9 +167,13 @@ public class RewriteCond {
         return null;
     }
 
+    /**
+     * String representation.
+     */
     @Override
     public String toString() {
-        return "RewriteCond " + testString + " " + condPattern + ((flagsString != null) ? (" " + flagsString) : "");
+        return "RewriteCond " + testString + " " + condPattern
+                + ((flagsString != null) ? (" " + flagsString) : "");
     }
 
 
@@ -180,8 +184,9 @@ public class RewriteCond {
     protected Condition condition = null;
 
     /**
-     * This makes the test case-insensitive, i.e., there is no difference between 'A-Z' and 'a-z' both in the expanded
-     * TestString and the CondPattern. This flag is effective only for comparisons between TestString and CondPattern.
+     * This makes the test case-insensitive, i.e., there is no difference between
+     * 'A-Z' and 'a-z' both in the expanded TestString and the CondPattern. This
+     * flag is effective only for comparisons between TestString and CondPattern.
      * It has no effect on filesystem and subrequest checks.
      */
     public boolean nocase = false;
@@ -194,10 +199,9 @@ public class RewriteCond {
     /**
      * Evaluate the condition based on the context
      *
-     * @param rule     corresponding matched rule
-     * @param cond     last matched condition
+     * @param rule corresponding matched rule
+     * @param cond last matched condition
      * @param resolver Property resolver
-     *
      * @return <code>true</code> if the condition matches
      */
     public boolean evaluate(Matcher rule, Matcher cond, Resolver resolver) {

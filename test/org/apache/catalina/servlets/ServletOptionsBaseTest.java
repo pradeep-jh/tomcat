@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.servlet.Servlet;
+import javax.servlet.Servlet;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +33,6 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
-import org.apache.tomcat.util.scan.StandardJarScanner;
 
 public abstract class ServletOptionsBaseTest extends TomcatBaseTest {
 
@@ -79,24 +78,20 @@ public abstract class ServletOptionsBaseTest extends TomcatBaseTest {
 
         // app dir is relative to server home
         org.apache.catalina.Context ctx =
-            tomcat.addWebapp(null, "/webdav", docBase.getAbsolutePath());
+            tomcat.addWebapp(null, "/servlet", docBase.getAbsolutePath());
 
         Wrapper w = Tomcat.addServlet(ctx, "servlet", createServlet());
         w.addInitParameter("listings", Boolean.toString(listings));
         w.addInitParameter("readonly", Boolean.toString(readonly));
-        w.addInitParameter("allowPostAsGet", "true");
 
         ctx.addServletMappingDecoded("/*", "servlet");
-
-        // Disable class path scanning - it slows the tests down by almost an order of magnitude
-        ((StandardJarScanner) ctx.getJarScanner()).setScanClassPath(false);
 
         tomcat.start();
 
         OptionsHttpClient client = new OptionsHttpClient();
         client.setPort(getPort());
         client.setRequest(new String[] {
-                "OPTIONS /webdav/" + url + " HTTP/1.1" + CRLF +
+                "OPTIONS /servlet/" + url + " HTTP/1.1" + CRLF +
                 "Host: localhost:" + getPort() + CRLF +
                 "Connection: close" + CRLF +
                 CRLF });
@@ -104,14 +99,14 @@ public abstract class ServletOptionsBaseTest extends TomcatBaseTest {
         client.connect();
         client.processRequest();
 
-        Assert.assertTrue(client.getResponseLine(), client.isResponse200());
+        Assert.assertTrue(client.isResponse200());
         Set<String> allowed = client.getAllowedMethods();
 
         client.disconnect();
         client.reset();
 
         client.setRequest(new String[] {
-                method + " /webdav/" + url + " HTTP/1.1" + CRLF +
+                method + " /servlet/" + url + " HTTP/1.1" + CRLF +
                 "Host: localhost:" + getPort() + CRLF +
                 "Connection: close" + CRLF +
                 CRLF });

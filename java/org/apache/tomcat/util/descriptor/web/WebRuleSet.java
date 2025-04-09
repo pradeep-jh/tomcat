@@ -283,8 +283,6 @@ public class WebRuleSet implements RuleSet {
                                "setDeferredSyntax", 0);
         digester.addCallMethod(fullPrefix + "/jsp-config/jsp-property-group/el-ignored",
                                "setElIgnored", 0);
-        digester.addCallMethod(fullPrefix + "/jsp-config/jsp-property-group/error-on-el-not-found",
-                               "setErrorOnELNotFound", 0);
         digester.addCallMethod(fullPrefix + "/jsp-config/jsp-property-group/include-coda",
                                "addIncludeCoda", 0);
         digester.addCallMethod(fullPrefix + "/jsp-config/jsp-property-group/include-prelude",
@@ -443,10 +441,6 @@ public class WebRuleSet implements RuleSet {
                                "setCookieSecure", 0);
         digester.addCallMethod(fullPrefix + "/session-config/cookie-config/max-age",
                                "setCookieMaxAge", 0);
-        digester.addCallMethod(fullPrefix + "/session-config/cookie-config/attribute",
-                               "setCookieAttribute", 2);
-        digester.addCallParam(fullPrefix + "/session-config/cookie-config/attribute/attribute-name", 0);
-        digester.addCallParam(fullPrefix + "/session-config/cookie-config/attribute/attribute-value", 1);
         digester.addCallMethod(fullPrefix + "/session-config/tracking-mode",
                                "addSessionTrackingMode", 0);
 
@@ -721,7 +715,7 @@ public class WebRuleSet implements RuleSet {
  */
 final class SetLoginConfig extends Rule {
     boolean isLoginConfigSet = false;
-    SetLoginConfig() {
+    public SetLoginConfig() {
         // NO-OP
     }
 
@@ -744,7 +738,7 @@ final class SetLoginConfig extends Rule {
  */
 final class SetJspConfig extends Rule {
     boolean isJspConfigSet = false;
-    SetJspConfig() {
+    public SetJspConfig() {
         // NO-OP
     }
 
@@ -767,7 +761,7 @@ final class SetJspConfig extends Rule {
  */
 final class SetSessionConfig extends Rule {
     boolean isSessionConfigSet = false;
-    SetSessionConfig() {
+    public SetSessionConfig() {
         // NO-OP
     }
 
@@ -791,7 +785,7 @@ final class SetSessionConfig extends Rule {
 
 final class SetAuthConstraintRule extends Rule {
 
-    SetAuthConstraintRule() {
+    public SetAuthConstraintRule() {
         // NO-OP
     }
 
@@ -801,16 +795,9 @@ final class SetAuthConstraintRule extends Rule {
         SecurityConstraint securityConstraint =
             (SecurityConstraint) digester.peek();
         securityConstraint.setAuthConstraint(true);
-        if (digester.getLogger().isTraceEnabled()) {
+        if (digester.getLogger().isDebugEnabled()) {
             digester.getLogger()
-               .trace("Calling SecurityConstraint.setAuthConstraint(true)");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(securityConstraint)).append(".setAuthConstraint(true);");
-            code.append(System.lineSeparator());
+               .debug("Calling SecurityConstraint.setAuthConstraint(true)");
         }
     }
 
@@ -823,7 +810,7 @@ final class SetAuthConstraintRule extends Rule {
  */
 final class SetDistributableRule extends Rule {
 
-    SetDistributableRule() {
+    public SetDistributableRule() {
         // NO-OP
     }
 
@@ -832,16 +819,9 @@ final class SetDistributableRule extends Rule {
         throws Exception {
         WebXml webXml = (WebXml) digester.peek();
         webXml.setDistributable(true);
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace
+        if (digester.getLogger().isDebugEnabled()) {
+            digester.getLogger().debug
                (webXml.getClass().getName() + ".setDistributable(true)");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(webXml)).append(".setDistributable(true);");
-            code.append(System.lineSeparator());
         }
     }
 }
@@ -853,7 +833,7 @@ final class SetDistributableRule extends Rule {
  */
 final class SetDenyUncoveredHttpMethodsRule extends Rule {
 
-    SetDenyUncoveredHttpMethodsRule() {
+    public SetDenyUncoveredHttpMethodsRule() {
         // NO-OP
     }
 
@@ -862,16 +842,9 @@ final class SetDenyUncoveredHttpMethodsRule extends Rule {
         throws Exception {
         WebXml webXml = (WebXml) digester.peek();
         webXml.setDenyUncoveredHttpMethods(true);
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace(webXml.getClass().getName() +
+        if (digester.getLogger().isDebugEnabled()) {
+            digester.getLogger().debug(webXml.getClass().getName() +
                     ".setDenyUncoveredHttpMethods(true)");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(webXml)).append(".setDenyUncoveredHttpMethods(true);");
-            code.append(System.lineSeparator());
         }
     }
 }
@@ -884,43 +857,36 @@ final class SetDenyUncoveredHttpMethodsRule extends Rule {
 
 final class SetPublicIdRule extends Rule {
 
-    SetPublicIdRule(String method) {
+    public SetPublicIdRule(String method) {
         this.method = method;
     }
 
-    private final String method;
+    private String method = null;
 
     @Override
     public void begin(String namespace, String name, Attributes attributes)
         throws Exception {
 
         Object top = digester.peek();
-        Class<?>[] paramClasses = new Class[1];
+        Class<?> paramClasses[] = new Class[1];
         paramClasses[0] = "String".getClass();
-        String[] paramValues = new String[1];
+        String paramValues[] = new String[1];
         paramValues[0] = digester.getPublicId();
 
-        Method m;
+        Method m = null;
         try {
             m = top.getClass().getMethod(method, paramClasses);
         } catch (NoSuchMethodException e) {
-            digester.getLogger().error(sm.getString("webRuleSet.noMethod", method, top, top.getClass()));
+            digester.getLogger().error("Can't find method " + method + " in "
+                                       + top + " CLASS " + top.getClass());
             return;
         }
 
         m.invoke(top, (Object [])paramValues);
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace(top.getClass().getName() + "."
+        if (digester.getLogger().isDebugEnabled())
+            digester.getLogger().debug("" + top.getClass().getName() + "."
                                        + method + "(" + paramValues[0] + ")");
-        }
 
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(top)).append(".").append(method).append("(\"");
-            code.append(digester.getPublicId()).append("\");");
-            code.append(System.lineSeparator());
-        }
     }
 
 }
@@ -933,7 +899,7 @@ final class SetPublicIdRule extends Rule {
 
 final class ServletDefCreateRule extends Rule {
 
-    ServletDefCreateRule() {
+    public ServletDefCreateRule() {
         // NO-OP
     }
 
@@ -942,30 +908,16 @@ final class ServletDefCreateRule extends Rule {
         throws Exception {
         ServletDef servletDef = new ServletDef();
         digester.push(servletDef);
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace("new " + servletDef.getClass().getName());
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(ServletDef.class.getName()).append(' ').append(digester.toVariableName(servletDef)).append(" = new ");
-            code.append(ServletDef.class.getName()).append("();").append(System.lineSeparator());
-        }
+        if (digester.getLogger().isDebugEnabled())
+            digester.getLogger().debug("new " + servletDef.getClass().getName());
     }
 
     @Override
     public void end(String namespace, String name)
         throws Exception {
         ServletDef servletDef = (ServletDef) digester.pop();
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace("pop " + servletDef.getClass().getName());
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-        }
+        if (digester.getLogger().isDebugEnabled())
+            digester.getLogger().debug("pop " + servletDef.getClass().getName());
     }
 
 }
@@ -977,7 +929,7 @@ final class ServletDefCreateRule extends Rule {
  */
 final class CallParamMultiRule extends CallParamRule {
 
-    CallParamMultiRule(int paramIndex) {
+    public CallParamMultiRule(int paramIndex) {
         super(paramIndex);
     }
 
@@ -985,7 +937,7 @@ final class CallParamMultiRule extends CallParamRule {
     public void end(String namespace, String name) {
         if (bodyTextStack != null && !bodyTextStack.empty()) {
             // what we do now is push one parameter onto the top set of parameters
-            Object[] parameters = (Object[]) digester.peekParams();
+            Object parameters[] = (Object[]) digester.peekParams();
             @SuppressWarnings("unchecked")
             ArrayList<String> params = (ArrayList<String>) parameters[paramIndex];
             if (params == null) {
@@ -1007,7 +959,7 @@ final class CallMethodMultiRule extends CallMethodRule {
 
     final int multiParamIndex;
 
-    CallMethodMultiRule(String methodName, int paramCount, int multiParamIndex) {
+    public CallMethodMultiRule(String methodName, int paramCount, int multiParamIndex) {
         super(methodName, paramCount);
         this.multiParamIndex = multiParamIndex;
     }
@@ -1025,7 +977,7 @@ final class CallMethodMultiRule extends CallMethodRule {
     public void end(String namespace, String name) throws Exception {
 
         // Retrieve or construct the parameter values array
-        Object[] parameters;
+        Object parameters[] = null;
         if (paramCount > 0) {
             parameters = (Object[]) digester.popParams();
         } else {
@@ -1038,7 +990,7 @@ final class CallMethodMultiRule extends CallMethodRule {
         // Construct the parameter values array we will need
         // We only do the conversion if the param value is a String and
         // the specified paramType is not String.
-        Object[] paramValues = new Object[paramTypes.length];
+        Object paramValues[] = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
             if (i != multiParamIndex) {
                 // convert nulls and convert stringy parameters
@@ -1062,9 +1014,16 @@ final class CallMethodMultiRule extends CallMethodRule {
         }
 
         if (target == null) {
-            String sb = "[CallMethodRule]{" + "} Call target is null (" + "targetOffset="
-                    + targetOffset + ",stackdepth=" + digester.getCount() + ')';
-            throw new org.xml.sax.SAXException(sb);
+            StringBuilder sb = new StringBuilder();
+            sb.append("[CallMethodRule]{");
+            sb.append("");
+            sb.append("} Call target is null (");
+            sb.append("targetOffset=");
+            sb.append(targetOffset);
+            sb.append(",stackdepth=");
+            sb.append(digester.getCount());
+            sb.append(")");
+            throw new org.xml.sax.SAXException(sb.toString());
         }
 
         if (multiParams == null) {
@@ -1084,24 +1043,6 @@ final class CallMethodMultiRule extends CallMethodRule {
             }
             IntrospectionUtils.callMethodN(target, methodName, paramValues,
                     paramTypes);
-
-            StringBuilder code = digester.getGeneratedCode();
-            if (code != null) {
-                code.append(digester.toVariableName(target)).append('.').append(methodName);
-                code.append('(');
-                for (int i = 0; i < paramValues.length; i++) {
-                    if (i > 0) {
-                        code.append(", ");
-                    }
-                    if (paramValues[i] instanceof String) {
-                        code.append("\"").append(paramValues[i].toString()).append("\"");
-                    } else {
-                        code.append(digester.toVariableName(paramValues[i]));
-                    }
-                }
-                code.append(");");
-                code.append(System.lineSeparator());
-            }
         }
 
     }
@@ -1117,34 +1058,24 @@ final class CallMethodMultiRule extends CallMethodRule {
 
 final class IgnoreAnnotationsRule extends Rule {
 
-    IgnoreAnnotationsRule() {
+    public IgnoreAnnotationsRule() {
         // NO-OP
     }
 
     @Override
     public void begin(String namespace, String name, Attributes attributes)
         throws Exception {
-        WebXml webXml = (WebXml) digester.peek(digester.getCount() - 1);
+        WebXml webxml = (WebXml) digester.peek(digester.getCount() - 1);
         String value = attributes.getValue("metadata-complete");
         if ("true".equals(value)) {
-            webXml.setMetadataComplete(true);
+            webxml.setMetadataComplete(true);
         } else if ("false".equals(value)) {
-            webXml.setMetadataComplete(false);
-        } else {
-            value = null;
+            webxml.setMetadataComplete(false);
         }
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace
-                (webXml.getClass().getName() + ".setMetadataComplete( " +
-                        webXml.isMetadataComplete() + ")");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (value != null && code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(webXml)).append(".setMetadataComplete(");
-            code.append(value).append(");");
-            code.append(System.lineSeparator());
+        if (digester.getLogger().isDebugEnabled()) {
+            digester.getLogger().debug
+                (webxml.getClass().getName() + ".setMetadataComplete( " +
+                        webxml.isMetadataComplete() + ")");
         }
     }
 
@@ -1157,28 +1088,20 @@ final class IgnoreAnnotationsRule extends Rule {
 
 final class VersionRule extends Rule {
 
-    VersionRule() {
+    public VersionRule() {
         // NO-OP
     }
 
     @Override
     public void begin(String namespace, String name, Attributes attributes)
         throws Exception {
-        WebXml webXml = (WebXml) digester.peek(digester.getCount() - 1);
-        webXml.setVersion(attributes.getValue("version"));
+        WebXml webxml = (WebXml) digester.peek(digester.getCount() - 1);
+        webxml.setVersion(attributes.getValue("version"));
 
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace
-                (webXml.getClass().getName() + ".setVersion( " +
-                        webXml.getVersion() + ")");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(webXml)).append(".setVersion(\"");
-            code.append(attributes.getValue("version")).append("\");");
-            code.append(System.lineSeparator());
+        if (digester.getLogger().isDebugEnabled()) {
+            digester.getLogger().debug
+                (webxml.getClass().getName() + ".setVersion( " +
+                        webxml.getVersion() + ")");
         }
     }
 
@@ -1192,7 +1115,7 @@ final class NameRule extends Rule {
 
     boolean isNameSet = false;
 
-    NameRule() {
+    public NameRule() {
         // NO-OP
     }
 
@@ -1209,15 +1132,8 @@ final class NameRule extends Rule {
     @Override
     public void body(String namespace, String name, String text)
             throws Exception {
+        super.body(namespace, name, text);
         ((WebXml) digester.peek()).setName(text);
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(digester.peek())).append(".setName(\"");
-            code.append(text).append("\");");
-            code.append(System.lineSeparator());
-        }
     }
 }
 
@@ -1231,7 +1147,7 @@ final class AbsoluteOrderingRule extends Rule {
     boolean isAbsoluteOrderingSet = false;
     private final boolean fragment;
 
-    AbsoluteOrderingRule(boolean fragment) {
+    public AbsoluteOrderingRule(boolean fragment) {
         this.fragment = fragment;
     }
 
@@ -1249,16 +1165,9 @@ final class AbsoluteOrderingRule extends Rule {
             isAbsoluteOrderingSet = true;
             WebXml webXml = (WebXml) digester.peek();
             webXml.createAbsoluteOrdering();
-            if (digester.getLogger().isTraceEnabled()) {
-                digester.getLogger().trace(
+            if (digester.getLogger().isDebugEnabled()) {
+                digester.getLogger().debug(
                         webXml.getClass().getName() + ".setAbsoluteOrdering()");
-            }
-
-            StringBuilder code = digester.getGeneratedCode();
-            if (code != null) {
-                code.append(System.lineSeparator());
-                code.append(digester.toVariableName(webXml)).append(".createAbsoluteOrdering();");
-                code.append(System.lineSeparator());
             }
         }
     }
@@ -1272,7 +1181,7 @@ final class RelativeOrderingRule extends Rule {
     boolean isRelativeOrderingSet = false;
     private final boolean fragment;
 
-    RelativeOrderingRule(boolean fragment) {
+    public RelativeOrderingRule(boolean fragment) {
         this.fragment = fragment;
     }
 
@@ -1298,7 +1207,7 @@ final class RelativeOrderingRule extends Rule {
  */
 final class SoapHeaderRule extends Rule {
 
-    SoapHeaderRule() {
+    public SoapHeaderRule() {
         // NO-OP
     }
 
@@ -1323,16 +1232,8 @@ final class SoapHeaderRule extends Rule {
             namespaceuri = digester.findNamespaceURI(prefix);
             localpart = text.substring(colon+1);
         }
-        ContextHandler contextHandler = (ContextHandler) digester.peek();
-        contextHandler.addSoapHeaders(localpart, namespaceuri);
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(contextHandler)).append(".addSoapHeaders(\"");
-            code.append(localpart).append("\", \"").append(namespaceuri).append("\");");
-            code.append(System.lineSeparator());
-        }
+        ContextHandler contextHandler = (ContextHandler)digester.peek();
+        contextHandler.addSoapHeaders(localpart,namespaceuri);
     }
 }
 
@@ -1342,7 +1243,7 @@ final class SoapHeaderRule extends Rule {
  */
 final class ServiceQnameRule extends Rule {
 
-    ServiceQnameRule() {
+    public ServiceQnameRule() {
         // NO-OP
     }
 
@@ -1367,20 +1268,9 @@ final class ServiceQnameRule extends Rule {
             namespaceuri = digester.findNamespaceURI(prefix);
             localpart = text.substring(colon+1);
         }
-        ContextService contextService = (ContextService) digester.peek();
+        ContextService contextService = (ContextService)digester.peek();
         contextService.setServiceqnameLocalpart(localpart);
         contextService.setServiceqnameNamespaceURI(namespaceuri);
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(contextService)).append(".setServiceqnameLocalpart(\"");
-            code.append(localpart).append("\");");
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(contextService)).append(".setServiceqnameNamespaceURI(\"");
-            code.append(namespaceuri).append("\");");
-            code.append(System.lineSeparator());
-        }
     }
 
 }
@@ -1392,7 +1282,7 @@ final class TaglibLocationRule extends Rule {
 
     final boolean isServlet24OrLater;
 
-    TaglibLocationRule(boolean isServlet24OrLater) {
+    public TaglibLocationRule(boolean isServlet24OrLater) {
         this.isServlet24OrLater = isServlet24OrLater;
     }
 
@@ -1415,7 +1305,7 @@ final class TaglibLocationRule extends Rule {
  */
 final class MappedNameRule extends Rule {
 
-    MappedNameRule() {
+    public MappedNameRule() {
         // NO-OP
     }
 
@@ -1434,14 +1324,6 @@ final class MappedNameRule extends Rule {
             throws Exception {
         ResourceBase resourceBase = (ResourceBase) digester.peek();
         resourceBase.setProperty("mappedName", text.trim());
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(resourceBase));
-            code.append(".setProperty(\"mappedName\", \"").append(text.trim()).append("\");");
-            code.append(System.lineSeparator());
-        }
     }
 }
 
@@ -1453,7 +1335,7 @@ final class LifecycleCallbackRule extends CallMethodRule {
 
     private final boolean postConstruct;
 
-    LifecycleCallbackRule(String methodName, int paramCount,
+    public LifecycleCallbackRule(String methodName, int paramCount,
             boolean postConstruct) {
         super(methodName, paramCount);
         this.postConstruct = postConstruct;
@@ -1482,7 +1364,7 @@ final class LifecycleCallbackRule extends CallMethodRule {
 
 final class SetOverrideRule extends Rule {
 
-    SetOverrideRule() {
+    public SetOverrideRule() {
         // no-op
     }
 
@@ -1490,15 +1372,8 @@ final class SetOverrideRule extends Rule {
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
         ContextEnvironment envEntry = (ContextEnvironment) digester.peek();
         envEntry.setOverride(false);
-        if (digester.getLogger().isTraceEnabled()) {
-            digester.getLogger().trace(envEntry.getClass().getName() + ".setOverride(false)");
-        }
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(digester.toVariableName(envEntry)).append(".setOverride(false);");
-            code.append(System.lineSeparator());
+        if (digester.getLogger().isDebugEnabled()) {
+            digester.getLogger().debug(envEntry.getClass().getName() + ".setOverride(false)");
         }
     }
 }

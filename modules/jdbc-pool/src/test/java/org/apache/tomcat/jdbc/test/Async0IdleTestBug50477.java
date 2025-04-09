@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import org.apache.tomcat.jdbc.pool.DataSourceProxy;
+
 public class Async0IdleTestBug50477 extends DefaultTestCase {
 
     @Test
@@ -31,7 +33,7 @@ public class Async0IdleTestBug50477 extends DefaultTestCase {
         this.datasource.getPoolProperties().setFairQueue(true);
         this.datasource.getPoolProperties().setInitialSize(0);
         try {
-            Future<Connection> cf = datasource.getConnectionAsync();
+            Future<Connection> cf = ((DataSourceProxy)datasource).getConnectionAsync();
             cf.get(5, TimeUnit.SECONDS);
         }finally {
             tearDown();

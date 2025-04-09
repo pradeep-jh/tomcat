@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,7 +32,6 @@ import java.util.Map;
  */
 public class ContextHandler extends ResourceBase {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -55,9 +53,9 @@ public class ContextHandler extends ResourceBase {
     /**
      * A list of QName specifying the SOAP Headers the handler will work on.
      * -namespace and localpart values must be found inside the WSDL.
-     * <p>
+     *
      * A service-qname is composed by a namespaceURI and a localpart.
-     * <p>
+     *
      * soapHeader[0] : namespaceURI
      * soapHeader[1] : localpart
      */
@@ -134,7 +132,7 @@ public class ContextHandler extends ResourceBase {
             sb.append(", class=");
             sb.append(handlerclass);
         }
-        if (!soapHeaders.isEmpty()) {
+        if (this.soapHeaders != null) {
             sb.append(", soap-headers=");
             sb.append(this.soapHeaders);
         }
@@ -150,7 +148,7 @@ public class ContextHandler extends ResourceBase {
             sb.append(", init-param=");
             sb.append(this.listProperties());
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 
@@ -161,9 +159,12 @@ public class ContextHandler extends ResourceBase {
         int result = super.hashCode();
         result = prime * result +
                 ((handlerclass == null) ? 0 : handlerclass.hashCode());
-        result = prime * result + portNames.hashCode();
-        result = prime * result + soapHeaders.hashCode();
-        result = prime * result + soapRoles.hashCode();
+        result = prime * result +
+                ((portNames == null) ? 0 : portNames.hashCode());
+        result = prime * result +
+                ((soapHeaders == null) ? 0 : soapHeaders.hashCode());
+        result = prime * result +
+                ((soapRoles == null) ? 0 : soapRoles.hashCode());
         return result;
     }
 
@@ -187,12 +188,27 @@ public class ContextHandler extends ResourceBase {
         } else if (!handlerclass.equals(other.handlerclass)) {
             return false;
         }
-        if (!portNames.equals(other.portNames)) {
+        if (portNames == null) {
+            if (other.portNames != null) {
+                return false;
+            }
+        } else if (!portNames.equals(other.portNames)) {
             return false;
         }
-        if (!soapHeaders.equals(other.soapHeaders)) {
+        if (soapHeaders == null) {
+            if (other.soapHeaders != null) {
+                return false;
+            }
+        } else if (!soapHeaders.equals(other.soapHeaders)) {
             return false;
         }
-        return soapRoles.equals(other.soapRoles);
+        if (soapRoles == null) {
+            if (other.soapRoles != null) {
+                return false;
+            }
+        } else if (!soapRoles.equals(other.soapRoles)) {
+            return false;
+        }
+        return true;
     }
 }

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2;
 
 import java.sql.Connection;
@@ -49,7 +50,7 @@ public class DriverManagerConnectionFactory implements ConnectionFactory {
      * Constructor for DriverManagerConnectionFactory.
      *
      * @param connectionUri
-     *            a database connection string of the form {@code  jdbc:<em>subprotocol</em>:<em>subname</em>}
+     *            a database url of the form <code> jdbc:<em>subprotocol</em>:<em>subname</em></code>
      * @since 2.2
      */
     public DriverManagerConnectionFactory(final String connectionUri) {
@@ -63,7 +64,7 @@ public class DriverManagerConnectionFactory implements ConnectionFactory {
      * Constructor for DriverManagerConnectionFactory.
      *
      * @param connectionUri
-     *            a database connection string of the form {@code  jdbc:<em>subprotocol</em>:<em>subname</em>}
+     *            a database url of the form <code> jdbc:<em>subprotocol</em>:<em>subname</em></code>
      * @param properties
      *            a list of arbitrary string tag/value pairs as connection arguments; normally at least a "user" and
      *            "password" property should be included.
@@ -79,7 +80,7 @@ public class DriverManagerConnectionFactory implements ConnectionFactory {
      * Constructor for DriverManagerConnectionFactory.
      *
      * @param connectionUri
-     *            a database connection string of the form {@code jdbc:<em>subprotocol</em>:<em>subname</em>}
+     *            a database url of the form <code>jdbc:<em>subprotocol</em>:<em>subname</em></code>
      * @param userName
      *            the database user
      * @param userPassword
@@ -97,7 +98,7 @@ public class DriverManagerConnectionFactory implements ConnectionFactory {
      * Constructor for DriverManagerConnectionFactory.
      *
      * @param connectionUri
-     *            a database connection string of the form {@code jdbc:<em>subprotocol</em>:<em>subname</em>}
+     *            a database url of the form <code>jdbc:<em>subprotocol</em>:<em>subname</em></code>
      * @param userName
      *            the database user
      * @param userPassword

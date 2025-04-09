@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -82,7 +82,7 @@ public class TestAsyncContextImplDispatch extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Wrapper w1 = Tomcat.addServlet(ctx, "target", new TesterServlet());
         w1.setAsyncSupported(targetAsyncSupported);

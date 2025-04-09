@@ -16,10 +16,7 @@
  */
 package org.apache.catalina.servlets;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,12 +30,9 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
-import org.apache.catalina.util.IOTools;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
 
 @RunWith(Parameterized.class)
@@ -53,14 +47,6 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         long len = index.length();
         String strLen = Long.toString(len);
         String lastModified = FastHttpDateFormat.formatDate(index.lastModified());
-        String weakETag = "W/\"" + strLen + "-" + Long.toString(index.lastModified()) + "\"";
-        String strongETag = "\"\"";
-        try (FileInputStream is = new FileInputStream(index)) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            IOTools.flow(is, os);
-            strongETag = "\"" + HexUtils.toHexString(MessageDigest.getInstance("SHA-1").digest(os.toByteArray())) + "\"";
-        } catch (Exception e) {
-        }
 
         List<Object[]> parameterSets = new ArrayList<>();
 
@@ -77,12 +63,6 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         parameterSets.add(new Object[] { "bytes=b-10", null, Integer.valueOf(416), "", "*/" + len });
         // Invalid ranges (out of range)
         parameterSets.add(new Object[] { "bytes=1000-2000", null, Integer.valueOf(416), "", "*/" + len });
-        // Valid overlapping ranges (up to 2)
-        parameterSets.add(new Object[] { "bytes=1-100, 30-50", null, Integer.valueOf(206), "", "30-50/" + len });
-        parameterSets.add(new Object[] { "bytes=1-100, 90-150", null, Integer.valueOf(206), "", "1-100/" + len });
-        // Invalid overlapping ranges (3 or more)
-        parameterSets.add(new Object[] { "bytes=1-100, 30-50, 10-20", null, Integer.valueOf(416), "", "*/" + len });
-        parameterSets.add(new Object[] { "bytes=1-100, 90-150, 10-20", null, Integer.valueOf(416), "", "*/" + len });
         // Invalid no equals
         parameterSets.add(new Object[] { "bytes 1-10", null, Integer.valueOf(416), "", "*/" + len });
         parameterSets.add(new Object[] { "bytes1-10", null, Integer.valueOf(416), "", "*/" + len });
@@ -95,8 +75,6 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         // Valid range
         parameterSets.add(new Object[] {
                 "bytes=0-9", null, Integer.valueOf(206), "10", "0-9/" + len });
-        parameterSets.add(new Object[] {
-                "bytes=0-9,10-10", null, Integer.valueOf(206), null, "0-9/" + len });
         parameterSets.add(new Object[] {
                 "bytes=-100", null, Integer.valueOf(206), "100", (len - 100) + "-" + (len - 1) + "/" + len });
         parameterSets.add(new Object[] {
@@ -111,25 +89,12 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         // Valid
         parameterSets.add(new Object[] {
                 "bytes=0-9", lastModified, Integer.valueOf(206), "10", "0-9/" + len });
-        // Nonsense data (request rejected)
-        parameterSets.add(new Object[] { "bytes=0-9", "a-b-c", Integer.valueOf(400), null, "" });
-        parameterSets.add(new Object[] { "bytes=0-9", "W\"123\"", Integer.valueOf(400), null, "" });
-        parameterSets.add(new Object[] { "bytes=0-9", "\"123\"W", Integer.valueOf(400), null, "" });
-        // More than one (request rejected)
+        // Nonsense date (return whole entity)
         parameterSets.add(new Object[] {
-                "bytes=0-9", "\"46273648\", " + weakETag, Integer.valueOf(400), null, "" });
+                "bytes=0-9", "a-b-c", Integer.valueOf(200), strLen, ""});
         // Different date (return whole entity)
         parameterSets.add(new Object[] {
-                "bytes=0-9", FastHttpDateFormat.formatDate(1000), Integer.valueOf(200), strLen, "" });
-        // Valid weak etag
-        parameterSets.add(new Object[] {
-                "bytes=0-9", weakETag, Integer.valueOf(200), strLen, "" });
-        // Invalid strong etag
-        parameterSets.add(new Object[] {
-                "bytes=0-9", "\"46273648\"", Integer.valueOf(200), strLen, "" });
-        // Valid strong etag
-        parameterSets.add(new Object[] {
-                "bytes=0-9", strongETag, Integer.valueOf(206), "10", "0-9/" + len });
+                "bytes=0-9", FastHttpDateFormat.formatDate(1000), Integer.valueOf(200), strLen, ""});
 
         return parameterSets;
     }
@@ -153,10 +118,7 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         File appDir = new File("test/webapp");
         Context ctxt = tomcat.addContext("", appDir.getAbsolutePath());
 
-        Wrapper wrapper = Tomcat.addServlet(ctxt, "default", DefaultServlet.class.getName());
-        if (ifRangeHeader != null && ifRangeHeader.startsWith("\"")) {
-            wrapper.addInitParameter("useStrongETags", "true");
-        }
+        Tomcat.addServlet(ctxt, "default", DefaultServlet.class.getName());
         ctxt.addServletMappingDecoded("/", "default");
 
         tomcat.start();
@@ -178,7 +140,7 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
         // Check the result
         Assert.assertEquals(responseCodeExpected, rc);
 
-        if (contentLengthExpected != null && contentLengthExpected.length() > 0) {
+        if (contentLengthExpected.length() > 0) {
             String contentLength = responseHeaders.get("Content-Length").get(0);
             Assert.assertEquals(contentLengthExpected, contentLength);
         }
@@ -189,14 +151,7 @@ public class TestDefaultServletRangeRequests extends TomcatBaseTest {
             if (headerValues != null && headerValues.size() == 1) {
                 responseRange = headerValues.get(0);
             }
-            if (responseRange != null) {
-                Assert.assertEquals("bytes " + responseRangeExpected, responseRange);
-            } else {
-                Assert.assertTrue(
-                        "Expected `Content-Range: " + "bytes " + responseRangeExpected +
-                                "` in multipart/byteranges response body not found!",
-                        responseBody.toString().contains("bytes " + responseRangeExpected));
-            }
+            Assert.assertEquals("bytes " + responseRangeExpected, responseRange);
         }
     }
 

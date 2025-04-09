@@ -55,7 +55,8 @@ public class CoyoteWriter extends PrintWriter {
      * Prevent cloning the facade.
      */
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    protected Object clone()
+        throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 
@@ -92,7 +93,7 @@ public class CoyoteWriter extends PrintWriter {
         try {
             ob.flush();
         } catch (IOException e) {
-            setErrorException(e);
+            error = true;
         }
 
     }
@@ -105,7 +106,7 @@ public class CoyoteWriter extends PrintWriter {
         // so the stream can be reused. We close ob.
         try {
             ob.close();
-        } catch (IOException ex) {
+        } catch (IOException ex ) {
             // Ignore
         }
         error = false;
@@ -130,14 +131,14 @@ public class CoyoteWriter extends PrintWriter {
         try {
             ob.write(c);
         } catch (IOException e) {
-            setErrorException(e);
+            error = true;
         }
 
     }
 
 
     @Override
-    public void write(char[] buf, int off, int len) {
+    public void write(char buf[], int off, int len) {
 
         if (error) {
             return;
@@ -146,14 +147,14 @@ public class CoyoteWriter extends PrintWriter {
         try {
             ob.write(buf, off, len);
         } catch (IOException e) {
-            setErrorException(e);
+            error = true;
         }
 
     }
 
 
     @Override
-    public void write(char[] buf) {
+    public void write(char buf[]) {
         write(buf, 0, buf.length);
     }
 
@@ -168,7 +169,7 @@ public class CoyoteWriter extends PrintWriter {
         try {
             ob.write(s, off, len);
         } catch (IOException e) {
-            setErrorException(e);
+            error = true;
         }
 
     }
@@ -224,7 +225,7 @@ public class CoyoteWriter extends PrintWriter {
 
 
     @Override
-    public void print(char[] s) {
+    public void print(char s[]) {
         write(s);
     }
 
@@ -293,7 +294,7 @@ public class CoyoteWriter extends PrintWriter {
 
 
     @Override
-    public void println(char[] c) {
+    public void println(char c[]) {
         print(c);
         println();
     }
@@ -313,8 +314,4 @@ public class CoyoteWriter extends PrintWriter {
     }
 
 
-    private void setErrorException(Exception e) {
-        error = true;
-        ob.setErrorException(e);
-    }
 }

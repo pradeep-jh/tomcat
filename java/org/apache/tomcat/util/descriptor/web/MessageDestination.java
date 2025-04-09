@@ -17,8 +17,6 @@
 package org.apache.tomcat.util.descriptor.web;
 
 
-import java.io.Serial;
-
 /**
  * <p>Representation of a message destination for a web application, as
  * represented in a <code>&lt;message-destination&gt;</code> element
@@ -29,7 +27,6 @@ import java.io.Serial;
  */
 public class MessageDestination extends ResourceBase {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -104,7 +101,7 @@ public class MessageDestination extends ResourceBase {
             sb.append(", description=");
             sb.append(getDescription());
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 
@@ -150,9 +147,12 @@ public class MessageDestination extends ResourceBase {
             return false;
         }
         if (smallIcon == null) {
-            return other.smallIcon == null;
-        } else {
-            return smallIcon.equals(other.smallIcon);
+            if (other.smallIcon != null) {
+                return false;
+            }
+        } else if (!smallIcon.equals(other.smallIcon)) {
+            return false;
         }
+        return true;
     }
 }

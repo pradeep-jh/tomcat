@@ -17,50 +17,58 @@
 package org.apache.juli;
 
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.LogRecord;
-
 /**
  * A {@link FileHandler} implementation that uses a queue of log entries.
- * <p>
- * Configuration properties are inherited from the {@link FileHandler} class. This class does not add its own
- * configuration properties for the logging configuration, but relies on the following system properties instead:
- * </p>
+ *
+ * <p>Configuration properties are inherited from the {@link FileHandler}
+ * class. This class does not add its own configuration properties for the
+ * logging configuration, but relies on the following system properties
+ * instead:</p>
+ *
  * <ul>
- * <li><code>org.apache.juli.AsyncOverflowDropType</code> Default value: <code>1</code></li>
- * <li><code>org.apache.juli.AsyncMaxRecordCount</code> Default value: <code>10000</code></li>
+ *   <li><code>org.apache.juli.AsyncOverflowDropType</code>
+ *    Default value: <code>1</code></li>
+ *   <li><code>org.apache.juli.AsyncMaxRecordCount</code>
+ *    Default value: <code>10000</code></li>
+ *   <li><code>org.apache.juli.AsyncLoggerPollInterval</code>
+ *    Default value: <code>1000</code></li>
  * </ul>
- * <p>
- * See the System Properties page in the configuration reference of Tomcat.
- * </p>
+ *
+ * <p>See the System Properties page in the configuration reference of Tomcat.</p>
  */
 public class AsyncFileHandler extends FileHandler {
 
-    static final String THREAD_PREFIX = "AsyncFileHandlerWriter-";
-
-    public static final int OVERFLOW_DROP_LAST = 1;
-    public static final int OVERFLOW_DROP_FIRST = 2;
-    public static final int OVERFLOW_DROP_FLUSH = 3;
+    public static final int OVERFLOW_DROP_LAST    = 1;
+    public static final int OVERFLOW_DROP_FIRST   = 2;
+    public static final int OVERFLOW_DROP_FLUSH   = 3;
     public static final int OVERFLOW_DROP_CURRENT = 4;
 
     public static final int DEFAULT_OVERFLOW_DROP_TYPE = 1;
-    public static final int DEFAULT_MAX_RECORDS = 10000;
+    public static final int DEFAULT_MAX_RECORDS        = 10000;
+    public static final int DEFAULT_LOGGER_SLEEP_TIME  = 1000;
 
     public static final int OVERFLOW_DROP_TYPE = Integer.parseInt(
-            System.getProperty("org.apache.juli.AsyncOverflowDropType", Integer.toString(DEFAULT_OVERFLOW_DROP_TYPE)));
-    public static final int MAX_RECORDS = Integer
-            .parseInt(System.getProperty("org.apache.juli.AsyncMaxRecordCount", Integer.toString(DEFAULT_MAX_RECORDS)));
+            System.getProperty("org.apache.juli.AsyncOverflowDropType",
+                               Integer.toString(DEFAULT_OVERFLOW_DROP_TYPE)));
+    public static final int MAX_RECORDS = Integer.parseInt(
+            System.getProperty("org.apache.juli.AsyncMaxRecordCount",
+                               Integer.toString(DEFAULT_MAX_RECORDS)));
+    public static final int LOGGER_SLEEP_TIME = Integer.parseInt(
+            System.getProperty("org.apache.juli.AsyncLoggerPollInterval",
+                               Integer.toString(DEFAULT_LOGGER_SLEEP_TIME)));
 
-    private static final LoggerExecutorService LOGGER_SERVICE =
-            new LoggerExecutorService(OVERFLOW_DROP_TYPE, MAX_RECORDS);
+    protected static final LinkedBlockingDeque<LogEntry> queue =
+            new LinkedBlockingDeque<>(MAX_RECORDS);
 
-    private final Object closeLock = new Object();
+    protected static final LoggerThread logger = new LoggerThread();
+
+    static {
+        logger.start();
+    }
+
     protected volatile boolean closed = false;
-    private final LoggerExecutorService loggerService;
 
     public AsyncFileHandler() {
         this(null, null, null);
@@ -71,14 +79,8 @@ public class AsyncFileHandler extends FileHandler {
     }
 
     public AsyncFileHandler(String directory, String prefix, String suffix, Integer maxDays) {
-        this(directory, prefix, suffix, maxDays, LOGGER_SERVICE);
-    }
-
-    AsyncFileHandler(String directory, String prefix, String suffix, Integer maxDays,
-            LoggerExecutorService loggerService) {
         super(directory, prefix, suffix, maxDays);
-        loggerService.registerHandler();
-        this.loggerService = loggerService;
+        open();
     }
 
     @Override
@@ -86,30 +88,19 @@ public class AsyncFileHandler extends FileHandler {
         if (closed) {
             return;
         }
-        synchronized (closeLock) {
-            if (closed) {
-                return;
-            }
-            closed = true;
-        }
-        loggerService.deregisterHandler();
+        closed = true;
         super.close();
     }
 
     @Override
-    public void open() {
+    protected void open() {
         if (!closed) {
             return;
         }
-        synchronized (closeLock) {
-            if (!closed) {
-                return;
-            }
-            closed = false;
-        }
-        loggerService.registerHandler();
+        closed = false;
         super.open();
     }
+
 
     @Override
     public void publish(LogRecord record) {
@@ -119,102 +110,80 @@ public class AsyncFileHandler extends FileHandler {
         // fill source entries, before we hand the record over to another
         // thread with another class loader
         record.getSourceMethodName();
-        loggerService.execute(() -> {
-            /*
-             * During Tomcat shutdown, the Handlers are closed before the executor queue is flushed therefore the closed
-             * flag is ignored if the executor is shutting down.
-             */
-            if (!closed || loggerService.isTerminating()) {
-                publishInternal(record);
-            }
-        });
+        LogEntry entry = new LogEntry(record, this);
+        boolean added = false;
+        try {
+            while (!added && !queue.offer(entry)) {
+                switch (OVERFLOW_DROP_TYPE) {
+                    case OVERFLOW_DROP_LAST: {
+                        //remove the last added element
+                        queue.pollLast();
+                        break;
+                    }
+                    case OVERFLOW_DROP_FIRST: {
+                        //remove the first element in the queue
+                        queue.pollFirst();
+                        break;
+                    }
+                    case OVERFLOW_DROP_FLUSH: {
+                        added = queue.offer(entry, 1000, TimeUnit.MILLISECONDS);
+                        break;
+                    }
+                    case OVERFLOW_DROP_CURRENT: {
+                        added = true;
+                        break;
+                    }
+                }//switch
+            }//while
+        } catch (InterruptedException x) {
+            // Allow thread to be interrupted and back out of the publish
+            // operation. No further action required.
+        }
+
     }
 
     protected void publishInternal(LogRecord record) {
         super.publish(record);
     }
 
-
-    static class LoggerExecutorService extends ThreadPoolExecutor {
-
-        private static final ThreadFactory THREAD_FACTORY = new ThreadFactory(THREAD_PREFIX);
-
-        /*
-         * Implementation note: Use of this count could be extended to start/stop the LoggerExecutorService but that
-         * would require careful locking as the current size of the queue also needs to be taken into account and there
-         * are lost of edge cases when rapidly starting and stopping handlers.
-         */
-        private final AtomicInteger handlerCount = new AtomicInteger();
-
-        LoggerExecutorService(final int overflowDropType, final int maxRecords) {
-            super(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(maxRecords), THREAD_FACTORY);
-            switch (overflowDropType) {
-                case OVERFLOW_DROP_FIRST -> setRejectedExecutionHandler(new DiscardOldestPolicy());
-                case OVERFLOW_DROP_FLUSH -> setRejectedExecutionHandler(new DropFlushPolicy());
-                case OVERFLOW_DROP_CURRENT -> setRejectedExecutionHandler(new DiscardPolicy());
-                default -> setRejectedExecutionHandler(new DropLastPolicy());
-            }
+    protected static class LoggerThread extends Thread {
+        public LoggerThread() {
+            this.setDaemon(true);
+            this.setName("AsyncFileHandlerWriter-" + System.identityHashCode(this));
         }
 
         @Override
-        public LinkedBlockingDeque<Runnable> getQueue() {
-            return (LinkedBlockingDeque<Runnable>) super.getQueue();
-        }
-
-        public void registerHandler() {
-            handlerCount.incrementAndGet();
-        }
-
-        public void deregisterHandler() {
-            int newCount = handlerCount.decrementAndGet();
-            if (newCount == 0) {
-                try {
-                    Thread dummyHook = new Thread();
-                    Runtime.getRuntime().addShutdownHook(dummyHook);
-                    Runtime.getRuntime().removeShutdownHook(dummyHook);
-                } catch (IllegalStateException ise) {
-                    // JVM is shutting down.
-                    // Allow up to 10s for the queue to be emptied
-                    shutdown();
-                    try {
-                        awaitTermination(10, TimeUnit.SECONDS);
-                    } catch (InterruptedException e) {
-                        // Ignore
-                    }
-                    shutdownNow();
-                }
-            }
-        }
-    }
-
-
-    private static class DropFlushPolicy implements RejectedExecutionHandler {
-
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        public void run() {
             while (true) {
-                if (executor.isShutdown()) {
-                    break;
-                }
                 try {
-                    if (executor.getQueue().offer(r, 1000, TimeUnit.MILLISECONDS)) {
-                        break;
+                    LogEntry entry = queue.poll(LOGGER_SLEEP_TIME, TimeUnit.MILLISECONDS);
+                    if (entry != null) {
+                        entry.flush();
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RejectedExecutionException("Interrupted", e);
+                } catch (InterruptedException x) {
+                    // Ignore the attempt to interrupt the thread.
+                } catch (Exception x) {
+                    x.printStackTrace();
                 }
             }
         }
     }
 
-    private static class DropLastPolicy implements RejectedExecutionHandler {
+    protected static class LogEntry {
+        private final LogRecord record;
+        private final AsyncFileHandler handler;
+        public LogEntry(LogRecord record, AsyncFileHandler handler) {
+            super();
+            this.record = record;
+            this.handler = handler;
+        }
 
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            if (!executor.isShutdown()) {
-                ((LoggerExecutorService) executor).getQueue().pollLast();
-                executor.execute(r);
+        public boolean flush() {
+            if (handler.closed) {
+                return false;
+            } else {
+                handler.publishInternal(record);
+                return true;
             }
         }
     }

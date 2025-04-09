@@ -30,32 +30,33 @@ public class InvalidContentTypeException
     private static final long serialVersionUID = -9073026332015646668L;
 
     /**
-     * Constructs a {@code InvalidContentTypeException} with no
+     * Constructs a <code>InvalidContentTypeException</code> with no
      * detail message.
      */
     public InvalidContentTypeException() {
+        super();
     }
 
     /**
-     * Constructs an {@code InvalidContentTypeException} with
+     * Constructs an <code>InvalidContentTypeException</code> with
      * the specified detail message.
      *
      * @param message The detail message.
      */
-    public InvalidContentTypeException(final String message) {
+    public InvalidContentTypeException(String message) {
         super(message);
     }
 
     /**
-     * Constructs an {@code InvalidContentTypeException} with
+     * Constructs an <code>InvalidContentTypeException</code> with
      * the specified detail message and cause.
      *
      * @param msg The detail message.
      * @param cause the original cause
      *
-     * @since FileUpload 1.3.1
+     * @since 1.3.1
      */
-    public InvalidContentTypeException(final String msg, final Throwable cause) {
+    public InvalidContentTypeException(String msg, Throwable cause) {
         super(msg, cause);
     }
 }

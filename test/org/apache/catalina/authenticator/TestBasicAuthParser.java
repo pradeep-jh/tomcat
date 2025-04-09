@@ -18,12 +18,12 @@ package org.apache.catalina.authenticator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.tomcat.util.codec.binary.Base64;
 
 /**
  * Test the BasicAuthenticator's BasicCredentials inner class and the
@@ -45,7 +45,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -56,7 +56,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, null);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertNull(credentials.getPassword());
     }
@@ -68,7 +68,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -80,7 +80,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertNull(credentials.getPassword());
     }
@@ -93,24 +93,34 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD1, credentials.getPassword());
     }
 
     /*
-     * Line breaks are not permitted inside the base64 encoded value.
+     * RFC 2045 says the Base64 encoded string should be represented
+     * as lines of no more than 76 characters. However, RFC 2617
+     * says a base64-user-pass token is not limited to 76 char/line.
+     * It also says all line breaks, including mandatory ones,
+     * should be ignored during decoding.
+     * This test case has a line break in the Base64 string.
+     * (See also testGoodCribBase64Big below).
      */
-    @Test(expected=IllegalArgumentException.class)
-    public void testLineWrap() throws Exception {
+    @Test
+    public void testGoodCribLineWrap() throws Exception {
+        final String USER_LONG = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "abcdefghijklmnopqrstuvwxyz0123456789+/AAAABBBBCCCC"
+                + "DDDD";                   // 80 characters
         final String BASE64_CRIB = "QUJDREVGR0hJSktMTU5PUFFSU1RVVldY"
                 + "WVphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ejAxMjM0"
                 + "\n" + "NTY3ODkrL0FBQUFCQkJCQ0NDQ0REREQ=";
-        final BasicAuthHeader AUTH_HEADER = new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
-        @SuppressWarnings("unused")
+        final BasicAuthHeader AUTH_HEADER =
+                new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_LONG, credentials.getUsername());
     }
 
     /*
@@ -131,7 +141,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_LONG, credentials.getUsername());
     }
 
@@ -147,7 +157,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(METHOD, USER_NAME, PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -155,26 +165,41 @@ public class TestBasicAuthParser {
     /*
      * Confirm the Basic parser rejects an invalid authentication method.
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAuthMethodBadMethod() throws Exception {
         final String METHOD = "BadMethod";
         final BasicAuthHeader AUTH_HEADER =
                 new BasicAuthHeader(METHOD, USER_NAME, PASSWORD);
         @SuppressWarnings("unused")
-        BasicAuthenticator.BasicCredentials credentials =
-                new BasicAuthenticator.BasicCredentials(AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+        BasicAuthenticator.BasicCredentials credentials = null;
+        try {
+            credentials = new BasicAuthenticator.BasicCredentials(
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+            Assert.fail("IllegalArgumentException expected");
+        }
+        catch (Exception e) {
+            Assert.assertTrue(e instanceof IllegalArgumentException);
+            Assert.assertTrue(e.getMessage().contains("header method"));
+        }
     }
 
     /*
-     * Confirm the Basic parser allows exactly one space after the authentication method.
+     * Confirm the Basic parser tolerates excess white space after
+     * the authentication method.
+     *
+     * RFC2617 does not define the separation syntax between the auth-scheme
+     * and basic-credentials tokens. Tomcat tolerates any amount of white
+     * (within the limits of HTTP header sizes).
      */
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testAuthMethodExtraLeadingSpace() throws Exception {
         final BasicAuthHeader AUTH_HEADER =
                 new BasicAuthHeader(NICE_METHOD + " ", USER_NAME, PASSWORD);
-        @SuppressWarnings("unused")
         final BasicAuthenticator.BasicCredentials credentials =
-                new BasicAuthenticator.BasicCredentials(AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                new BasicAuthenticator.BasicCredentials(
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_NAME, credentials.getUsername());
+        Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
 
 
@@ -188,7 +213,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PWD_WRONG);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertNotSame(PASSWORD, credentials.getPassword());
     }
@@ -200,7 +225,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, EMPTY_USER_NAME, PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(EMPTY_USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -212,7 +237,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, SHORT_USER_NAME, PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(SHORT_USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -224,7 +249,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, SHORT_PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(SHORT_PASSWORD, credentials.getPassword());
     }
@@ -236,7 +261,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD_SPACE);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD_SPACE, credentials.getPassword());
     }
@@ -248,7 +273,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD_COLON);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD_COLON, credentials.getPassword());
     }
@@ -260,7 +285,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD_COLON);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD_COLON, credentials.getPassword());
     }
@@ -272,24 +297,36 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD_COLON);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD_COLON, credentials.getPassword());
     }
 
     /*
-     * Confirm the Basic parser does not tolerate excess white space after the base64 blob.
+     * Confirm the Basic parser tolerates excess white space after
+     * the base64 blob.
+     *
+     * RFC2617 does not define this case, but asks servers to be
+     * tolerant of this kind of client deviation.
      */
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testAuthMethodExtraTrailingSpace() throws Exception {
-        final BasicAuthHeader AUTH_HEADER = new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD, "    ");
-        @SuppressWarnings("unused")
+        final BasicAuthHeader AUTH_HEADER =
+                new BasicAuthHeader(NICE_METHOD, USER_NAME, PASSWORD, "    ");
         BasicAuthenticator.BasicCredentials credentials =
-                new BasicAuthenticator.BasicCredentials(AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                new BasicAuthenticator.BasicCredentials(
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_NAME, credentials.getUsername());
+        Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
 
     /*
-     * Confirm the Basic parser does not tolerate excess white space around the username inside the base64 blob.
+     * Confirm the Basic parser tolerates excess white space around
+     * the username inside the base64 blob.
+     *
+     * RFC2617 does not define the separation syntax between the auth-scheme
+     * and basic-credentials tokens. Tomcat should tolerate any reasonable
+     * amount of white space.
      */
     @Test
     public void testUserExtraSpace() throws Exception {
@@ -297,14 +334,18 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, " " + USER_NAME + " ", PASSWORD);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
-        Assert.assertNotEquals(USER_NAME, credentials.getUsername());
-        Assert.assertEquals(USER_NAME, credentials.getUsername().trim());
+                AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
 
     /*
-     * Confirm the Basic parser does not tolerate excess white space around the password within the base64 blob.
+     * Confirm the Basic parser tolerates excess white space around
+     * the username within the base64 blob.
+     *
+     * RFC2617 does not define the separation syntax between the auth-scheme
+     * and basic-credentials tokens. Tomcat should tolerate any reasonable
+     * amount of white space.
      */
     @Test
     public void testPasswordExtraSpace() throws Exception {
@@ -312,10 +353,9 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, USER_NAME, " " + PASSWORD + " ");
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
-        Assert.assertNotEquals(PASSWORD, credentials.getPassword());
-        Assert.assertEquals(PASSWORD, credentials.getPassword().trim());
+        Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
 
 
@@ -338,7 +378,7 @@ public class TestBasicAuthParser {
         @SuppressWarnings("unused") // Exception will be thrown.
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
     }
 
     /*
@@ -354,31 +394,44 @@ public class TestBasicAuthParser {
         @SuppressWarnings("unused")
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
     }
 
     /*
-     * "-" is not a legal base64 character.
+     * "-" is not a legal base64 character. The RFC says it must be
+     * ignored by the decoder. This is a very strange case because the
+     * next character is a pad, which terminates the string normally.
+     * It is likely (but not certain) the decoded password will be
+     * damaged and subsequent authentication will fail.
      */
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testBadBase64LastChar() throws Exception {
         final String BASE64_CRIB = "dXNlcmlkOnNlY3JldA-=";
-        final BasicAuthHeader AUTH_HEADER = new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
-        @SuppressWarnings("unused")
+        final String POSSIBLY_DAMAGED_PWD = "secret";
+        final BasicAuthHeader AUTH_HEADER =
+                new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
-                new BasicAuthenticator.BasicCredentials(AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                new BasicAuthenticator.BasicCredentials(
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_NAME, credentials.getUsername());
+        Assert.assertEquals(POSSIBLY_DAMAGED_PWD, credentials.getPassword());
     }
 
     /*
-     * The trailing third "=" is illegal.
+     * The trailing third "=" is illegal. However, the RFC says the decoder
+     * must terminate as soon as the first pad is detected, so no error
+     * will be detected unless the payload has been damaged in some way.
      */
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testBadBase64TooManyEquals() throws Exception {
         final String BASE64_CRIB = "dXNlcmlkOnNlY3JldA===";
-        final BasicAuthHeader AUTH_HEADER = new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
-        @SuppressWarnings("unused")
+        final BasicAuthHeader AUTH_HEADER =
+                new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
-                new BasicAuthenticator.BasicCredentials(AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                new BasicAuthenticator.BasicCredentials(
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
+        Assert.assertEquals(USER_NAME, credentials.getUsername());
+        Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
 
     /*
@@ -395,7 +448,7 @@ public class TestBasicAuthParser {
                 new BasicAuthHeader(NICE_METHOD, BASE64_CRIB);
         BasicAuthenticator.BasicCredentials credentials =
                 new BasicAuthenticator.BasicCredentials(
-                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8);
+                    AUTH_HEADER.getHeader(), StandardCharsets.UTF_8, true);
         Assert.assertEquals(USER_NAME, credentials.getUsername());
         Assert.assertEquals(PASSWORD, credentials.getPassword());
     }
@@ -406,7 +459,7 @@ public class TestBasicAuthParser {
      * for BASIC Authentication.
      * Note: only used internally, so no need to validate arguments.
      */
-    public static final class BasicAuthHeader {
+    private static final class BasicAuthHeader {
 
         private static final byte[] HEADER =
                 "authorization: ".getBytes(StandardCharsets.ISO_8859_1);
@@ -416,7 +469,7 @@ public class TestBasicAuthParser {
         /*
          * This method creates a valid base64 blob
          */
-        public BasicAuthHeader(String method, String username,
+        private BasicAuthHeader(String method, String username,
                 String password) {
             this(method, username, password, null);
         }
@@ -434,7 +487,7 @@ public class TestBasicAuthParser {
                     : username + ":" + password;
             byte[] credentialsBytes =
                     userCredentials.getBytes(StandardCharsets.ISO_8859_1);
-            String base64auth = Base64.getEncoder().encodeToString(credentialsBytes);
+            String base64auth = Base64.encodeBase64String(credentialsBytes);
             byte[] base64Bytes =
                     base64auth.getBytes(StandardCharsets.ISO_8859_1);
 
@@ -454,7 +507,7 @@ public class TestBasicAuthParser {
                         + ioe.getMessage());
             }
             // emulate tomcat server - offset points to method in header
-            authHeader.setStart(initialOffset);
+            authHeader.setOffset(initialOffset);
         }
 
         /*
@@ -474,7 +527,7 @@ public class TestBasicAuthParser {
                         + ioe.getMessage());
             }
             // emulate tomcat server - offset points to method in header
-            authHeader.setStart(initialOffset);
+            authHeader.setOffset(initialOffset);
         }
 
         /*
@@ -497,7 +550,7 @@ public class TestBasicAuthParser {
             }
         }
 
-        public ByteChunk getHeader() {
+        private ByteChunk getHeader() {
             return authHeader;
         }
     }

@@ -24,9 +24,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.PongMessage;
-import jakarta.websocket.Session;
+import javax.websocket.OnMessage;
+import javax.websocket.PongMessage;
+import javax.websocket.Session;
 
 /**
  * The three annotated echo endpoints can be used to test with Autobahn and
@@ -36,7 +36,7 @@ import jakarta.websocket.Session;
  * Note: This one is disabled by default since it allocates memory, and needs
  * to be enabled back.
  */
-//@jakarta.websocket.server.ServerEndpoint("/websocket/echoAsyncAnnotation")
+//@javax.websocket.server.ServerEndpoint("/websocket/echoAsyncAnnotation")
 public class EchoAsyncAnnotation {
 
     private static final Future<Void> COMPLETED = new CompletedFuture();

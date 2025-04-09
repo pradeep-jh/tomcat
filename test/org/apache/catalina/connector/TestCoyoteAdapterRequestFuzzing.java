@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -124,12 +123,7 @@ public class TestCoyoteAdapterRequestFuzzing extends TomcatBaseTest {
         client.setRequest(new String[] {requestLine + CRLF, headers + CRLF});
 
         client.connect();
-        try {
-            client.processRequest();
-        } catch (SocketException e) {
-            // Likely connection reset. Response line won't be available.
-            return;
-        }
+        client.processRequest();
 
         // Expected response
         String line = client.getResponseLine();
@@ -139,7 +133,7 @@ public class TestCoyoteAdapterRequestFuzzing extends TomcatBaseTest {
 
     private static final class Client extends SimpleHttpClient {
 
-        Client(int port) {
+        public Client(int port) {
             setPort(port);
             setRequestPause(0);
         }

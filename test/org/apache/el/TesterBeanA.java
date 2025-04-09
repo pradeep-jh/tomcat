@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.el;
 
 import java.util.List;
@@ -23,7 +24,6 @@ public class TesterBeanA {
     private String name;
     private long valLong;
     private List<?> valList;
-    private Object[] valArray;
 
     public TesterBeanB getBean() {
         return bean;
@@ -55,14 +55,6 @@ public class TesterBeanA {
 
     public void setValList(List<?> valList) {
         this.valList = valList;
-    }
-
-    public Object[] getValArray() {
-        return valArray;
-    }
-
-    public void setValArray(Object[] valArray) {
-        this.valArray = valArray;
     }
 
     public CharSequence echo1(CharSequence cs) {

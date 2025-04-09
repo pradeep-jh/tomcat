@@ -32,7 +32,7 @@ public interface Rules {
      * @return the Digester instance with which this Rules instance is
      * associated.
      */
-    Digester getDigester();
+    public Digester getDigester();
 
 
     /**
@@ -40,7 +40,7 @@ public interface Rules {
      *
      * @param digester The newly associated Digester instance
      */
-    void setDigester(Digester digester);
+    public void setDigester(Digester digester);
 
 
     // --------------------------------------------------------- Public Methods
@@ -51,13 +51,13 @@ public interface Rules {
      * @param pattern Nesting pattern to be matched for this Rule
      * @param rule Rule instance to be registered
      */
-    void add(String pattern, Rule rule);
+    public void add(String pattern, Rule rule);
 
 
     /**
      * Clear all existing Rule instance registrations.
      */
-    void clear();
+    public void clear();
 
 
     /**
@@ -72,7 +72,7 @@ public interface Rules {
      * @param pattern Nesting pattern to be matched
      * @return a rules list
      */
-    List<Rule> match(String namespaceURI, String pattern);
+    public List<Rule> match(String namespaceURI, String pattern);
 
 
     /**
@@ -83,5 +83,5 @@ public interface Rules {
      * method.
      * @return a rules list
      */
-    List<Rule> rules();
+    public List<Rule> rules();
 }

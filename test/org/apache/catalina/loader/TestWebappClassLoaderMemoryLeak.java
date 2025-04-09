@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class TestWebappClassLoaderMemoryLeak extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         if (ctx instanceof StandardContext) {
             ((StandardContext) ctx).setClearReferencesStopTimerThreads(true);

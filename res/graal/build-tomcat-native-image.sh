@@ -48,15 +48,14 @@ native-image \
 --no-server \
 -H:EnableURLProtocols=http \
 --report-unsupported-elements-at-runtime \
---initialize-at-run-time=org.apache,jakarta.servlet \
--H:TraceClassInitialization=org.* \
+--initialize-at-run-time=org.apache,javax.servlet \
+-H:+TraceClassInitialization \
 -H:+PrintClassInitialization \
--H:+PrintAnalysisCallTree \
 -H:Name=tc-graal-image \
 -H:+ReportExceptionStackTraces \
 --allow-incomplete-classpath \
 --no-fallback \
--cp ../embed/tomcat-embed-programmatic.jar:tomcat-embedded-sample.jar \
+-cp ../embed/tomcat-embed-core.jar:../embed/tomcat-embed-websocket.jar:../embed/tomcat-embed-el.jar:tomcat-embedded-sample.jar:../embed/annotations-api.jar \
 org.apache.catalina.startup.EmbeddedTomcat
 
 cd $CURDIR

@@ -32,9 +32,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.startup.ExpandWar;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 
 public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
 
@@ -60,9 +60,10 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        ExpandWar.delete(new File(WEBAPP_DOC_BASE));
-    }
 
+        FileUtils.deleteDirectory(new File(WEBAPP_DOC_BASE));
+
+    }
 
     private Tomcat tomcat;
     private Context context;
@@ -393,7 +394,7 @@ public class TestWebappClassLoaderWeaving extends TomcatBaseTest {
             for (int i = 0, b = input.read(); b >= 0; i++, b = input.read()) {
                 String value = "" + ((byte)b);
                 if (builder.length() + value.length() > 97) {
-                    builder.append(',');
+                    builder.append(",");
                     System.out.println(builder.toString());
                     builder = new StringBuilder();
                     builder.append("            ").append(value);

@@ -86,7 +86,12 @@ public class Escape {
         if (obj == null) {
             return "?";
         }
-        return htmlElementContent(obj.toString());
+
+        try {
+            return htmlElementContent(obj.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 

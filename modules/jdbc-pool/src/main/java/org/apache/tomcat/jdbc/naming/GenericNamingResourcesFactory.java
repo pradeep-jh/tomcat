@@ -83,10 +83,9 @@ public class GenericNamingResourcesFactory implements ObjectFactory {
 
     @SuppressWarnings("null") // setPropertyMethodVoid can't be null when used
     private static boolean setProperty(Object o, String name, String value) {
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug("IntrospectionUtils: setProperty(" +
                     o.getClass() + " " + name + "=" + value + ")");
-        }
 
         String setter = "set" + capitalize(name);
 
@@ -144,18 +143,16 @@ public class GenericNamingResourcesFactory implements ObjectFactory {
                         try {
                             params[0] = InetAddress.getByName(value);
                         } catch (UnknownHostException exc) {
-                            if (log.isDebugEnabled()) {
+                            if (log.isDebugEnabled())
                                 log.debug("IntrospectionUtils: Unable to resolve host name:" + value);
-                            }
                             ok = false;
                         }
 
                         // Unknown type
                     } else {
-                        if (log.isDebugEnabled()) {
+                        if (log.isDebugEnabled())
                             log.debug("IntrospectionUtils: Unknown type " +
                                     paramType.getName());
-                        }
                     }
 
                     if (ok) {
@@ -202,24 +199,24 @@ public class GenericNamingResourcesFactory implements ObjectFactory {
         } catch (IllegalArgumentException ex2) {
             log.warn("IAE " + o + " " + name + " " + value, ex2);
         } catch (SecurityException ex1) {
-            if (log.isDebugEnabled()) {
+            if (log.isDebugEnabled())
                 log.debug("IntrospectionUtils: SecurityException for " +
                         o.getClass() + " " + name + "=" + value + ")", ex1);
-            }
         } catch (IllegalAccessException iae) {
-            if (log.isDebugEnabled()) {
+            if (log.isDebugEnabled())
                 log.debug("IntrospectionUtils: IllegalAccessException for " +
                         o.getClass() + " " + name + "=" + value + ")", iae);
-            }
         } catch (InvocationTargetException ie) {
             Throwable cause = ie.getCause();
+            if (cause instanceof ThreadDeath) {
+                throw (ThreadDeath) cause;
+            }
             if (cause instanceof VirtualMachineError) {
                 throw (VirtualMachineError) cause;
             }
-            if (log.isDebugEnabled()) {
+            if (log.isDebugEnabled())
                 log.debug("IntrospectionUtils: InvocationTargetException for " +
                         o.getClass() + " " + name + "=" + value + ")", ie);
-            }
         }
         return false;
     }

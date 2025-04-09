@@ -26,18 +26,19 @@ import org.apache.coyote.Response;
 public interface OutputFilter extends HttpOutputBuffer {
 
     /**
-     * Some filters need additional parameters from the response. All the necessary reading can occur in that method, as
-     * this method is called after the response header processing is complete.
+     * Some filters need additional parameters from the response. All the
+     * necessary reading can occur in that method, as this method is called
+     * after the response header processing is complete.
      *
      * @param response The response to associate with this OutputFilter
      */
-    void setResponse(Response response);
+    public void setResponse(Response response);
 
 
     /**
      * Make the filter ready to process the next request.
      */
-    void recycle();
+    public void recycle();
 
 
     /**
@@ -45,5 +46,5 @@ public interface OutputFilter extends HttpOutputBuffer {
      *
      * @param buffer The next buffer instance
      */
-    void setBuffer(HttpOutputBuffer buffer);
+    public void setBuffer(HttpOutputBuffer buffer);
 }

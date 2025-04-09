@@ -17,16 +17,15 @@
 package org.apache.catalina.util;
 
 import java.util.Locale;
-import java.util.Objects;
 
 /**
- * Utility class to manage context names so there is one place where the conversions between baseName, path and version
- * take place.
+ * Utility class to manage context names so there is one place where the
+ * conversions between baseName, path and version take place.
  */
 public final class ContextName {
     public static final String ROOT_NAME = "ROOT";
     private static final String VERSION_MARKER = "##";
-    private static final char FWD_SLASH_REPLACEMENT = '#';
+    private static final String FWD_SLASH_REPLACEMENT = "#";
 
     private final String baseName;
     private final String path;
@@ -35,11 +34,13 @@ public final class ContextName {
 
 
     /**
-     * Creates an instance from a context name, display name, base name, directory name, WAR name or context.xml name.
+     * Creates an instance from a context name, display name, base name,
+     * directory name, WAR name or context.xml name.
      *
-     * @param name               The name to use as the basis for this object
-     * @param stripFileExtension If a .war or .xml file extension is present at the end of the provided name should it
-     *                               be removed?
+     * @param name  The name to use as the basis for this object
+     * @param stripFileExtension    If a .war or .xml file extension is present
+     *                              at the end of the provided name should it be
+     *                              removed?
      */
     public ContextName(String name, boolean stripFileExtension) {
 
@@ -53,17 +54,18 @@ public final class ContextName {
         }
 
         // Replace any remaining /
-        tmp1 = tmp1.replace('/', FWD_SLASH_REPLACEMENT);
+        tmp1 = tmp1.replaceAll("/", FWD_SLASH_REPLACEMENT);
 
         // Insert the ROOT name if required
-        if (tmp1.startsWith(VERSION_MARKER) || tmp1.isEmpty()) {
+        if (tmp1.startsWith(VERSION_MARKER) || "".equals(tmp1)) {
             tmp1 = ROOT_NAME + tmp1;
         }
 
         // Remove any file extensions
-        if (stripFileExtension && (tmp1.toLowerCase(Locale.ENGLISH).endsWith(".war") ||
-                tmp1.toLowerCase(Locale.ENGLISH).endsWith(".xml"))) {
-            tmp1 = tmp1.substring(0, tmp1.length() - 4);
+        if (stripFileExtension &&
+                (tmp1.toLowerCase(Locale.ENGLISH).endsWith(".war") ||
+                        tmp1.toLowerCase(Locale.ENGLISH).endsWith(".xml"))) {
+            tmp1 = tmp1.substring(0, tmp1.length() -4);
         }
 
         baseName = tmp1;
@@ -82,7 +84,7 @@ public final class ContextName {
         if (ROOT_NAME.equals(tmp2)) {
             path = "";
         } else {
-            path = "/" + tmp2.replace(FWD_SLASH_REPLACEMENT, '/');
+            path = "/" + tmp2.replaceAll(FWD_SLASH_REPLACEMENT, "/");
         }
 
         if (versionIndex > -1) {
@@ -95,8 +97,8 @@ public final class ContextName {
     /**
      * Construct an instance from a path and version.
      *
-     * @param path    Context path to use
-     * @param version Context version to use
+     * @param path      Context path to use
+     * @param version   Context version to use
      */
     public ContextName(String path, String version) {
         // Path should never be null, '/' or '/ROOT'
@@ -107,10 +109,14 @@ public final class ContextName {
         }
 
         // Version should never be null
-        this.version = Objects.requireNonNullElse(version, "");
+        if (version == null) {
+            this.version = "";
+        } else {
+            this.version = version;
+        }
 
         // Name is path + version
-        if (this.version.isEmpty()) {
+        if ("".equals(this.version)) {
             name = this.path;
         } else {
             name = this.path + VERSION_MARKER + this.version;
@@ -118,12 +124,13 @@ public final class ContextName {
 
         // Base name is converted path + version
         StringBuilder tmp = new StringBuilder();
-        if (this.path.isEmpty()) {
+        if ("".equals(this.path)) {
             tmp.append(ROOT_NAME);
         } else {
-            tmp.append(this.path.substring(1).replace('/', FWD_SLASH_REPLACEMENT));
+            tmp.append(this.path.substring(1).replaceAll("/",
+                    FWD_SLASH_REPLACEMENT));
         }
-        if (!this.version.isEmpty()) {
+        if (this.version.length() > 0) {
             tmp.append(VERSION_MARKER);
             tmp.append(this.version);
         }
@@ -154,7 +161,7 @@ public final class ContextName {
             tmp.append(path);
         }
 
-        if (!version.isEmpty()) {
+        if (!"".equals(version)) {
             tmp.append(VERSION_MARKER);
             tmp.append(version);
         }
@@ -169,8 +176,8 @@ public final class ContextName {
 
 
     /**
-     * Extract the final component of the given path which is assumed to be a base name and generate a
-     * {@link ContextName} from that base name.
+     * Extract the final component of the given path which is assumed to be a
+     * base name and generate a {@link ContextName} from that base name.
      *
      * @param path The path that ends in a base name
      *
@@ -178,7 +185,7 @@ public final class ContextName {
      */
     public static ContextName extractFromPath(String path) {
         // Convert '\' to '/'
-        path = path.replace("\\", "/");
+        path = path.replaceAll("\\\\", "/");
         // Remove trailing '/'. Use while just in case a value ends in ///
         while (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);

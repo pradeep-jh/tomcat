@@ -19,11 +19,11 @@ package org.apache.tomcat.util.http;
 import java.io.IOException;
 import java.util.Enumeration;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,17 +38,15 @@ public class TestCookieParsing extends TomcatBaseTest {
 
     private static final String[] COOKIES_WITH_EQUALS = new String[] {
             "name=equals=middle", "name==equalsstart", "name=equalsend=" };
+    private static final String COOKIES_WITH_EQUALS_TRUNC = "name=equalsname=name=equalsend";
 
-    private static final String[] COOKIES_WITH_NAME_OR_VALUE_ONLY = new String[] { "bob=", "bob", "=bob" };
-
-    // First two are treated as name and no value, third is invalid (therefore ignored)
-    private static final String COOKIES_WITH_NAME_OR_VALUE_ONLY_NAME_CONCAT = "bob=bob=";
-
-    // First is treated as name and no value, second is ignored and third is invalid (therefore ignored)
-    private static final String COOKIES_WITH_NAME_OR_VALUE_ONLY_IGNORE_CONCAT = "bob=";
+    private static final String[] COOKIES_WITH_NAME_ONLY = new String[] {
+            "bob", "bob=" };
+    private static final String COOKIES_WITH_NAME_ONLY_CONCAT = "bob=bob=";
 
     private static final String[] COOKIES_WITH_SEPS = new String[] {
             "name=val/ue" };
+    private static final String COOKIES_WITH_SEPS_TRUNC = "name=val";
 
     private static final String[] COOKIES_WITH_QUOTES = new String[] {
             "name=\"val\\\"ue\"", "name=\"value\"" };
@@ -56,12 +54,43 @@ public class TestCookieParsing extends TomcatBaseTest {
     private static final String[] COOKIES_V0 = new String[] {
             "$Version=0;name=\"val ue\"", "$Version=0;name=\"val\tue\""};
 
-    private static final String COOKIES_V0_CONCAT = "$Version=0$Version=0";
+    private static final String COOKIES_V0_CONCAT = "name=\"val ue\"name=\"val\tue\"";
 
     private static final String[] COOKIES_V1 = new String[] {
             "$Version=1;name=\"val ue\"", "$Version=1;name=\"val\tue\""};
 
-    private static final String COOKIES_V1_CONCAT = "$Version=1$Version=1";
+    private static final String COOKIES_V1_CONCAT = "name=\"val ue\"name=\"val\tue\"";
+
+
+    @Test
+    public void testLegacyWithEquals() throws Exception {
+        doTestLegacyEquals(true);
+    }
+
+
+    @Test
+    public void testLegacyWithoutEquals() throws Exception {
+        doTestLegacyEquals(false);
+    }
+
+
+    private void doTestLegacyEquals(boolean allowEquals) throws Exception {
+        LegacyCookieProcessor legacyCookieProcessor = new LegacyCookieProcessor();
+        legacyCookieProcessor.setAllowEqualsInValue(allowEquals);
+        // Need to allow name only cookies to handle equals at the start of
+        // the value
+        legacyCookieProcessor.setAllowNameOnly(true);
+
+        String expected;
+        if (allowEquals) {
+            expected = concat(COOKIES_WITH_EQUALS);
+        } else {
+            expected = COOKIES_WITH_EQUALS_TRUNC;
+        }
+        TestCookieParsingClient client = new TestCookieParsingClient(
+                legacyCookieProcessor, COOKIES_WITH_EQUALS, expected);
+        client.doRequest();
+    }
 
 
     @Test
@@ -74,30 +103,39 @@ public class TestCookieParsing extends TomcatBaseTest {
 
 
     @Test
-    public void testRfc6265NameOrValueOnlyName() throws Exception {
-        doTestRfc6265WithoutEquals("name", COOKIES_WITH_NAME_OR_VALUE_ONLY_NAME_CONCAT);
+    public void testLegacyWithNameOnly() throws Exception {
+        doTestLegacyNameOnly(true);
     }
 
 
     @Test
-    public void testRfc6265NameOrValueOnlyIgnore() throws Exception {
-        doTestRfc6265WithoutEquals("ignore", COOKIES_WITH_NAME_OR_VALUE_ONLY_IGNORE_CONCAT);
+    public void testLegacyWithoutNameOnly() throws Exception {
+        doTestLegacyNameOnly(false);
     }
 
 
-    @Test
-    public void testRfc6265NameOrValueOnlyDefault() throws Exception {
-        doTestRfc6265WithoutEquals(null, COOKIES_WITH_NAME_OR_VALUE_ONLY_IGNORE_CONCAT);
-    }
+    private void doTestLegacyNameOnly(boolean nameOnly) throws Exception {
+        LegacyCookieProcessor legacyCookieProcessor = new LegacyCookieProcessor();
+        legacyCookieProcessor.setAllowNameOnly(nameOnly);
 
-
-    private void doTestRfc6265WithoutEquals(String cookiesWithoutEquals, String expected) throws Exception {
-        Rfc6265CookieProcessor cookieProcessor = new Rfc6265CookieProcessor();
-        if (cookiesWithoutEquals != null) {
-            cookieProcessor.setCookiesWithoutEquals(cookiesWithoutEquals);
+        String expected;
+        if (nameOnly) {
+            expected = COOKIES_WITH_NAME_ONLY_CONCAT;
+        } else {
+            expected = "";
         }
-        TestCookieParsingClient client = new TestCookieParsingClient(cookieProcessor, COOKIES_WITH_NAME_OR_VALUE_ONLY,
-                expected);
+        TestCookieParsingClient client = new TestCookieParsingClient(
+                legacyCookieProcessor, COOKIES_WITH_NAME_ONLY, expected);
+        client.doRequest();
+    }
+
+
+    @Test
+    public void testRfc6265NameOnly() throws Exception {
+        // Always allows equals
+        TestCookieParsingClient client = new TestCookieParsingClient(
+                new Rfc6265CookieProcessor(), COOKIES_WITH_NAME_ONLY,
+                COOKIES_WITH_NAME_ONLY_CONCAT);
         client.doRequest();
     }
 
@@ -119,10 +157,63 @@ public class TestCookieParsing extends TomcatBaseTest {
 
 
     @Test
+    public void testLegacyWithSeps() throws Exception {
+        doTestLegacySeps(true, true);
+    }
+
+
+    @Test
+    public void testLegacyWithoutSeps() throws Exception {
+        doTestLegacySeps(false, true);
+    }
+
+
+    @Test
+    public void testLegacyWithFwdSlash() throws Exception {
+        doTestLegacySeps(true, false);
+    }
+
+
+    @Test
+    public void testLegacyWithoutFwdSlash() throws Exception {
+        doTestLegacySeps(false, false);
+    }
+
+
+    private void doTestLegacySeps(boolean seps, boolean fwdSlash) throws Exception {
+        LegacyCookieProcessor legacyCookieProcessor = new LegacyCookieProcessor();
+        legacyCookieProcessor.setAllowHttpSepsInV0(seps);
+        legacyCookieProcessor.setForwardSlashIsSeparator(fwdSlash);
+
+        String expected;
+        if (!seps && fwdSlash) {
+            expected = COOKIES_WITH_SEPS_TRUNC;
+        } else {
+            expected = concat(COOKIES_WITH_SEPS);
+        }
+        TestCookieParsingClient client = new TestCookieParsingClient(
+                legacyCookieProcessor, COOKIES_WITH_SEPS, expected);
+        client.doRequest();
+    }
+
+
+    @Test
     public void testRfc6265Seps() throws Exception {
         // Always allows equals
         TestCookieParsingClient client = new TestCookieParsingClient(
                 new Rfc6265CookieProcessor(), COOKIES_WITH_SEPS, concat(COOKIES_WITH_SEPS));
+        client.doRequest();
+    }
+
+
+    @Test
+    public void testLegacyPreserveHeader() throws Exception {
+        LegacyCookieProcessor legacyCookieProcessor = new LegacyCookieProcessor();
+
+        String expected;
+        expected = concat(COOKIES_WITH_QUOTES);
+        TestCookieParsingClient client = new TestCookieParsingClient(
+                legacyCookieProcessor, true, COOKIES_WITH_QUOTES, expected);
         client.doRequest();
     }
 
@@ -153,12 +244,12 @@ public class TestCookieParsing extends TomcatBaseTest {
         private final boolean echoHeader;
 
 
-        TestCookieParsingClient(CookieProcessor cookieProcessor,
+        public TestCookieParsingClient(CookieProcessor cookieProcessor,
                 String[] cookies, String expected) {
             this(cookieProcessor, false, cookies, expected);
         }
 
-        TestCookieParsingClient(CookieProcessor cookieProcessor,
+        public TestCookieParsingClient(CookieProcessor cookieProcessor,
                 boolean echoHeader, String[] cookies, String expected) {
             this.cookieProcessor = cookieProcessor;
             this.echoHeader = echoHeader;

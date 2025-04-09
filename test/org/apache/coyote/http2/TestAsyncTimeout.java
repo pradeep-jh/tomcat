@@ -23,12 +23,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.AsyncEvent;
-import jakarta.servlet.AsyncListener;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class TestAsyncTimeout extends Http2TestBase {
 
         Tomcat tomcat = getTomcatInstance();
 
-        Context ctxt = getProgrammaticRootContext();
+        Context ctxt = tomcat.addContext("", null);
         // This is the target of the HTTP/2 upgrade request
         Tomcat.addServlet(ctxt, "simple", new SimpleServlet());
         ctxt.addServletMappingDecoded("/simple", "simple");
@@ -79,9 +79,9 @@ public class TestAsyncTimeout extends Http2TestBase {
         writeFrame(frameHeader, headersPayload);
 
         // Headers
-        parser.readFrame();
+        parser.readFrame(true);
         // Body
-        parser.readFrame();
+        parser.readFrame(true);
 
         // Check that the expected text was received
         String trace = output.getTrace();
@@ -102,7 +102,8 @@ public class TestAsyncTimeout extends Http2TestBase {
         }
 
         @Override
-        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        protected void doGet(HttpServletRequest request, HttpServletResponse response)
+                throws IOException {
 
             // The idea of this test is that the timeout kicks in after 2
             // seconds and stops the async thread early rather than letting it
@@ -131,7 +132,7 @@ public class TestAsyncTimeout extends Http2TestBase {
         private final AtomicBoolean completeCalled;
         private volatile boolean running = true;
 
-        Ticker(AsyncContext asyncContext, AtomicBoolean completeCalled) {
+        public Ticker(AsyncContext asyncContext, AtomicBoolean completeCalled) {
             this.asyncContext = asyncContext;
             this.completeCalled = completeCalled;
         }
@@ -146,10 +147,10 @@ public class TestAsyncTimeout extends Http2TestBase {
                 PrintWriter pw = asyncContext.getResponse().getWriter();
                 int counter = 0;
 
-                // If the test works running will be set to false before
+                // If the test works running will be set too false before
                 // counter reaches 50.
                 while (running && counter < 50) {
-                    sleep(100);
+                    Thread.sleep(100);
                     counter++;
                     pw.print("Tick " + counter);
                 }
@@ -173,7 +174,7 @@ public class TestAsyncTimeout extends Http2TestBase {
         private final Ticker ticker;
         private final AtomicBoolean completeCalled;
 
-        TimeoutListener(CountDownLatch latch, Ticker ticker, AtomicBoolean completeCalled) {
+        public TimeoutListener(CountDownLatch latch, Ticker ticker, AtomicBoolean completeCalled) {
             this.latch = latch;
             this.ticker = ticker;
             this.completeCalled = completeCalled;
@@ -182,16 +183,6 @@ public class TestAsyncTimeout extends Http2TestBase {
         @Override
         public void onTimeout(AsyncEvent event) throws IOException {
             ticker.end();
-            // Wait for the ticker to exit to avoid concurrent access to the
-            // response and associated writer.
-            // Excessively long timeout just in case things so wrong so test
-            // does not lock up.
-            try {
-                ticker.join(10 * 1000);
-            } catch (InterruptedException e) {
-                throw new IOException(e);
-            }
-
             if (ended.compareAndSet(false, true)) {
                 PrintWriter pw = event.getAsyncContext().getResponse().getWriter();
                 pw.write("PASS");

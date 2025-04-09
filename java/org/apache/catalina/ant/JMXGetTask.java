@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.ant;
 
 
@@ -24,8 +26,8 @@ import org.apache.tools.ant.BuildException;
 
 
 /**
- * Ant task that implements the JMX Get command (<code>/jmxproxy/?get</code>) supported by the Tomcat manager
- * application.
+ * Ant task that implements the JMX Get command (<code>/jmxproxy/?get</code>)
+ * supported by the Tomcat manager application.
  *
  * @author Peter Rossbach
  */
@@ -36,7 +38,7 @@ public class JMXGetTask extends AbstractCatalinaTask {
     /**
      * The full bean name
      */
-    protected String bean = null;
+    protected String bean      = null;
 
     /**
      * The attribute you wish to alter
@@ -47,37 +49,33 @@ public class JMXGetTask extends AbstractCatalinaTask {
 
     /**
      * Get method for the bean name
-     *
      * @return Bean name
      */
-    public String getBean() {
+    public String getBean () {
         return this.bean;
     }
 
     /**
      * Set method for the bean name
-     *
      * @param bean Bean name
      */
-    public void setBean(String bean) {
+    public void setBean (String bean) {
         this.bean = bean;
     }
 
     /**
      * Get method for the attribute name
-     *
      * @return Attribute name
      */
-    public String getAttribute() {
+    public String getAttribute () {
         return this.attribute;
     }
 
     /**
      * Set method for the attribute name
-     *
      * @param attribute Attribute name
      */
-    public void setAttribute(String attribute) {
+    public void setAttribute (String attribute) {
         this.attribute = attribute;
     }
 
@@ -90,14 +88,17 @@ public class JMXGetTask extends AbstractCatalinaTask {
     public void execute() throws BuildException {
         super.execute();
         if (bean == null || attribute == null) {
-            throw new BuildException("Must specify 'bean' and 'attribute' attributes");
+            throw new BuildException
+                ("Must specify 'bean' and 'attribute' attributes");
         }
-        log("Getting attribute " + attribute + " in bean " + bean);
+        log("Getting attribute " + attribute +
+                " in bean " + bean );
         try {
-            execute("/jmxproxy/?get=" + URLEncoder.encode(bean, getCharset()) + "&att=" +
-                    URLEncoder.encode(attribute, getCharset()));
+            execute("/jmxproxy/?get=" + URLEncoder.encode(bean, getCharset())
+                    + "&att=" + URLEncoder.encode(attribute, getCharset()));
         } catch (UnsupportedEncodingException e) {
-            throw new BuildException("Invalid 'charset' attribute: " + getCharset());
+            throw new BuildException
+                ("Invalid 'charset' attribute: " + getCharset());
         }
     }
 }

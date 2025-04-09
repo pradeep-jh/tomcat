@@ -28,7 +28,8 @@
  *      {@link org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory DiskFileItemFactory}
  *      would be created, configured, and then passed to a
  *      {@link org.apache.tomcat.util.http.fileupload.FileUpload FileUpload}
- *      implementation.
+ *      implementation such as
+ *      {@link org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload ServletFileUpload}.
  *    </p>
  *    <p>
  *      The following code fragment demonstrates this usage.

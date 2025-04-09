@@ -19,7 +19,7 @@ package org.apache.coyote.http11.upgrade;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import jakarta.servlet.http.WebConnection;
+import javax.servlet.http.WebConnection;
 
 import org.apache.coyote.AbstractProcessorLight;
 import org.apache.coyote.Request;

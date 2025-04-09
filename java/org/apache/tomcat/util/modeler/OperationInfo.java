@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.modeler;
 
-import java.io.Serial;
 import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -33,8 +32,7 @@ import javax.management.MBeanParameterInfo;
  */
 public class OperationInfo extends FeatureInfo {
 
-    @Serial
-    private static final long serialVersionUID = 4418342922072614875L;
+    static final long serialVersionUID = 4418342922072614875L;
 
     // ----------------------------------------------------------- Constructors
 
@@ -51,7 +49,7 @@ public class OperationInfo extends FeatureInfo {
     protected String impact = "UNKNOWN";
     protected String role = "operation";
     protected final ReadWriteLock parametersLock = new ReentrantReadWriteLock();
-    protected ParameterInfo[] parameters = new ParameterInfo[0];
+    protected ParameterInfo parameters[] = new ParameterInfo[0];
 
 
     // ------------------------------------------------------------- Properties
@@ -66,11 +64,10 @@ public class OperationInfo extends FeatureInfo {
     }
 
     public void setImpact(String impact) {
-        if (impact == null) {
+        if (impact == null)
             this.impact = null;
-        } else {
+        else
             this.impact = impact.toUpperCase(Locale.ENGLISH);
-        }
     }
 
 
@@ -103,7 +100,7 @@ public class OperationInfo extends FeatureInfo {
     }
 
     /**
-     * @return the array of parameters for this operation.
+     * @return the set of parameters for this operation.
      */
     public ParameterInfo[] getSignature() {
         Lock readLock = parametersLock.readLock();
@@ -128,7 +125,7 @@ public class OperationInfo extends FeatureInfo {
         Lock writeLock = parametersLock.writeLock();
         writeLock.lock();
         try {
-            ParameterInfo[] results = new ParameterInfo[parameters.length + 1];
+            ParameterInfo results[] = new ParameterInfo[parameters.length + 1];
             System.arraycopy(parameters, 0, results, 0, parameters.length);
             results[parameters.length] = parameter;
             parameters = results;
@@ -150,13 +147,12 @@ public class OperationInfo extends FeatureInfo {
         if (info == null) {
             // Create and return a new information object
             int impact = MBeanOperationInfo.UNKNOWN;
-            if ("ACTION".equals(getImpact())) {
+            if ("ACTION".equals(getImpact()))
                 impact = MBeanOperationInfo.ACTION;
-            } else if ("ACTION_INFO".equals(getImpact())) {
+            else if ("ACTION_INFO".equals(getImpact()))
                 impact = MBeanOperationInfo.ACTION_INFO;
-            } else if ("INFO".equals(getImpact())) {
+            else if ("INFO".equals(getImpact()))
                 impact = MBeanOperationInfo.INFO;
-            }
 
             info = new MBeanOperationInfo(getName(), getDescription(),
                                           getMBeanParameterInfo(),
@@ -166,12 +162,11 @@ public class OperationInfo extends FeatureInfo {
     }
 
     protected MBeanParameterInfo[] getMBeanParameterInfo() {
-        ParameterInfo[] params = getSignature();
-        MBeanParameterInfo[] parameters =
+        ParameterInfo params[] = getSignature();
+        MBeanParameterInfo parameters[] =
             new MBeanParameterInfo[params.length];
-        for (int i = 0; i < params.length; i++) {
+        for (int i = 0; i < params.length; i++)
             parameters[i] = params[i].createParameterInfo();
-        }
         return parameters;
     }
 }

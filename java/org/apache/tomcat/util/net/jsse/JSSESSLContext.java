@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.net.jsse;
 
 import java.security.KeyManagementException;
@@ -37,7 +38,7 @@ import org.apache.tomcat.util.net.SSLContext;
 
 class JSSESSLContext implements SSLContext {
 
-    private final javax.net.ssl.SSLContext context;
+    private javax.net.ssl.SSLContext context;
     private KeyManager[] kms;
     private TrustManager[] tms;
 
@@ -97,7 +98,9 @@ class JSSESSLContext implements SSLContext {
             for (TrustManager tm : tms) {
                 if (tm instanceof X509TrustManager) {
                     X509Certificate[] accepted = ((X509TrustManager) tm).getAcceptedIssuers();
-                    certs.addAll(Arrays.asList(accepted));
+                    if (accepted != null) {
+                        certs.addAll(Arrays.asList(accepted));
+                    }
                 }
             }
         }

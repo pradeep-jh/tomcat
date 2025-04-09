@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina;
 
 import java.util.EventListener;
@@ -32,7 +34,7 @@ public interface SessionListener extends EventListener {
      *
      * @param event SessionEvent that has occurred
      */
-    void sessionEvent(SessionEvent event);
+    public void sessionEvent(SessionEvent event);
 
 
 }

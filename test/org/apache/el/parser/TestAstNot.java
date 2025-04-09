@@ -16,7 +16,7 @@
  */
 package org.apache.el.parser;
 
-import jakarta.el.ELProcessor;
+import javax.el.ELProcessor;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,21 +26,21 @@ public class TestAstNot {
     @Test
     public void test01() {
         ELProcessor processor = new ELProcessor();
-        Boolean result = processor.eval("!null");
+        Object result = processor.eval("!null");
         Assert.assertEquals(Boolean.TRUE, result);
     }
 
     @Test
     public void test02() {
         ELProcessor processor = new ELProcessor();
-        Boolean result = processor.eval("!true");
+        Object result = processor.eval("!true");
         Assert.assertEquals(Boolean.FALSE, result);
     }
 
     @Test
     public void test03() {
         ELProcessor processor = new ELProcessor();
-        Boolean result = processor.eval("!false");
+        Object result = processor.eval("!false");
         Assert.assertEquals(Boolean.TRUE, result);
     }
 }

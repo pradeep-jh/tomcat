@@ -16,8 +16,6 @@
  */
 package org.apache.naming;
 
-import java.io.Serial;
-
 import javax.naming.StringRefAddr;
 
 /**
@@ -27,7 +25,6 @@ import javax.naming.StringRefAddr;
  */
 public class EjbRef extends AbstractRef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 
@@ -83,7 +80,7 @@ public class EjbRef extends AbstractRef {
     public EjbRef(String ejbType, String home, String remote, String link,
             String factory, String factoryLocation) {
         super(home, factory, factoryLocation);
-        StringRefAddr refAddr;
+        StringRefAddr refAddr = null;
         if (ejbType != null) {
             refAddr = new StringRefAddr(TYPE, ejbType);
             add(refAddr);

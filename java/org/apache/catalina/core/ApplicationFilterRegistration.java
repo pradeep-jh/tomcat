@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.core;
 
 import java.util.Arrays;
@@ -23,8 +24,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.FilterRegistration;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.util.ParameterMap;
@@ -32,24 +33,28 @@ import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 import org.apache.tomcat.util.res.StringManager;
 
-public class ApplicationFilterRegistration implements FilterRegistration.Dynamic {
+public class ApplicationFilterRegistration
+        implements FilterRegistration.Dynamic {
 
     /**
      * The string manager for this package.
      */
-    private static final StringManager sm = StringManager.getManager(ApplicationFilterRegistration.class);
+    private static final StringManager sm =
+      StringManager.getManager(Constants.Package);
 
     private final FilterDef filterDef;
     private final Context context;
 
-    public ApplicationFilterRegistration(FilterDef filterDef, Context context) {
+    public ApplicationFilterRegistration(FilterDef filterDef,
+            Context context) {
         this.filterDef = filterDef;
         this.context = context;
 
     }
 
     @Override
-    public void addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter,
+    public void addMappingForServletNames(
+            EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter,
             String... servletNames) {
 
         FilterMap filterMap = new FilterMap();
@@ -77,7 +82,8 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
     }
 
     @Override
-    public void addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter,
+    public void addMappingForUrlPatterns(
+            EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter,
             String... urlPatterns) {
 
         FilterMap filterMap = new FilterMap();
@@ -137,7 +143,7 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
     @Override
     public String getClassName() {
         return filterDef.getFilterClass();
-    }
+   }
 
     @Override
     public String getInitParameter(String name) {
@@ -145,7 +151,7 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
     }
 
     @Override
-    public Map<String,String> getInitParameters() {
+    public Map<String, String> getInitParameters() {
         ParameterMap<String,String> result = new ParameterMap<>();
         result.putAll(filterDef.getParameterMap());
         result.setLocked(true);
@@ -161,7 +167,8 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
     public boolean setInitParameter(String name, String value) {
         if (name == null || value == null) {
             throw new IllegalArgumentException(
-                    sm.getString("applicationFilterRegistration.nullInitParam", name, value));
+                    sm.getString("applicationFilterRegistration.nullInitParam",
+                            name, value));
         }
         if (getInitParameter(name) != null) {
             return false;
@@ -173,14 +180,15 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
     }
 
     @Override
-    public Set<String> setInitParameters(Map<String,String> initParameters) {
+    public Set<String> setInitParameters(Map<String, String> initParameters) {
 
         Set<String> conflicts = new HashSet<>();
 
-        for (Map.Entry<String,String> entry : initParameters.entrySet()) {
+        for (Map.Entry<String, String> entry : initParameters.entrySet()) {
             if (entry.getKey() == null || entry.getValue() == null) {
-                throw new IllegalArgumentException(
-                        sm.getString("applicationFilterRegistration.nullInitParams", entry.getKey(), entry.getValue()));
+                throw new IllegalArgumentException(sm.getString(
+                        "applicationFilterRegistration.nullInitParams",
+                                entry.getKey(), entry.getValue()));
             }
             if (getInitParameter(entry.getKey()) != null) {
                 conflicts.add(entry.getKey());
@@ -189,7 +197,7 @@ public class ApplicationFilterRegistration implements FilterRegistration.Dynamic
 
         // Have to add in a separate loop since spec requires no updates at all
         // if there is an issue
-        for (Map.Entry<String,String> entry : initParameters.entrySet()) {
+        for (Map.Entry<String, String> entry : initParameters.entrySet()) {
             setInitParameter(entry.getKey(), entry.getValue());
         }
 

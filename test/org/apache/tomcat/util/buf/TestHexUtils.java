@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.buf;
 
 import java.nio.charset.StandardCharsets;
@@ -66,10 +67,5 @@ public class TestHexUtils {
     public void testFromHex02() {
         // Odd number of hex characters
         HexUtils.fromHexString("aaa");
-    }
-
-    @Test
-    public void testToHex01() {
-        Assert.assertEquals("fedc", HexUtils.toHexString((char) 0xfedc));
     }
 }

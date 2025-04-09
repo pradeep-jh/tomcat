@@ -19,11 +19,12 @@ package org.apache.catalina.webresources;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,13 +52,14 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * <p>
- * Provides the resources implementation for a web application. The {@link org.apache.catalina.Lifecycle} of this class
- * should be aligned with that of the associated {@link Context}.
- * </p>
- * <p>
- * This implementation assumes that the base attribute supplied to
- * {@link StandardRoot#createWebResourceSet( org.apache.catalina.WebResourceRoot.ResourceSetType, String, String, String, String)}
- * represents the absolute path to a file.
+ * Provides the resources implementation for a web application. The
+ * {@link org.apache.catalina.Lifecycle} of this class should be aligned with
+ * that of the associated {@link Context}.
+ * </p><p>
+ * This implementation assumes that the base attribute supplied to {@link
+ * StandardRoot#createWebResourceSet(
+ * org.apache.catalina.WebResourceRoot.ResourceSetType, String, String, String,
+ * String)} represents the absolute path to a file.
  * </p>
  */
 public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot {
@@ -67,7 +69,6 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
     private Context context;
     private boolean allowLinking = false;
-    private boolean readOnly = false;
     private final List<WebResourceSet> preResources = new ArrayList<>();
     private WebResourceSet main;
     private final List<WebResourceSet> classResources = new ArrayList<>();
@@ -79,13 +80,13 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     private ObjectName cacheJmxName = null;
 
     private boolean trackLockedFiles = false;
-    private final Set<TrackedWebResource> trackedResources = ConcurrentHashMap.newKeySet();
-
-    private ArchiveIndexStrategy archiveIndexStrategy = ArchiveIndexStrategy.SIMPLE;
+    private final Set<TrackedWebResource> trackedResources =
+            Collections.newSetFromMap(new ConcurrentHashMap<TrackedWebResource,Boolean>());
 
     // Constructs to make iteration over all WebResourceSets simpler
     private final List<WebResourceSet> mainResources = new ArrayList<>();
-    private final List<List<WebResourceSet>> allResources = new ArrayList<>();
+    private final List<List<WebResourceSet>> allResources =
+            new ArrayList<>();
     {
         allResources.add(preResources);
         allResources.add(mainResources);
@@ -96,8 +97,10 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
 
     /**
-     * Creates a new standard implementation of {@link WebResourceRoot}. A no argument constructor is required for this
-     * to work with the digester. {@link #setContext(Context)} must be called before this component is initialized.
+     * Creates a new standard implementation of {@link WebResourceRoot}. A no
+     * argument constructor is required for this to work with the digester.
+     * {@link #setContext(Context)} must be called before this component is
+     * initialized.
      */
     public StandardRoot() {
         // NO-OP
@@ -119,7 +122,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
         // Set because we don't want duplicates
         // LinkedHashSet to retain the order. It is the order of the
-        // WebResourceSet that matters, but it is simpler to retain the order
+        // WebResourceSet that matters but it is simpler to retain the order
         // over all of the JARs.
         HashSet<String> result = new LinkedHashSet<>();
         for (List<WebResourceSet> list : allResources) {
@@ -147,7 +150,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
                 }
             }
         }
-        if (result.isEmpty()) {
+        if (result.size() == 0) {
             return null;
         }
         return result;
@@ -203,7 +206,8 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         return getResource(path, true, false);
     }
 
-    protected WebResource getResource(String path, boolean validate, boolean useClassLoaderResources) {
+    protected WebResource getResource(String path, boolean validate,
+            boolean useClassLoaderResources) {
         if (validate) {
             path = validate(path);
         }
@@ -229,20 +233,22 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
 
     /**
-     * Ensures that this object is in a valid state to serve resources, checks that the path is a String that starts
-     * with '/' and checks that the path can be normalized without stepping outside of the root.
+     * Ensures that this object is in a valid state to serve resources, checks
+     * that the path is a String that starts with '/' and checks that the path
+     * can be normalized without stepping outside of the root.
      *
-     * @param path The path to validate
-     *
-     * @return the normalized path
+     * @param path
+     * @return  the normalized path
      */
     private String validate(String path) {
         if (!getState().isAvailable()) {
-            throw new IllegalStateException(sm.getString("standardRoot.checkStateNotStarted"));
+            throw new IllegalStateException(
+                    sm.getString("standardRoot.checkStateNotStarted"));
         }
 
-        if (path == null || !path.startsWith("/")) {
-            throw new IllegalArgumentException(sm.getString("standardRoot.invalidPath", path));
+        if (path == null || path.length() == 0 || !path.startsWith("/")) {
+            throw new IllegalArgumentException(
+                    sm.getString("standardRoot.invalidPath", path));
         }
 
         String result;
@@ -255,20 +261,22 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
             // convert it to '/'
             result = RequestUtil.normalize(path, false);
         }
-        if (result == null || !result.startsWith("/")) {
-            throw new IllegalArgumentException(sm.getString("standardRoot.invalidPathNormal", path, result));
+        if (result == null || result.length() == 0 || !result.startsWith("/")) {
+            throw new IllegalArgumentException(
+                    sm.getString("standardRoot.invalidPathNormal", path, result));
         }
 
         return result;
     }
 
-    protected final WebResource getResourceInternal(String path, boolean useClassLoaderResources) {
-        WebResource result;
+    protected final WebResource getResourceInternal(String path,
+            boolean useClassLoaderResources) {
+        WebResource result = null;
         WebResource virtual = null;
         WebResource mainEmpty = null;
         for (List<WebResourceSet> list : allResources) {
             for (WebResourceSet webResourceSet : list) {
-                if (!useClassLoaderResources && !webResourceSet.getClassLoaderOnly() ||
+                if (!useClassLoaderResources &&  !webResourceSet.getClassLoaderOnly() ||
                         useClassLoaderResources && !webResourceSet.getStaticOnly()) {
                     result = webResourceSet.getResource(path);
                     if (result.exists()) {
@@ -299,7 +307,8 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         return getResources(path, false);
     }
 
-    private WebResource[] getResources(String path, boolean useClassLoaderResources) {
+    private WebResource[] getResources(String path,
+            boolean useClassLoaderResources) {
         path = validate(path);
 
         if (isCachingAllowed()) {
@@ -309,7 +318,8 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         }
     }
 
-    protected WebResource[] getResourcesInternal(String path, boolean useClassLoaderResources) {
+    protected WebResource[] getResourcesInternal(String path,
+            boolean useClassLoaderResources) {
         List<WebResource> result = new ArrayList<>();
         for (List<WebResourceSet> list : allResources) {
             for (WebResourceSet webResourceSet : list) {
@@ -322,7 +332,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
             }
         }
 
-        if (result.isEmpty()) {
+        if (result.size() == 0) {
             result.add(main.getResource(path));
         }
 
@@ -352,28 +362,39 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     }
 
     // TODO: Should the createWebResourceSet() methods be removed to some
-    // utility class for file system based resource sets?
+    //       utility class for file system based resource sets?
 
     @Override
-    public void createWebResourceSet(ResourceSetType type, String webAppMount, URL url, String internalPath) {
+    public void createWebResourceSet(ResourceSetType type, String webAppMount,
+            URL url, String internalPath) {
         BaseLocation baseLocation = new BaseLocation(url);
-        createWebResourceSet(type, webAppMount, baseLocation.getBasePath(), baseLocation.getArchivePath(),
-                internalPath);
+        createWebResourceSet(type, webAppMount, baseLocation.getBasePath(),
+                baseLocation.getArchivePath(), internalPath);
     }
 
     @Override
-    public void createWebResourceSet(ResourceSetType type, String webAppMount, String base, String archivePath,
-            String internalPath) {
+    public void createWebResourceSet(ResourceSetType type, String webAppMount,
+            String base, String archivePath, String internalPath) {
         List<WebResourceSet> resourceList;
         WebResourceSet resourceSet;
 
-        resourceList = switch (type) {
-            case PRE -> preResources;
-            case CLASSES_JAR -> classResources;
-            case RESOURCE_JAR -> jarResources;
-            case POST -> postResources;
-            default -> throw new IllegalArgumentException(sm.getString("standardRoot.createUnknownType", type));
-        };
+        switch (type) {
+            case PRE:
+                resourceList = preResources;
+                break;
+            case CLASSES_JAR:
+                resourceList = classResources;
+                break;
+            case RESOURCE_JAR:
+                resourceList = jarResources;
+                break;
+            case POST:
+                resourceList = postResources;
+                break;
+            default:
+                throw new IllegalArgumentException(
+                        sm.getString("standardRoot.createUnknownType", type));
+        }
 
         // This implementation assumes that the base for all resources will be a
         // file.
@@ -382,16 +403,21 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         if (file.isFile()) {
             if (archivePath != null) {
                 // Must be a JAR nested inside a WAR if archivePath is non-null
-                resourceSet = new JarWarResourceSet(this, webAppMount, base, archivePath, internalPath);
+                resourceSet = new JarWarResourceSet(this, webAppMount, base,
+                        archivePath, internalPath);
             } else if (file.getName().toLowerCase(Locale.ENGLISH).endsWith(".jar")) {
-                resourceSet = new JarResourceSet(this, webAppMount, base, internalPath);
+                resourceSet = new JarResourceSet(this, webAppMount, base,
+                        internalPath);
             } else {
-                resourceSet = new FileResourceSet(this, webAppMount, base, internalPath);
+                resourceSet = new FileResourceSet(this, webAppMount, base,
+                        internalPath);
             }
         } else if (file.isDirectory()) {
-            resourceSet = new DirResourceSet(this, webAppMount, base, internalPath);
+            resourceSet =
+                    new DirResourceSet(this, webAppMount, base, internalPath);
         } else {
-            throw new IllegalArgumentException(sm.getString("standardRoot.createInvalidFile", file));
+            throw new IllegalArgumentException(
+                    sm.getString("standardRoot.createInvalidFile", file));
         }
 
         if (type.equals(ResourceSetType.CLASSES_JAR)) {
@@ -472,17 +498,6 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         return cachingAllowed;
     }
 
-
-    @Override
-    public CacheStrategy getCacheStrategy() {
-        return cache.getCacheStrategy();
-    }
-
-    @Override
-    public void setCacheStrategy(CacheStrategy strategy) {
-        cache.setCacheStrategy(strategy);
-    }
-
     @Override
     public long getCacheTtl() {
         return cache.getTtl();
@@ -531,21 +546,6 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         return trackLockedFiles;
     }
 
-    @Override
-    public void setArchiveIndexStrategy(String archiveIndexStrategy) {
-        this.archiveIndexStrategy = ArchiveIndexStrategy.valueOf(archiveIndexStrategy.toUpperCase(Locale.ENGLISH));
-    }
-
-    @Override
-    public String getArchiveIndexStrategy() {
-        return this.archiveIndexStrategy.name();
-    }
-
-    @Override
-    public ArchiveIndexStrategy getArchiveIndexStrategyEnum() {
-        return this.archiveIndexStrategy;
-    }
-
     public List<String> getTrackedResources() {
         List<String> result = new ArrayList<>(trackedResources.size());
         for (TrackedWebResource resource : trackedResources) {
@@ -565,27 +565,32 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     }
 
     /**
-     * Class loader resources are handled by treating JARs in WEB-INF/lib as resource JARs (without the internal
-     * META-INF/resources/ prefix) mounted at WEB-INF/classes (rather than the web app root). This enables reuse of the
-     * resource handling plumbing. These resources are marked as class loader only so they are only used in the methods
-     * that are explicitly defined to return class loader resources. This prevents calls to
-     * getResource("/WEB-INF/classes") returning from one or more of the JAR files.
+     * Class loader resources are handled by treating JARs in WEB-INF/lib as
+     * resource JARs (without the internal META-INF/resources/ prefix) mounted
+     * at WEB-INF/classes (rather than the web app root). This enables reuse
+     * of the resource handling plumbing.
      *
-     * @throws LifecycleException If an error occurs that should stop the web application from starting
+     * These resources are marked as class loader only so they are only used in
+     * the methods that are explicitly defined to return class loader resources.
+     * This prevents calls to getResource("/WEB-INF/classes") returning from one
+     * or more of the JAR files.
+     *
+     * @throws LifecycleException If an error occurs that should stop the web
+     *                            application from starting
      */
     protected void processWebInfLib() throws LifecycleException {
         WebResource[] possibleJars = listResources("/WEB-INF/lib", false);
 
         for (WebResource possibleJar : possibleJars) {
             if (possibleJar.isFile() && possibleJar.getName().endsWith(".jar")) {
-                createWebResourceSet(ResourceSetType.CLASSES_JAR, "/WEB-INF/classes", possibleJar.getURL(), "/");
+                createWebResourceSet(ResourceSetType.CLASSES_JAR,
+                        "/WEB-INF/classes", possibleJar.getURL(), "/");
             }
         }
     }
 
     /**
      * For unit testing.
-     *
      * @param main The main resources
      */
     protected final void setMainResources(WebResourceSet main) {
@@ -600,6 +605,7 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         cache.backgroundProcess();
         gc();
     }
+
 
 
     @Override
@@ -640,24 +646,16 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     }
 
 
+
     /*
-     * Returns true if and only if all the resources for this web application are provided via a packed WAR file. It is
-     * used to optimise cache validation in this case on the basis that the WAR file will not change.
+     * Returns true if and only if all the resources for this web application
+     * are provided via a packed WAR file. It is used to optimise cache
+     * validation in this case on the basis that the WAR file will not change.
      */
     protected boolean isPackedWarFile() {
         return main instanceof WarResourceSet && preResources.isEmpty() && postResources.isEmpty();
     }
 
-
-    @Override
-    public boolean isReadOnly() {
-        return (readOnly || main == null || main.isReadOnly());
-    }
-
-    @Override
-    public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
-    }
 
     // ----------------------------------------------------------- JMX Lifecycle
     @Override
@@ -667,7 +665,10 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
     @Override
     protected String getObjectNameKeyProperties() {
-        return "type=WebResourceRoot" + context.getMBeanKeyProperties();
+        StringBuilder keyProperties = new StringBuilder("type=WebResourceRoot");
+        keyProperties.append(context.getMBeanKeyProperties());
+
+        return keyProperties.toString();
     }
 
     // --------------------------------------------------------------- Lifecycle
@@ -676,13 +677,14 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
     protected void initInternal() throws LifecycleException {
         super.initInternal();
 
-        if (context == null) {
-            throw new IllegalStateException(sm.getString("standardRoot.noContext"));
-        }
-
         cacheJmxName = register(cache, getObjectNameKeyProperties() + ",name=Cache");
 
         registerURLStreamHandlerFactory();
+
+        if (context == null) {
+            throw new IllegalStateException(
+                    sm.getString("standardRoot.noContext"));
+        }
 
         for (List<WebResourceSet> list : allResources) {
             for (WebResourceSet webResourceSet : list) {
@@ -738,15 +740,16 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         } else {
             File f = new File(docBase);
             if (!f.isAbsolute()) {
-                f = new File(((Host) context.getParent()).getAppBaseFile(), f.getPath());
+                f = new File(((Host)context.getParent()).getAppBaseFile(), f.getPath());
             }
             if (f.isDirectory()) {
                 mainResourceSet = new DirResourceSet(this, "/", f.getAbsolutePath(), "/");
-                mainResourceSet.setReadOnly(readOnly);
-            } else if (f.isFile() && docBase.endsWith(".war")) {
+            } else if(f.isFile() && docBase.endsWith(".war")) {
                 mainResourceSet = new WarResourceSet(this, "/", f.getAbsolutePath());
             } else {
-                throw new IllegalArgumentException(sm.getString("standardRoot.startInvalidMain", f.getAbsolutePath()));
+                throw new IllegalArgumentException(
+                        sm.getString("standardRoot.startInvalidMain",
+                                f.getAbsolutePath()));
             }
         }
 
@@ -777,7 +780,9 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         classResources.clear();
 
         for (TrackedWebResource trackedResource : trackedResources) {
-            log.error(sm.getString("standardRoot.lockedFile", context.getName(), trackedResource.getName()),
+            log.error(sm.getString("standardRoot.lockedFile",
+                    context.getName(),
+                    trackedResource.getName()),
                     trackedResource.getCreatedBy());
             try {
                 trackedResource.close();
@@ -811,11 +816,11 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
         private final String archivePath;
 
         BaseLocation(URL url) {
-            File f;
+            File f = null;
 
             if ("jar".equals(url.getProtocol()) || "war".equals(url.getProtocol())) {
                 String jarUrl = url.toString();
-                int endOfFileUrl;
+                int endOfFileUrl = -1;
                 if ("jar".equals(url.getProtocol())) {
                     endOfFileUrl = jarUrl.indexOf("!/");
                 } else {
@@ -823,17 +828,17 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
                 }
                 String fileUrl = jarUrl.substring(4, endOfFileUrl);
                 try {
-                    f = new File(new URI(fileUrl));
-                } catch (URISyntaxException e) {
+                    f = new File(new URL(fileUrl).toURI());
+                } catch (MalformedURLException | URISyntaxException e) {
                     throw new IllegalArgumentException(e);
                 }
                 int startOfArchivePath = endOfFileUrl + 2;
-                if (jarUrl.length() > startOfArchivePath) {
+                if (jarUrl.length() >  startOfArchivePath) {
                     archivePath = jarUrl.substring(startOfArchivePath);
                 } else {
                     archivePath = null;
                 }
-            } else if ("file".equals(url.getProtocol())) {
+            } else if ("file".equals(url.getProtocol())){
                 try {
                     f = new File(url.toURI());
                 } catch (URISyntaxException e) {
@@ -841,7 +846,8 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
                 }
                 archivePath = null;
             } else {
-                throw new IllegalArgumentException(sm.getString("standardRoot.unsupportedProtocol", url.getProtocol()));
+                throw new IllegalArgumentException(sm.getString(
+                        "standardRoot.unsupportedProtocol", url.getProtocol()));
             }
 
             basePath = f.getAbsolutePath();

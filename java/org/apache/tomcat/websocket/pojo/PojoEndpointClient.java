@@ -19,24 +19,25 @@ package org.apache.tomcat.websocket.pojo;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.websocket.Decoder;
-import jakarta.websocket.DeploymentException;
-import jakarta.websocket.EndpointConfig;
-import jakarta.websocket.Session;
+import javax.websocket.Decoder;
+import javax.websocket.DeploymentException;
+import javax.websocket.EndpointConfig;
+import javax.websocket.Session;
 
-import org.apache.tomcat.InstanceManager;
 
 /**
- * Wrapper class for instances of POJOs annotated with {@link jakarta.websocket.ClientEndpoint} so they appear as
- * standard {@link jakarta.websocket.Endpoint} instances.
+ * Wrapper class for instances of POJOs annotated with
+ * {@link javax.websocket.ClientEndpoint} so they appear as standard
+ * {@link javax.websocket.Endpoint} instances.
  */
 public class PojoEndpointClient extends PojoEndpointBase {
 
-    public PojoEndpointClient(Object pojo, List<Class<? extends Decoder>> decoders, InstanceManager instanceManager)
-            throws DeploymentException {
-        super(Collections.emptyMap());
+    public PojoEndpointClient(Object pojo,
+            List<Class<? extends Decoder>> decoders) throws DeploymentException {
         setPojo(pojo);
-        setMethodMapping(new PojoMethodMapping(pojo.getClass(), decoders, null, instanceManager));
+        setMethodMapping(
+                new PojoMethodMapping(pojo.getClass(), decoders, null));
+        setPathParameters(Collections.<String,String>emptyMap());
     }
 
     @Override

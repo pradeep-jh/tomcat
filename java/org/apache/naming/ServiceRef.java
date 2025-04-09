@@ -16,9 +16,7 @@
  */
 package org.apache.naming;
 
-import java.io.Serial;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Vector;
 
 import javax.naming.StringRefAddr;
 
@@ -29,7 +27,6 @@ import javax.naming.StringRefAddr;
  */
 public class ServiceRef extends AbstractRef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 
@@ -78,10 +75,10 @@ public class ServiceRef extends AbstractRef {
 
 
     /**
-     * The list to save the handler Reference objects, because they can't be
+     * The vector to save the handler Reference objects, because they can't be
      * saved in the addrs vector.
      */
-    private final List<HandlerRef> handlers = new CopyOnWriteArrayList<>();
+    private final Vector<HandlerRef> handlers = new Vector<>();
 
 
     public ServiceRef(String refname, String serviceInterface, String[] serviceQname,
@@ -96,7 +93,7 @@ public class ServiceRef extends AbstractRef {
                        String wsdl, String jaxrpcmapping,
                        String factory, String factoryLocation) {
         super(serviceInterface, factory, factoryLocation);
-        StringRefAddr refAddr;
+        StringRefAddr refAddr = null;
         if (serviceInterface != null) {
             refAddr = new StringRefAddr(SERVICE_INTERFACE, serviceInterface);
             add(refAddr);
@@ -125,7 +122,7 @@ public class ServiceRef extends AbstractRef {
      * @return the handler
      */
     public HandlerRef getHandler() {
-        return handlers.removeFirst();
+        return handlers.remove(0);
     }
 
 

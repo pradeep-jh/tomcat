@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.modeler;
 
-import java.io.Serial;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -31,8 +30,7 @@ import javax.management.MBeanNotificationInfo;
  */
 public class NotificationInfo extends FeatureInfo {
 
-    @Serial
-    private static final long serialVersionUID = -6319885418912650856L;
+    static final long serialVersionUID = -6319885418912650856L;
 
     // ----------------------------------------------------- Instance Variables
 
@@ -42,7 +40,7 @@ public class NotificationInfo extends FeatureInfo {
      * to this <code>NotificationInfo</code> instance.
      */
     transient MBeanNotificationInfo info = null;
-    protected String[] notifTypes = new String[0];
+    protected String notifTypes[] = new String[0];
     protected final ReadWriteLock notifTypesLock = new ReentrantReadWriteLock();
 
     // ------------------------------------------------------------- Properties
@@ -73,7 +71,7 @@ public class NotificationInfo extends FeatureInfo {
 
 
     /**
-     * @return the array of notification types for this MBean.
+     * @return the set of notification types for this MBean.
      */
     public String[] getNotifTypes() {
         Lock readLock = notifTypesLock.readLock();
@@ -100,7 +98,7 @@ public class NotificationInfo extends FeatureInfo {
         writeLock.lock();
         try {
 
-            String[] results = new String[notifTypes.length + 1];
+            String results[] = new String[notifTypes.length + 1];
             System.arraycopy(notifTypes, 0, results, 0, notifTypes.length);
             results[notifTypes.length] = notifType;
             notifTypes = results;
@@ -119,9 +117,8 @@ public class NotificationInfo extends FeatureInfo {
     public MBeanNotificationInfo createNotificationInfo() {
 
         // Return our cached information (if any)
-        if (info != null) {
+        if (info != null)
             return info;
-        }
 
         // Create and return a new information object
         info = new MBeanNotificationInfo
@@ -153,7 +150,7 @@ public class NotificationInfo extends FeatureInfo {
         } finally {
             readLock.unlock();
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 }

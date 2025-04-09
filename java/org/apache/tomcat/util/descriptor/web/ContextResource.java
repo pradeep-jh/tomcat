@@ -17,7 +17,6 @@
 package org.apache.tomcat.util.descriptor.web;
 
 
-import java.io.Serial;
 
 /**
  * Representation of a resource reference for a web application, as
@@ -29,7 +28,6 @@ import java.io.Serial;
  */
 public class ContextResource extends ResourceBase {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -66,7 +64,7 @@ public class ContextResource extends ResourceBase {
 
     /**
      * Is this resource known to be a singleton resource. The default value is
-     * true since this is what users expect although the Jakarta EE spec implies
+     * true since this is what users expect although the JavaEE spec implies
      * that the default should be false.
      */
     private boolean singleton = true;
@@ -131,7 +129,7 @@ public class ContextResource extends ResourceBase {
             sb.append(", scope=");
             sb.append(scope);
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 
@@ -182,6 +180,9 @@ public class ContextResource extends ResourceBase {
         } else if (!scope.equals(other.scope)) {
             return false;
         }
-        return singleton == other.singleton;
+        if (singleton != other.singleton) {
+            return false;
+        }
+        return true;
     }
 }

@@ -14,28 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.el;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.annotation.Annotation;
 
-import jakarta.el.ELContext;
-import jakarta.el.ELException;
-import jakarta.el.MethodExpression;
-import jakarta.el.MethodInfo;
-import jakarta.el.MethodReference;
+import javax.el.ELContext;
+import javax.el.ELException;
+import javax.el.MethodExpression;
+import javax.el.MethodInfo;
 
-import org.apache.el.util.MessageFactory;
 import org.apache.el.util.ReflectionUtil;
 
 
 public class MethodExpressionLiteral extends MethodExpression implements Externalizable {
-
-    private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
-    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     private Class<?> expectedType;
 
@@ -47,7 +42,8 @@ public class MethodExpressionLiteral extends MethodExpression implements Externa
         // do nothing
     }
 
-    public MethodExpressionLiteral(String expr, Class<?> expectedType, Class<?>[] paramTypes) {
+    public MethodExpressionLiteral(String expr, Class<?> expectedType,
+            Class<?>[] paramTypes) {
         this.expr = expr;
         this.expectedType = expectedType;
         this.paramTypes = paramTypes;
@@ -56,14 +52,10 @@ public class MethodExpressionLiteral extends MethodExpression implements Externa
     @Override
     public MethodInfo getMethodInfo(ELContext context) throws ELException {
         context.notifyBeforeEvaluation(getExpressionString());
-        MethodInfo result = getMethodInfoInternal();
+        MethodInfo result =
+                new MethodInfo(this.expr, this.expectedType, this.paramTypes);
         context.notifyAfterEvaluation(getExpressionString());
         return result;
-    }
-
-
-    private MethodInfo getMethodInfoInternal() throws ELException {
-        return new MethodInfo(this.expr, this.expectedType, this.paramTypes);
     }
 
     @Override
@@ -75,19 +67,6 @@ public class MethodExpressionLiteral extends MethodExpression implements Externa
         } else {
             result = this.expr;
         }
-        context.notifyAfterEvaluation(getExpressionString());
-        return result;
-    }
-
-
-    @Override
-    public MethodReference getMethodReference(ELContext context) {
-        if (context == null) {
-            throw new NullPointerException(MessageFactory.get("error.context.null"));
-        }
-        context.notifyBeforeEvaluation(getExpressionString());
-        MethodReference result =
-                new MethodReference(null, getMethodInfoInternal(), EMPTY_ANNOTATION_ARRAY, EMPTY_OBJECT_ARRAY);
         context.notifyAfterEvaluation(getExpressionString());
         return result;
     }
@@ -116,16 +95,18 @@ public class MethodExpressionLiteral extends MethodExpression implements Externa
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         this.expr = in.readUTF();
         String type = in.readUTF();
-        if (!type.isEmpty()) {
+        if (!"".equals(type)) {
             this.expectedType = ReflectionUtil.forName(type);
         }
-        this.paramTypes = ReflectionUtil.toTypeArray(((String[]) in.readObject()));
+        this.paramTypes = ReflectionUtil.toTypeArray(((String[]) in
+                .readObject()));
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeUTF(this.expr);
-        out.writeUTF((this.expectedType != null) ? this.expectedType.getName() : "");
+        out.writeUTF((this.expectedType != null) ? this.expectedType.getName()
+                : "");
         out.writeObject(ReflectionUtil.toTypeNameArray(this.paramTypes));
     }
 }

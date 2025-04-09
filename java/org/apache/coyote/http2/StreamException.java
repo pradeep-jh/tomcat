@@ -16,14 +16,11 @@
  */
 package org.apache.coyote.http2;
 
-import java.io.Serial;
-
 /**
  * Thrown when an HTTP/2 stream error occurs.
  */
 class StreamException extends Http2Exception {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final int streamId;

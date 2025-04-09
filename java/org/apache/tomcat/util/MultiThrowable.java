@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,10 +29,9 @@ import java.util.List;
  */
 public class MultiThrowable extends Throwable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final List<Throwable> throwables = new ArrayList<>();
+    private List<Throwable> throwables = new ArrayList<>();
 
     /**
      * Add a throwable to the list of wrapped throwables.
@@ -62,7 +60,7 @@ public class MultiThrowable extends Throwable {
         if (size() == 0) {
             return null;
         } else if (size() == 1) {
-            return throwables.getFirst();
+            return throwables.get(0);
         } else {
             return this;
         }
@@ -91,9 +89,9 @@ public class MultiThrowable extends Throwable {
         sb.append(size());
         sb.append(" wrapped Throwables: ");
         for (Throwable t : throwables) {
-            sb.append('[');
+            sb.append("[");
             sb.append(t.getMessage());
-            sb.append(']');
+            sb.append("]");
         }
 
         return sb.toString();

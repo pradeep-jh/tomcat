@@ -16,7 +16,6 @@
  */
 package org.apache.catalina.authenticator;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 import org.apache.catalina.Authenticator;
@@ -28,7 +27,6 @@ import org.apache.catalina.SessionListener;
 
 public class SingleSignOnListener implements SessionListener, Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String ssoId;

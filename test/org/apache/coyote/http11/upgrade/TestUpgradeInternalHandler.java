@@ -31,13 +31,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpUpgradeHandler;
-import jakarta.servlet.http.WebConnection;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.WebConnection;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -86,7 +85,7 @@ public class TestUpgradeInternalHandler extends TomcatBaseTest {
         Assert.assertTrue(tomcat.getConnector().setProperty("useAsyncIO", "true"));
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         UpgradeServlet servlet = new UpgradeServlet(upgradeHandlerClass);
         Tomcat.addServlet(ctx, "servlet", servlet);
@@ -129,7 +128,7 @@ public class TestUpgradeInternalHandler extends TomcatBaseTest {
 
         private final Class<? extends HttpUpgradeHandler> upgradeHandlerClass;
 
-        UpgradeServlet(Class<? extends HttpUpgradeHandler> upgradeHandlerClass) {
+        public UpgradeServlet(Class<? extends HttpUpgradeHandler> upgradeHandlerClass) {
             this.upgradeHandlerClass = upgradeHandlerClass;
         }
 
@@ -146,7 +145,7 @@ public class TestUpgradeInternalHandler extends TomcatBaseTest {
         private final Writer writer;
         private final BufferedReader reader;
 
-        UpgradeConnection(Socket socket) {
+        public UpgradeConnection(Socket socket) {
             this.socket = socket;
             InputStream is;
             OutputStream os;

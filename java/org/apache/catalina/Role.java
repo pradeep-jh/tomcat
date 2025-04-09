@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina;
 
 
@@ -21,13 +23,10 @@ import java.security.Principal;
 
 
 /**
- * <p>
- * Abstract representation of a security role, suitable for use in environments like JAAS that want to deal with
- * <code>Principals</code>.
- * </p>
+ * <p>Abstract representation of a security role, suitable for use in
+ * environments like JAAS that want to deal with <code>Principals</code>.</p>
  *
  * @author Craig R. McClanahan
- *
  * @since 4.1
  */
 public interface Role extends Principal {
@@ -39,7 +38,7 @@ public interface Role extends Principal {
     /**
      * @return the description of this role.
      */
-    String getDescription();
+    public String getDescription();
 
 
     /**
@@ -47,27 +46,29 @@ public interface Role extends Principal {
      *
      * @param description The new description
      */
-    void setDescription(String description);
+    public void setDescription(String description);
 
 
     /**
-     * @return the role name of this role, which must be unique within the scope of a {@link UserDatabase}.
+     * @return the role name of this role, which must be unique
+     * within the scope of a {@link UserDatabase}.
      */
-    String getRolename();
+    public String getRolename();
 
 
     /**
-     * Set the role name of this role, which must be unique within the scope of a {@link UserDatabase}.
+     * Set the role name of this role, which must be unique
+     * within the scope of a {@link UserDatabase}.
      *
      * @param rolename The new role name
      */
-    void setRolename(String rolename);
+    public void setRolename(String rolename);
 
 
     /**
      * @return the {@link UserDatabase} within which this Role is defined.
      */
-    UserDatabase getUserDatabase();
+    public UserDatabase getUserDatabase();
 
 
 }

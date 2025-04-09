@@ -18,7 +18,6 @@ package org.apache.tomcat.util.threads;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  * A Thread implementation that records the time at which it was created.
@@ -27,7 +26,6 @@ import org.apache.tomcat.util.res.StringManager;
 public class TaskThread extends Thread {
 
     private static final Log log = LogFactory.getLog(TaskThread.class);
-    private static final StringManager sm = StringManager.getManager(TaskThread.class);
     private final long creationTime;
 
     public TaskThread(ThreadGroup group, Runnable target, String name) {
@@ -52,7 +50,11 @@ public class TaskThread extends Thread {
      * Wraps a {@link Runnable} to swallow any {@link StopPooledThreadException}
      * instead of letting it go and potentially trigger a break in a debugger.
      */
-    private record WrappingRunnable(Runnable wrappedRunnable) implements Runnable {
+    private static class WrappingRunnable implements Runnable {
+        private Runnable wrappedRunnable;
+        WrappingRunnable(Runnable wrappedRunnable) {
+            this.wrappedRunnable = wrappedRunnable;
+        }
         @Override
         public void run() {
             try {
@@ -60,9 +62,10 @@ public class TaskThread extends Thread {
             } catch(StopPooledThreadException exc) {
                 //expected : we just swallow the exception to avoid disturbing
                 //debuggers like eclipse's
-                log.debug(sm.getString("taskThread.exiting"), exc);
+                log.debug("Thread exiting on purpose", exc);
             }
         }
+
     }
 
 }

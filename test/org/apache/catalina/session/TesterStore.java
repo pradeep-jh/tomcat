@@ -58,7 +58,7 @@ class TesterStore implements Store {
 
     @Override
     public String[] keys() throws IOException {
-        return new ArrayList<>(sessions.keySet()).toArray(new String[0]);
+        return new ArrayList<>(sessions.keySet()).toArray(new String[] {});
     }
 
     @Override

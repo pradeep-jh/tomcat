@@ -16,8 +16,6 @@
  */
 package org.apache.naming;
 
-import java.io.Serial;
-
 import javax.naming.StringRefAddr;
 
 /**
@@ -27,7 +25,6 @@ import javax.naming.StringRefAddr;
  */
 public class HandlerRef extends AbstractRef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 
@@ -94,7 +91,7 @@ public class HandlerRef extends AbstractRef {
     public HandlerRef(String refname, String handlerClass,
                     String factory, String factoryLocation) {
         super(refname, factory, factoryLocation);
-        StringRefAddr refAddr;
+        StringRefAddr refAddr = null;
         if (refname != null) {
             refAddr = new StringRefAddr(HANDLER_NAME, refname);
             add(refAddr);

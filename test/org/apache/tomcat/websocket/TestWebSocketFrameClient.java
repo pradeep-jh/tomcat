@@ -24,11 +24,11 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.websocket.ClientEndpointConfig;
-import jakarta.websocket.ClientEndpointConfig.Configurator;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
+import javax.websocket.ClientEndpointConfig;
+import javax.websocket.ClientEndpointConfig.Configurator;
+import javax.websocket.ContainerProvider;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -54,8 +54,8 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
     public void testConnectToServerEndpoint() throws Exception {
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
-        ctx.addApplicationListener(TesterFirehoseServer.ConfigInline.class.getName());
+        Context ctx = tomcat.addContext("", null);
+        ctx.addApplicationListener(TesterFirehoseServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMappingDecoded("/", "default");
 
@@ -64,20 +64,24 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
         WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
 
         // BZ 62596
-        ClientEndpointConfig clientEndpointConfig = ClientEndpointConfig.Builder.create()
-                .configurator(new Configurator() {
+        ClientEndpointConfig clientEndpointConfig =
+                ClientEndpointConfig.Builder.create().configurator(new Configurator() {
                     @Override
                     public void beforeRequest(Map<String, List<String>> headers) {
-                        headers.put("Dummy",
-                                Collections.singletonList(String.join("", Collections.nCopies(4000, "A"))));
+                        headers.put("Dummy", Collections.singletonList(
+                                String.join("", Collections.nCopies(4000, "A"))));
                         super.beforeRequest(headers);
                     }
                 }).build();
 
-        Session wsSession = wsContainer.connectToServer(TesterProgrammaticEndpoint.class, clientEndpointConfig,
-                new URI("ws://localhost:" + getPort() + TesterFirehoseServer.PATH));
-        CountDownLatch latch = new CountDownLatch(TesterFirehoseServer.MESSAGE_COUNT);
-        BasicText handler = new BasicText(latch, TesterFirehoseServer.MESSAGE);
+        Session wsSession = wsContainer.connectToServer(
+                TesterProgrammaticEndpoint.class,
+                clientEndpointConfig,
+                new URI("ws://localhost:" + getPort() +
+                        TesterFirehoseServer.Config.PATH));
+        CountDownLatch latch =
+                new CountDownLatch(TesterFirehoseServer.MESSAGE_COUNT);
+        BasicText handler = new BasicText(latch);
         wsSession.addMessageHandler(handler);
         wsSession.getBasicRemote().sendText("Hello");
 
@@ -85,16 +89,22 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
 
         // Ignore the latch result as the message count test below will tell us
         // if the right number of messages arrived
-        handler.getLatch().await(TesterFirehoseServer.WAIT_TIME_MILLIS, TimeUnit.MILLISECONDS);
+        handler.getLatch().await(TesterFirehoseServer.WAIT_TIME_MILLIS,
+                TimeUnit.MILLISECONDS);
 
-        Assert.assertEquals(TesterFirehoseServer.MESSAGE_COUNT, handler.getMessageCount());
+        Queue<String> messages = handler.getMessages();
+        Assert.assertEquals(
+                TesterFirehoseServer.MESSAGE_COUNT, messages.size());
+        for (String message : messages) {
+            Assert.assertEquals(TesterFirehoseServer.MESSAGE, message);
+        }
     }
 
     @Test
     public void testConnectToRootEndpoint() throws Exception {
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMappingDecoded("/", "default");
@@ -105,14 +115,14 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
 
         tomcat.start();
 
-        echoTester("", null);
-        echoTester("/", null);
-        // This will trigger a redirect so there will be 5 requests logged
-        echoTester("/foo", null);
-        echoTester("/foo/", null);
+        echoTester("",null);
+        echoTester("/",null);
+        echoTester("/foo",null);
+        echoTester("/foo/",null);
     }
 
-    public void echoTester(String path, ClientEndpointConfig clientEndpointConfig) throws Exception {
+    public void echoTester(String path, ClientEndpointConfig clientEndpointConfig)
+            throws Exception {
         WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
 
         if (clientEndpointConfig == null) {
@@ -122,8 +132,8 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
         // CI systems.
         clientEndpointConfig.getUserProperties().put(Constants.IO_TIMEOUT_MS_PROPERTY, "10000");
 
-        Session wsSession = wsContainer.connectToServer(TesterProgrammaticEndpoint.class, clientEndpointConfig,
-                new URI("ws://localhost:" + getPort() + path));
+        Session wsSession = wsContainer.connectToServer(TesterProgrammaticEndpoint.class,
+                clientEndpointConfig, new URI("ws://localhost:" + getPort() + path));
         CountDownLatch latch = new CountDownLatch(1);
         BasicText handler = new BasicText(latch);
         wsSession.addMessageHandler(handler);
@@ -176,6 +186,7 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
         clientEndpointConfig.getUserProperties().put(Constants.WS_AUTHENTICATION_PASSWORD, utf8Pass);
 
         echoTester(URI_PROTECTED, clientEndpointConfig);
+
     }
 
     @Test
@@ -209,8 +220,10 @@ public class TestWebSocketFrameClient extends WebSocketBaseTest {
 
         ClientEndpointConfig clientEndpointConfig = ClientEndpointConfig.Builder.create().build();
         clientEndpointConfig.getUserProperties().put(Constants.WS_AUTHENTICATION_USER_NAME, USER);
-        clientEndpointConfig.getUserProperties().put(Constants.WS_AUTHENTICATION_PASSWORD, PWD);
+        clientEndpointConfig.getUserProperties().put(Constants.WS_AUTHENTICATION_PASSWORD,PWD);
 
         echoTester(URI_PROTECTED, clientEndpointConfig);
+
     }
+
 }

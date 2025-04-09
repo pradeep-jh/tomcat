@@ -23,7 +23,7 @@ import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
 
 /**
- * Tests that depend on strict whitespace parsing are duplicated in {@link TestParserNoStrictWhitespace} with the strict
+ * Tests are duplicated in {@link TestParserNoStrictWhitespace} with the strict
  * whitespace parsing disabled.
  */
 public class TestParser extends TomcatBaseTest {
@@ -32,7 +32,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug48627() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug48nnn/bug48627.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug48nnn/bug48627.jsp");
 
         String result = res.toString();
         // Beware of the differences between escaping in JSP attributes and
@@ -45,7 +46,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug48668a() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug48nnn/bug48668a.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug48nnn/bug48668a.jsp");
         String result = res.toString();
         assertEcho(result, "00-Hello world</p>#{foo.bar}");
         assertEcho(result, "01-Hello world</p>${foo.bar}");
@@ -83,7 +85,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug48668b() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug48nnn/bug48668b.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug48nnn/bug48668b.jsp");
         String result = res.toString();
         assertEcho(result, "00-Hello world</p>#{foo.bar}");
         assertEcho(result, "01-Hello world</p>#{foo2");
@@ -93,8 +96,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug49297NoSpaceStrict() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297NoSpaceStrict.jsp", new ByteChunk(),
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297NoSpace.jsp", new ByteChunk(), null);
 
         Assert.assertEquals(500, sc);
     }
@@ -103,8 +106,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug49297DuplicateAttr() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297DuplicateAttr.jsp", new ByteChunk(),
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297DuplicateAttr.jsp", new ByteChunk(), null);
 
         Assert.assertEquals(500, sc);
     }
@@ -114,7 +117,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultipleImport1.jsp", res, null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultipleImport1.jsp", res, null);
 
         Assert.assertEquals(200, sc);
         assertEcho(res.toString(), "OK");
@@ -125,7 +129,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultipleImport2.jsp", res, null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultipleImport2.jsp", res, null);
 
         Assert.assertEquals(200, sc);
         assertEcho(res.toString(), "OK");
@@ -136,8 +141,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultiplePageEncoding1.jsp", res,
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultiplePageEncoding1.jsp", res, null);
 
         Assert.assertEquals(500, sc);
     }
@@ -147,8 +152,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultiplePageEncoding2.jsp", res,
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultiplePageEncoding2.jsp", res, null);
 
         Assert.assertEquals(500, sc);
     }
@@ -158,8 +163,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultiplePageEncoding3.jsp", res,
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultiplePageEncoding3.jsp", res, null);
 
         Assert.assertEquals(500, sc);
     }
@@ -169,8 +174,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297MultiplePageEncoding4.jsp", res,
-                null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297MultiplePageEncoding4.jsp", res, null);
 
         Assert.assertEquals(500, sc);
     }
@@ -180,7 +185,8 @@ public class TestParser extends TomcatBaseTest {
         getTomcatInstanceTestWebapp(false, true);
 
         ByteChunk res = new ByteChunk();
-        int sc = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49297Tag.jsp", res, null);
+        int sc = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49297Tag.jsp", res, null);
 
         Assert.assertEquals(200, sc);
         assertEcho(res.toString(), "OK");
@@ -190,7 +196,8 @@ public class TestParser extends TomcatBaseTest {
     public void testBug52335() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug5nnnn/bug52335.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug5nnnn/bug52335.jsp");
 
         String result = res.toString();
         // Beware of the differences between escaping in JSP attributes and
@@ -204,38 +211,53 @@ public class TestParser extends TomcatBaseTest {
     public void testBug55198() throws Exception {
         getTomcatInstanceTestWebapp(false, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug5nnnn/bug55198.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug5nnnn/bug55198.jsp");
 
         String result = res.toString();
 
         Assert.assertTrue(result,
-                result.contains("&quot;1foo1&lt;&amp;&gt;&quot;") || result.contains("&#034;1foo1&lt;&amp;&gt;&#034;"));
+                result.contains("&quot;1foo1&lt;&amp;&gt;&quot;")
+             || result.contains("&#034;1foo1&lt;&amp;&gt;&#034;"));
         Assert.assertTrue(result,
-                result.contains("&quot;2bar2&lt;&amp;&gt;&quot;") || result.contains("&#034;2bar2&lt;&amp;&gt;&#034;"));
-        Assert.assertTrue(result, result.contains("&quot;3a&amp;b3&quot;") || result.contains("&#034;3a&amp;b3&#034;"));
-        Assert.assertTrue(result, result.contains("&quot;4&4&quot;") || result.contains("&#034;4&4&#034;"));
-        Assert.assertTrue(result, result.contains("&quot;5&apos;5&quot;") || result.contains("&#034;5&apos;5&#034;"));
+                result.contains("&quot;2bar2&lt;&amp;&gt;&quot;")
+             || result.contains("&#034;2bar2&lt;&amp;&gt;&#034;"));
+        Assert.assertTrue(result,
+                result.contains("&quot;3a&amp;b3&quot;")
+             || result.contains("&#034;3a&amp;b3&#034;"));
+        Assert.assertTrue(result,
+                result.contains("&quot;4&4&quot;")
+             || result.contains("&#034;4&4&#034;"));
+        Assert.assertTrue(result,
+                result.contains("&quot;5&apos;5&quot;")
+             || result.contains("&#034;5&apos;5&#034;"));
     }
 
     @Test
     public void testBug56265() throws Exception {
         getTomcatInstanceTestWebapp(true, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug5nnnn/bug56265.jsp");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug5nnnn/bug56265.jsp");
 
         String result = res.toString();
 
-        Assert.assertTrue(result, result.contains("[1: [data-test]: [window.alert('Hello World <&>!')]]"));
-        Assert.assertTrue(result, result.contains("[2: [data-test]: [window.alert('Hello World <&>!')]]"));
-        Assert.assertTrue(result, result.contains("[3: [data-test]: [window.alert('Hello 'World <&>'!')]]"));
-        Assert.assertTrue(result, result.contains("[4: [data-test]: [window.alert('Hello 'World <&>'!')]]"));
+        Assert.assertTrue(result,
+                result.contains("[1: [data-test]: [window.alert('Hello World <&>!')]]"));
+        Assert.assertTrue(result,
+                result.contains("[2: [data-test]: [window.alert('Hello World <&>!')]]"));
+        Assert.assertTrue(result,
+                result.contains("[3: [data-test]: [window.alert('Hello 'World <&>'!')]]"));
+        Assert.assertTrue(result,
+                result.contains("[4: [data-test]: [window.alert('Hello 'World <&>'!')]]"));
     }
 
     @Test
     public void testBug56334And56561() throws Exception {
         getTomcatInstanceTestWebapp(true, true);
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug5nnnn/bug56334and56561.jspx");
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug5nnnn/bug56334and56561.jspx");
 
         String result = res.toString();
 

@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
-import java.io.Serial;
 import java.io.Serializable;
 
 import javax.management.MBeanFeatureInfo;
@@ -31,8 +32,7 @@ import javax.management.MBeanFeatureInfo;
  * @author Craig R. McClanahan
  */
 public class FeatureInfo implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -911529176124712296L;
+    static final long serialVersionUID = -911529176124712296L;
 
     protected String description = null;
     protected String name = null;

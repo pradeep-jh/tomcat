@@ -28,9 +28,15 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
 /**
- * Filters membership based on domain.
+ * <p>Title: Member domain filter interceptor </p>
+ *
+ * <p>Description: Filters membership based on domain.
+ * </p>
+ *
+ * @version 1.0
  */
-public class DomainFilterInterceptor extends ChannelInterceptorBase implements DomainFilterInterceptorMBean {
+public class DomainFilterInterceptor extends ChannelInterceptorBase
+        implements DomainFilterInterceptorMBean {
 
     private static final Log log = LogFactory.getLog(DomainFilterInterceptor.class);
     protected static final StringManager sm = StringManager.getManager(DomainFilterInterceptor.class);
@@ -47,73 +53,54 @@ public class DomainFilterInterceptor extends ChannelInterceptorBase implements D
         } else {
             if (logCounter.incrementAndGet() >= logInterval) {
                 logCounter.set(0);
-                if (log.isWarnEnabled()) {
+                if (log.isWarnEnabled())
                     log.warn(sm.getString("domainFilterInterceptor.message.refused", msg.getAddress()));
-                }
             }
         }
-    }// messageReceived
+    }//messageReceived
 
 
     @Override
     public void memberAdded(Member member) {
-        if (membership == null) {
-            setupMembership();
-        }
-        boolean notify;
+        if ( membership == null ) setupMembership();
+        boolean notify = false;
         synchronized (membership) {
-            notify = Arrays.equals(domain, member.getDomain());
-            if (notify) {
-                notify = membership.memberAlive(member);
-            }
+            notify = Arrays.equals(domain,member.getDomain());
+            if ( notify ) notify = membership.memberAlive(member);
         }
-        if (notify) {
+        if ( notify ) {
             super.memberAdded(member);
         } else {
-            if (log.isInfoEnabled()) {
-                log.info(sm.getString("domainFilterInterceptor.member.refused", member));
-            }
+            if(log.isInfoEnabled()) log.info(sm.getString("domainFilterInterceptor.member.refused", member));
         }
     }
 
     @Override
     public void memberDisappeared(Member member) {
-        if (membership == null) {
-            setupMembership();
-        }
-        boolean notify;
+        if ( membership == null ) setupMembership();
+        boolean notify = false;
         synchronized (membership) {
-            notify = Arrays.equals(domain, member.getDomain());
-            if (notify) {
-                membership.removeMember(member);
-            }
+            notify = Arrays.equals(domain,member.getDomain());
+            if ( notify ) membership.removeMember(member);
         }
-        if (notify) {
-            super.memberDisappeared(member);
-        }
+        if ( notify ) super.memberDisappeared(member);
     }
 
     @Override
     public boolean hasMembers() {
-        if (membership == null) {
-            setupMembership();
-        }
+        if ( membership == null ) setupMembership();
         return membership.hasMembers();
     }
 
     @Override
     public Member[] getMembers() {
-        if (membership == null) {
-            setupMembership();
-        }
+        if ( membership == null ) setupMembership();
         return membership.getMembers();
     }
 
     @Override
     public Member getMember(Member mbr) {
-        if (membership == null) {
-            setupMembership();
-        }
+        if ( membership == null ) setupMembership();
         return membership.getMember(mbr);
     }
 
@@ -124,7 +111,7 @@ public class DomainFilterInterceptor extends ChannelInterceptorBase implements D
 
 
     protected synchronized void setupMembership() {
-        if (membership == null) {
+        if ( membership == null ) {
             membership = new Membership(super.getLocalMember(true));
         }
 
@@ -140,14 +127,11 @@ public class DomainFilterInterceptor extends ChannelInterceptorBase implements D
     }
 
     public void setDomain(String domain) {
-        if (domain == null) {
-            return;
-        }
-        if (domain.startsWith("{")) {
+        if ( domain == null ) return;
+        if (domain.startsWith("{"))
             setDomain(org.apache.catalina.tribes.util.Arrays.fromString(domain));
-        } else {
+        else
             setDomain(org.apache.catalina.tribes.util.Arrays.convert(domain));
-        }
     }
 
     @Override

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2;
 
 import java.lang.management.ManagementFactory;
@@ -31,16 +32,16 @@ import org.apache.juli.logging.LogFactory;
  *
  * @since 2.2.1
  */
-final class ObjectNameWrapper {
+class ObjectNameWrapper {
 
     private static final Log log = LogFactory.getLog(ObjectNameWrapper.class);
 
-    private static final MBeanServer MBEAN_SERVER = getPlatformMBeanServer();
+    private static MBeanServer MBEAN_SERVER = getPlatformMBeanServer();
 
     private static MBeanServer getPlatformMBeanServer() {
         try {
             return ManagementFactory.getPlatformMBeanServer();
-        } catch (final LinkageError | Exception e) {
+        } catch (LinkageError | Exception e) {
             // ignore - JMX not available
             log.debug("Failed to get platform MBeanServer", e);
             return null;
@@ -61,7 +62,7 @@ final class ObjectNameWrapper {
 
     private final ObjectName objectName;
 
-    ObjectNameWrapper(final ObjectName objectName) {
+    public ObjectNameWrapper(final ObjectName objectName) {
         this.objectName = objectName;
     }
 
@@ -71,7 +72,7 @@ final class ObjectNameWrapper {
         }
         try {
             MBEAN_SERVER.registerMBean(object, objectName);
-        } catch (final LinkageError | Exception e) {
+        } catch (LinkageError | Exception e) {
             log.warn("Failed to complete JMX registration for " + objectName, e);
         }
     }
@@ -91,7 +92,7 @@ final class ObjectNameWrapper {
         if (MBEAN_SERVER.isRegistered(objectName)) {
             try {
                 MBEAN_SERVER.unregisterMBean(objectName);
-            } catch (final LinkageError | Exception e) {
+            } catch (LinkageError | Exception e) {
                 log.warn("Failed to complete JMX unregistration for " + objectName, e);
             }
         }

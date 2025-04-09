@@ -20,9 +20,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,14 +44,16 @@ public class TestStuckThreadDetectionValve extends TomcatBaseTest {
         super.setUp();
         tomcat = getTomcatInstance();
         File docBase = new File(System.getProperty("java.io.tmpdir"));
-        context = (StandardContext) tomcat.addContext("", docBase.getAbsolutePath());
+        context = (StandardContext) tomcat.addContext("",
+                docBase.getAbsolutePath());
     }
 
     @Test
     public void testDetection() throws Exception {
         // second, we test the actual effect of the flag on the startup
         StickingServlet stickingServlet = new StickingServlet(8000L);
-        Wrapper servlet = Tomcat.addServlet(context, "myservlet", stickingServlet);
+        Wrapper servlet = Tomcat.addServlet(context, "myservlet",
+                stickingServlet);
         servlet.addMapping("/myservlet");
 
         StuckThreadDetectionValve valve = new StuckThreadDetectionValve();
@@ -67,7 +69,8 @@ public class TestStuckThreadDetectionValve extends TomcatBaseTest {
             @Override
             public void run() {
                 try {
-                    getUrl("http://localhost:" + getPort() + "/myservlet", result, null);
+                    getUrl("http://localhost:" + getPort() + "/myservlet",
+                            result, null);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -93,8 +96,10 @@ public class TestStuckThreadDetectionValve extends TomcatBaseTest {
     @Test
     public void testInterruption() throws Exception {
         // second, we test the actual effect of the flag on the startup
-        StickingServlet stickingServlet = new StickingServlet(TimeUnit.SECONDS.toMillis(20L));
-        Wrapper servlet = Tomcat.addServlet(context, "myservlet", stickingServlet);
+        StickingServlet stickingServlet = new StickingServlet(
+                TimeUnit.SECONDS.toMillis(20L));
+        Wrapper servlet = Tomcat.addServlet(context, "myservlet",
+                stickingServlet);
         servlet.addMapping("/myservlet");
 
         StuckThreadDetectionValve valve = new StuckThreadDetectionValve();
@@ -111,7 +116,8 @@ public class TestStuckThreadDetectionValve extends TomcatBaseTest {
             @Override
             public void run() {
                 try {
-                    getUrl("http://localhost:" + getPort() + "/myservlet", result, null);
+                    getUrl("http://localhost:" + getPort() + "/myservlet",
+                            result, null);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -144,7 +150,8 @@ public class TestStuckThreadDetectionValve extends TomcatBaseTest {
         }
 
         @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+                throws IOException {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {

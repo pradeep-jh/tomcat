@@ -16,10 +16,6 @@
  */
 package org.apache.tomcat.util.http;
 
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,9 +24,6 @@ public class TestMimeHeaders {
     public static final String HEADER_NAME_LC_STRING = "test";
     public static final String HEADER_NAME_UC_STRING = "TEST";
     public static final String HEADER_NAME_MIXED_STRING = "tEsT";
-    public static final String HEADER_NAME_A = "aaa";
-    public static final String HEADER_NAME_B = "bbb";
-    public static final String HEADER_NAME_C = "ccc";
 
     @Test
     public void testSetValueStringIgnoresCase01() {
@@ -68,43 +61,4 @@ public class TestMimeHeaders {
         Assert.assertEquals(HEADER_NAME_MIXED_STRING, mh.getValue(HEADER_NAME_MIXED_STRING).toString());
     }
 
-    @Test
-    public void testNamesEnumerator() {
-        MimeHeaders mh = new MimeHeaders();
-
-        mh.setValue(HEADER_NAME_A);
-        mh.setValue(HEADER_NAME_B);
-        mh.setValue(HEADER_NAME_C);
-
-        Set<String> expected = new HashSet<>();
-        expected.add(HEADER_NAME_A);
-        expected.add(HEADER_NAME_B);
-        expected.add(HEADER_NAME_C);
-
-        Enumeration<String> names = mh.names();
-        while (names.hasMoreElements()) {
-            Assert.assertTrue(expected.remove(names.nextElement()));
-        }
-        Assert.assertFalse(names.hasMoreElements());
-    }
-
-    @Test
-    public void testNamesEnumeratorWithNull() {
-        MimeHeaders mh = new MimeHeaders();
-
-        mh.setValue(HEADER_NAME_A);
-        mh.setValue(null);
-        mh.setValue(HEADER_NAME_C);
-
-        Set<String> expected = new HashSet<>();
-        expected.add(HEADER_NAME_A);
-        expected.add(null);
-        expected.add(HEADER_NAME_C);
-
-        Enumeration<String> names = mh.names();
-        while (names.hasMoreElements()) {
-            Assert.assertTrue(expected.remove(names.nextElement()));
-        }
-        Assert.assertFalse(names.hasMoreElements());
-    }
 }

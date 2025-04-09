@@ -20,15 +20,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.descriptor.JspConfigDescriptor;
-import jakarta.servlet.descriptor.JspPropertyGroupDescriptor;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.Filter;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.descriptor.JspConfigDescriptor;
+import javax.servlet.descriptor.JspPropertyGroupDescriptor;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -184,7 +184,7 @@ public class TestApplicationContext extends TomcatBaseTest {
         Context bar = tomcat.addContext("/bar", null);
         bar.addLifecycleListener(new SetIdListener("bar"));
 
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addLifecycleListener(new SetIdListener("ROOT"));
         ctx.setCrossContext(true);
 
@@ -235,7 +235,7 @@ public class TestApplicationContext extends TomcatBaseTest {
 
         private final String id;
 
-        SetIdListener(String id) {
+        public SetIdListener(String id) {
             this.id = id;
         }
 
@@ -290,7 +290,7 @@ public class TestApplicationContext extends TomcatBaseTest {
         private final String targetContextPath;
         private final String targetPath;
 
-        SetAttributeServlet(String targetPath, String targetContextPath) {
+        public SetAttributeServlet(String targetPath, String targetContextPath) {
             this.targetPath = targetPath;
             this.targetContextPath = targetContextPath;
         }

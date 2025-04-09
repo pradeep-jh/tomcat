@@ -38,7 +38,7 @@ public class TestApplicationFilterConfig extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "HelloWorld", new HelloWorldServlet());
         ctx.addServletMappingDecoded("/", "HelloWorld");
@@ -53,7 +53,7 @@ public class TestApplicationFilterConfig extends TomcatBaseTest {
         tomcat.start();
 
         final MBeanServer mbeanServer =
-                Registry.getRegistry(null).getMBeanServer();
+                Registry.getRegistry(null, null).getMBeanServer();
 
         // There should be one Servlet MBean registered
         Set<ObjectName> servlets = mbeanServer.queryNames(

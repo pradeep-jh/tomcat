@@ -1,18 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ *  Licensed to the Apache Software Foundation (ASF) under one or more
+ *  contributor license agreements.  See the NOTICE file distributed with
+ *  this work for additional information regarding copyright ownership.
+ *  The ASF licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package org.apache.tomcat.util.bcel.classfile;
 
@@ -21,36 +22,35 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.tomcat.util.bcel.Const;
+
 /**
- * Represents one annotation in the annotation table
+ * represents one annotation in the annotation table
  */
 public class AnnotationEntry {
 
-    static final AnnotationEntry[] EMPTY_ARRAY = {};
+    private final int type_index;
+    private final ConstantPool constant_pool;
 
-    private final int typeIndex;
-
-    private final ConstantPool constantPool;
-
-    private final List<ElementValuePair> elementValuePairs;
+    private final List<ElementValuePair> element_value_pairs;
 
     /*
      * Creates an AnnotationEntry from a DataInputStream
      *
      * @param input
-     * @param constantPool
+     * @param constant_pool
      * @throws IOException
      */
-    AnnotationEntry(final DataInput input, final ConstantPool constantPool) throws IOException {
+    AnnotationEntry(final DataInput input, final ConstantPool constant_pool) throws IOException {
 
-        this.constantPool = constantPool;
+        this.constant_pool = constant_pool;
 
-        typeIndex = input.readUnsignedShort();
-        final int numElementValuePairs = input.readUnsignedShort();
+        type_index = input.readUnsignedShort();
+        final int num_element_value_pairs = input.readUnsignedShort();
 
-        elementValuePairs = new ArrayList<>(numElementValuePairs);
-        for (int i = 0; i < numElementValuePairs; i++) {
-            elementValuePairs.add(new ElementValuePair(input, constantPool));
+        element_value_pairs = new ArrayList<>(num_element_value_pairs);
+        for (int i = 0; i < num_element_value_pairs; i++) {
+            element_value_pairs.add(new ElementValuePair(input, constant_pool));
         }
     }
 
@@ -58,13 +58,14 @@ public class AnnotationEntry {
      * @return the annotation type name
      */
     public String getAnnotationType() {
-        return constantPool.getConstantUtf8(typeIndex).getBytes();
+        final ConstantUtf8 c = (ConstantUtf8) constant_pool.getConstant(type_index, Const.CONSTANT_Utf8);
+        return c.getBytes();
     }
 
     /**
      * @return the element value pairs in this annotation entry
      */
     public List<ElementValuePair> getElementValuePairs() {
-        return elementValuePairs;
+        return element_value_pairs;
     }
 }

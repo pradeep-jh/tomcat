@@ -14,18 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.ha.tcp;
 
 import org.apache.catalina.tribes.Member;
 
 /**
  * @author Peter Rossbach
- *
- * @param message     The message that was sent
- * @param destination The destination of the message
- * @param exception   The exception, if any, when attempting to send the message
  */
-public record SendMessageData(Object message, Member destination, Exception exception) {
+public class SendMessageData {
+
+    private Object message ;
+    private Member destination ;
+    private Exception exception ;
+
+
+    /**
+     * @param message The message to send
+     * @param destination Member destination
+     * @param exception Associated error
+     */
+    public SendMessageData(Object message, Member destination,
+            Exception exception) {
+        super();
+        this.message = message;
+        this.destination = destination;
+        this.exception = exception;
+    }
 
     /**
      * @return the destination.
@@ -33,19 +48,16 @@ public record SendMessageData(Object message, Member destination, Exception exce
     public Member getDestination() {
         return destination;
     }
-
     /**
      * @return the exception.
      */
     public Exception getException() {
         return exception;
     }
-
     /**
      * @return the message.
      */
     public Object getMessage() {
         return message;
     }
-
 }

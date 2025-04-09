@@ -32,8 +32,7 @@ public class TestException extends DefaultTestCase {
     public void testException() throws Exception {
         datasource.getPoolProperties().setJdbcInterceptors(TestInterceptor.class.getName());
         Connection con = datasource.getConnection();
-        try (@SuppressWarnings("unused")
-        Statement s = con.createStatement()){
+        try (Statement s = con.createStatement()){
         } catch (Exception x) {
             Assert.fail();
         }

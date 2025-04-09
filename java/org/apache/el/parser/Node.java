@@ -16,12 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.el.parser;
 
-import jakarta.el.ELException;
-import jakarta.el.MethodInfo;
-import jakarta.el.MethodReference;
-import jakarta.el.ValueReference;
+import javax.el.ELException;
+import javax.el.MethodInfo;
+import javax.el.ValueReference;
 
 import org.apache.el.lang.EvaluationContext;
 
@@ -36,65 +36,49 @@ import org.apache.el.lang.EvaluationContext;
 @SuppressWarnings("all") // Ignore warnings in generated code
 public interface Node {
 
-    /**
-     * This method is called after the node has been made the current node. It indicates that child nodes can now be
-     * added to it.
-     */
-    void jjtOpen();
+  /** This method is called after the node has been made the current
+    node.  It indicates that child nodes can now be added to it. */
+  public void jjtOpen();
 
-    /**
-     * This method is called after all the child nodes have been added.
-     */
-    void jjtClose();
+  /** This method is called after all the child nodes have been
+    added. */
+  public void jjtClose();
 
-    /**
-     * This pair of methods are used to inform the node of its parent.
-     */
-    void jjtSetParent(Node n);
+  /** This pair of methods are used to inform the node of its
+    parent. */
+  public void jjtSetParent(Node n);
+  public Node jjtGetParent();
 
-    Node jjtGetParent();
+  /** This method tells the node to add its argument to the node's
+    list of children.  */
+  public void jjtAddChild(Node n, int i);
 
-    /**
-     * This method tells the node to add its argument to the node's list of children.
-     */
-    void jjtAddChild(Node n, int i);
+  /** This method returns a child node.  The children are numbered
+     from zero, left to right. */
+  public Node jjtGetChild(int i);
 
-    /**
-     * This method returns a child node. The children are numbered from zero, left to right.
-     */
-    Node jjtGetChild(int i);
+  /** Return the number of children the node has. */
+  public int jjtGetNumChildren();
 
-    /** Return the number of children the node has. */
-    int jjtGetNumChildren();
+  public String getImage();
 
-    String getImage();
+  public Object getValue(EvaluationContext ctx) throws ELException;
+  public void setValue(EvaluationContext ctx, Object value) throws ELException;
+  public Class<?> getType(EvaluationContext ctx) throws ELException;
+  public boolean isReadOnly(EvaluationContext ctx) throws ELException;
+  public void accept(NodeVisitor visitor) throws Exception;
+  public MethodInfo getMethodInfo(EvaluationContext ctx, Class<?>[] paramTypes)
+          throws ELException;
+  public Object invoke(EvaluationContext ctx, Class<?>[] paramTypes,
+          Object[] paramValues) throws ELException;
 
-    Object getValue(EvaluationContext ctx) throws ELException;
+  /**
+   * @since EL 2.2
+   */
+  public ValueReference getValueReference(EvaluationContext ctx);
 
-    void setValue(EvaluationContext ctx, Object value) throws ELException;
-
-    Class<?> getType(EvaluationContext ctx) throws ELException;
-
-    boolean isReadOnly(EvaluationContext ctx) throws ELException;
-
-    void accept(NodeVisitor visitor) throws Exception;
-
-    MethodInfo getMethodInfo(EvaluationContext ctx, Class<?>[] paramTypes) throws ELException;
-
-    Object invoke(EvaluationContext ctx, Class<?>[] paramTypes, Object[] paramValues) throws ELException;
-
-    /**
-     * @since EL 2.2
-     */
-    ValueReference getValueReference(EvaluationContext ctx);
-
-    /**
-     * @since EL 2.2
-     */
-    boolean isParametersProvided();
-
-    /**
-     * @since EL 5.0
-     */
-    MethodReference getMethodReference(EvaluationContext ctx);
+  /**
+   * @since EL 2.2
+   */
+  public boolean isParametersProvided();
 }

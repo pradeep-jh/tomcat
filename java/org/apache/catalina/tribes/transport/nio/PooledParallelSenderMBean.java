@@ -19,50 +19,50 @@ package org.apache.catalina.tribes.transport.nio;
 public interface PooledParallelSenderMBean {
 
     // Transport Attributes
-    int getRxBufSize();
+    public int getRxBufSize();
 
-    int getTxBufSize();
+    public int getTxBufSize();
 
-    int getUdpRxBufSize();
+    public int getUdpRxBufSize();
 
-    int getUdpTxBufSize();
+    public int getUdpTxBufSize();
 
-    boolean getDirectBuffer();
+    public boolean getDirectBuffer();
 
-    int getKeepAliveCount();
+    public int getKeepAliveCount();
 
-    long getKeepAliveTime();
+    public long getKeepAliveTime();
 
-    long getTimeout();
+    public long getTimeout();
 
-    int getMaxRetryAttempts();
+    public int getMaxRetryAttempts();
 
-    boolean getOoBInline();
+    public boolean getOoBInline();
 
-    boolean getSoKeepAlive();
+    public boolean getSoKeepAlive();
 
-    boolean getSoLingerOn();
+    public boolean getSoLingerOn();
 
-    int getSoLingerTime();
+    public int getSoLingerTime();
 
-    boolean getSoReuseAddress();
+    public boolean getSoReuseAddress();
 
-    int getSoTrafficClass();
+    public int getSoTrafficClass();
 
-    boolean getTcpNoDelay();
+    public boolean getTcpNoDelay();
 
-    boolean getThrowOnFailedAck();
+    public boolean getThrowOnFailedAck();
 
     // PooledSender Attributes
-    int getPoolSize();
+    public int getPoolSize();
 
-    long getMaxWait();
+    public long getMaxWait();
 
     // Operation
-    boolean isConnected();
+    public boolean isConnected();
 
-    int getInPoolSize();
+    public int getInPoolSize();
 
-    int getInUsePoolSize();
+    public int getInUsePoolSize();
 
 }

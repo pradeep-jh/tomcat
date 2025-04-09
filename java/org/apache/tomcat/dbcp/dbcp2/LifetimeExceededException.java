@@ -16,29 +16,29 @@
  */
 package org.apache.tomcat.dbcp.dbcp2;
 
-import java.sql.SQLException;
-
 /**
  * Exception thrown when a connection's maximum lifetime has been exceeded.
  *
  * @since 2.1
  */
-final class LifetimeExceededException extends SQLException {
+class LifetimeExceededException extends Exception {
 
     private static final long serialVersionUID = -3783783104516492659L;
 
     /**
-     * Constructs a new instance.
+     * Create a LifetimeExceededException.
      */
-    LifetimeExceededException() {
+    public LifetimeExceededException() {
+        super();
     }
 
     /**
-     * Constructs a new instance with the given message.
+     * Create a LifetimeExceededException with the given message.
      *
-     * @param reason a description of the exception
+     * @param message
+     *            The message with which to create the exception
      */
-    LifetimeExceededException(final String reason) {
-        super(reason);
+    public LifetimeExceededException(final String message) {
+        super(message);
     }
 }

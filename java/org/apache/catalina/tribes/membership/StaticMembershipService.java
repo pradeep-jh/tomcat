@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.membership;
 
 import java.io.IOException;
@@ -31,7 +32,8 @@ import org.apache.catalina.tribes.util.StringManager;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
-public class StaticMembershipService extends MembershipServiceBase implements StaticMembershipServiceMBean {
+public class StaticMembershipService extends MembershipServiceBase
+        implements StaticMembershipServiceMBean {
 
     private static final Log log = LogFactory.getLog(StaticMembershipService.class);
     protected static final StringManager sm = StringManager.getManager(Constants.Package);
@@ -46,7 +48,7 @@ public class StaticMembershipService extends MembershipServiceBase implements St
     private ObjectName oname = null;
 
     public StaticMembershipService() {
-        // default values
+        //default values
         setDefaults(this.properties);
     }
 
@@ -98,14 +100,15 @@ public class StaticMembershipService extends MembershipServiceBase implements St
 
     @Override
     public Member getLocalMember(boolean incAliveTime) {
-        if (incAliveTime && localMember != null) {
-            localMember.setMemberAliveTime(System.currentTimeMillis() - localMember.getServiceStartTime());
+        if ( incAliveTime && localMember != null) {
+            localMember.setMemberAliveTime(System.currentTimeMillis()-localMember.getServiceStartTime());
         }
         return localMember;
     }
 
     @Override
-    public void setLocalMemberProperties(String listenHost, int listenPort, int securePort, int udpPort) {
+    public void setLocalMemberProperties(String listenHost, int listenPort,
+            int securePort, int udpPort) {
         properties.setProperty("tcpListenHost", listenHost);
         properties.setProperty("tcpListenPort", String.valueOf(listenPort));
         try {
@@ -210,45 +213,36 @@ public class StaticMembershipService extends MembershipServiceBase implements St
 
     protected void setDefaults(Properties properties) {
         // default values
-        if (properties.getProperty("expirationTime") == null) {
-            properties.setProperty("expirationTime", "5000");
-        }
-        if (properties.getProperty("connectTimeout") == null) {
-            properties.setProperty("connectTimeout", "500");
-        }
-        if (properties.getProperty("rpcTimeout") == null) {
-            properties.setProperty("rpcTimeout", "3000");
-        }
-        if (properties.getProperty("useThread") == null) {
-            properties.setProperty("useThread", "false");
-        }
-        if (properties.getProperty("pingInterval") == null) {
-            properties.setProperty("pingInterval", "1000");
-        }
+        if (properties.getProperty("expirationTime") == null)
+            properties.setProperty("expirationTime","5000");
+        if (properties.getProperty("connectTimeout") == null)
+            properties.setProperty("connectTimeout","500");
+        if (properties.getProperty("rpcTimeout") == null)
+            properties.setProperty("rpcTimeout","3000");
+        if (properties.getProperty("useThread") == null)
+            properties.setProperty("useThread","false");
+        if (properties.getProperty("pingInterval") == null)
+            properties.setProperty("pingInterval","1000");
     }
 
     private String getMembershipName() {
-        return channel.getName() + "-" + "StaticMembership";
+        return channel.getName()+"-"+"StaticMembership";
     }
 
     private void findLocalMember() throws IOException {
-        if (this.localMember != null) {
-            return;
-        }
+        if (this.localMember != null) return;
         String listenHost = properties.getProperty("tcpListenHost");
         String listenPort = properties.getProperty("tcpListenPort");
 
         // find local member from static members
         for (StaticMember staticMember : this.staticMembers) {
-            if (Arrays.equals(InetAddress.getByName(listenHost).getAddress(), staticMember.getHost()) &&
-                    Integer.parseInt(listenPort) == staticMember.getPort()) {
+            if (Arrays.equals(InetAddress.getByName(listenHost).getAddress(), staticMember.getHost())
+                    && Integer.parseInt(listenPort) == staticMember.getPort()) {
                 this.localMember = staticMember;
                 break;
             }
         }
-        if (this.localMember == null) {
-            throw new IllegalStateException(sm.getString("staticMembershipService.noLocalMember"));
-        }
+        if (this.localMember == null) throw new IllegalStateException(sm.getString("staticMembershipService.noLocalMember"));
         staticMembers.remove(this.localMember);
     }
 }

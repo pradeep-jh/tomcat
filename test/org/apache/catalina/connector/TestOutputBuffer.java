@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -105,7 +105,7 @@ public class TestOutputBuffer extends TomcatBaseTest{
         private final String writeString;
         private final int writeCount;
 
-        WritingServlet(int writeLength) {
+        public WritingServlet(int writeLength) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < writeLength; i++) {
                 sb.append('x');
@@ -164,7 +164,7 @@ public class TestOutputBuffer extends TomcatBaseTest{
         // Create test data. This is carefully constructed to trigger the edge
         // case. Small variations may cause the test to miss the edge case.
         StringBuffer sb = new StringBuffer();
-        sb.append('a');
+        sb.append("a");
 
         for (int i = 0x10000; i < 0x11000; i++) {
             char[] chars = Character.toChars(i);
@@ -193,7 +193,7 @@ public class TestOutputBuffer extends TomcatBaseTest{
 
         private final char[] chars;
 
-        Utf8WriteChars(String data) {
+        public Utf8WriteChars(String data) {
             chars = data.toCharArray();
         }
 

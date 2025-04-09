@@ -24,7 +24,8 @@ import org.apache.coyote.http11.HttpOutputBuffer;
 import org.apache.coyote.http11.OutputFilter;
 
 /**
- * Void output filter, which silently swallows bytes written. Used with a 204 status (no content) or a HEAD request.
+ * Void output filter, which silently swallows bytes written. Used with a 204
+ * status (no content) or a HEAD request.
  *
  * @author Remy Maucherat
  */
@@ -74,7 +75,7 @@ public class VoidOutputFilter implements OutputFilter {
 
 
     @Override
-    public void end() throws IOException {
+    public void  end() throws IOException {
         buffer.end();
     }
 }

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.servlet.Servlet;
+import javax.servlet.Servlet;
 
 import org.junit.Assert;
 import org.junit.Test;

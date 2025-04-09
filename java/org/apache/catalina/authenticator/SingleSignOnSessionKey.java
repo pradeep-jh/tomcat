@@ -16,20 +16,20 @@
  */
 package org.apache.catalina.authenticator;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Session;
 
 /**
- * Key used by SSO to identify a session. This key is used rather than the actual session to facilitate the replication
- * of the SSO information across a cluster where replicating the entire session would generate significant, unnecessary
- * overhead.
+ * Key used by SSO to identify a session. This key is used rather than the
+ * actual session to facilitate the replication of the SSO information
+ * across a cluster where replicating the entire session would generate
+ * significant, unnecessary overhead.
+ *
  */
 public class SingleSignOnSessionKey implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String sessionId;
@@ -59,9 +59,12 @@ public class SingleSignOnSessionKey implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sessionId == null) ? 0 : sessionId.hashCode());
-        result = prime * result + ((contextName == null) ? 0 : contextName.hashCode());
-        result = prime * result + ((hostName == null) ? 0 : hostName.hashCode());
+        result = prime * result +
+                ((sessionId == null) ? 0 : sessionId.hashCode());
+        result = prime * result +
+                ((contextName == null) ? 0 : contextName.hashCode());
+        result = prime * result +
+                ((hostName == null) ? 0 : hostName.hashCode());
         return result;
     }
 
@@ -92,10 +95,13 @@ public class SingleSignOnSessionKey implements Serializable {
             return false;
         }
         if (hostName == null) {
-            return other.hostName == null;
-        } else {
-            return hostName.equals(other.hostName);
+            if (other.hostName != null) {
+                return false;
+            }
+        } else if (!hostName.equals(other.hostName)) {
+            return false;
         }
+        return true;
     }
 
     @Override
@@ -103,6 +109,14 @@ public class SingleSignOnSessionKey implements Serializable {
         // Session ID is 32. Standard text is 36. Host could easily be 20+.
         // Context could be anything from 0 upwards. 128 seems like a reasonable
         // size to accommodate most cases without being too big.
-        return "Host: [" + hostName + "], Context: [" + contextName + "], SessionID: [" + sessionId + ']';
+        StringBuilder sb = new StringBuilder(128);
+        sb.append("Host: [");
+        sb.append(hostName);
+        sb.append("], Context: [");
+        sb.append(contextName);
+        sb.append("], SessionID: [");
+        sb.append(sessionId);
+        sb.append("]");
+        return sb.toString();
     }
 }

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 import org.apache.tomcat.util.http.fileupload.FileItem;
 import org.apache.tomcat.util.http.fileupload.FileItemHeaders;
@@ -42,24 +41,9 @@ import org.apache.tomcat.util.http.fileupload.util.LimitedInputStream;
  * {@link FileUploadBase#getItemIterator(RequestContext)}.
  */
 public class FileItemIteratorImpl implements FileItemIterator {
-    /**
-     * The file uploads processing utility.
-     * @see FileUploadBase
-     */
     private final FileUploadBase fileUploadBase;
-    /**
-     * The request context.
-     * @see RequestContext
-     */
     private final RequestContext ctx;
-    /**
-     * The maximum allowed size of a complete request.
-     */
-    private long sizeMax;
-    /**
-     * The maximum allowed size of a single uploaded file.
-     */
-    private long fileSizeMax;
+    private long sizeMax, fileSizeMax;
 
 
     @Override
@@ -68,7 +52,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
     }
 
     @Override
-    public void setSizeMax(final long sizeMax) {
+    public void setSizeMax(long sizeMax) {
         this.sizeMax = sizeMax;
     }
 
@@ -78,7 +62,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
     }
 
     @Override
-    public void setFileSizeMax(final long fileSizeMax) {
+    public void setFileSizeMax(long fileSizeMax) {
         this.fileSizeMax = fileSizeMax;
     }
 
@@ -126,25 +110,30 @@ public class FileItemIteratorImpl implements FileItemIterator {
     /**
      * Creates a new instance.
      *
-     * @param fileUploadBase Main processor.
-     * @param requestContext The request context.
+     * @param pFileUploadBase Upload instance
+     * @param pRequestContext The request context.
      * @throws FileUploadException An error occurred while
      *   parsing the request.
      * @throws IOException An I/O error occurred.
      */
-    public FileItemIteratorImpl(final FileUploadBase fileUploadBase, final RequestContext requestContext)
-        throws FileUploadException, IOException {
-        this.fileUploadBase = fileUploadBase;
+    public FileItemIteratorImpl(FileUploadBase pFileUploadBase, RequestContext pRequestContext)
+            throws FileUploadException, IOException {
+        fileUploadBase = pFileUploadBase;
         sizeMax = fileUploadBase.getSizeMax();
         fileSizeMax = fileUploadBase.getFileSizeMax();
-        ctx = Objects.requireNonNull(requestContext, "requestContext");
+        ctx = pRequestContext;
+        if (ctx == null) {
+            throw new NullPointerException("ctx parameter");
+        }
+
+
         skipPreamble = true;
         findNextItem();
     }
 
-    protected void init(final FileUploadBase fileUploadBase, @SuppressWarnings("unused") final RequestContext pRequestContext)
+    protected void init(FileUploadBase fileUploadBase, @SuppressWarnings("unused") RequestContext pRequestContext)
             throws FileUploadException, IOException {
-        final String contentType = ctx.getContentType();
+        String contentType = ctx.getContentType();
         if ((null == contentType)
                 || (!contentType.toLowerCase(Locale.ENGLISH).startsWith(FileUploadBase.MULTIPART))) {
             throw new InvalidContentTypeException(
@@ -154,7 +143,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
 
         final long requestSize = ((UploadContext) ctx).contentLength();
 
-        final InputStream input; // N.B. this is eventually closed in MultipartStream processing
+        InputStream input; // N.B. this is eventually closed in MultipartStream processing
         if (sizeMax >= 0) {
             if (requestSize != -1 && requestSize > sizeMax) {
                 throw new SizeLimitExceededException(
@@ -165,9 +154,9 @@ public class FileItemIteratorImpl implements FileItemIterator {
             // N.B. this is eventually closed in MultipartStream processing
             input = new LimitedInputStream(ctx.getInputStream(), sizeMax) {
                 @Override
-                protected void raiseError(final long pSizeMax, final long pCount)
+                protected void raiseError(long pSizeMax, long pCount)
                         throws IOException {
-                    final FileUploadException ex = new SizeLimitExceededException(
+                    FileUploadException ex = new SizeLimitExceededException(
                     String.format("the request was rejected because its size (%s) exceeds the configured maximum (%s)",
                             Long.valueOf(pCount), Long.valueOf(pSizeMax)),
                            pCount, pSizeMax);
@@ -192,7 +181,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
         progressNotifier = new MultipartStream.ProgressNotifier(fileUploadBase.getProgressListener(), requestSize);
         try {
             multiPartStream = new MultipartStream(input, multiPartBoundary, progressNotifier);
-        } catch (final IllegalArgumentException iae) {
+        } catch (IllegalArgumentException iae) {
             IOUtils.closeQuietly(input); // avoid possible resource leak
             throw new InvalidContentTypeException(
                     String.format("The boundary specified in the %s header is too long", FileUploadBase.CONTENT_TYPE), iae);
@@ -223,7 +212,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
         }
         final MultipartStream multi = getMultiPartStream();
         for (;;) {
-            final boolean nextPart;
+            boolean nextPart;
             if (skipPreamble) {
                 nextPart = multi.skipPreamble();
             } else {
@@ -240,23 +229,23 @@ public class FileItemIteratorImpl implements FileItemIterator {
                 currentFieldName = null;
                 continue;
             }
-            final FileItemHeaders headers = fileUploadBase.getParsedHeaders(multi.readHeaders());
+            FileItemHeaders headers = fileUploadBase.getParsedHeaders(multi.readHeaders());
             if (currentFieldName == null) {
                 // We're parsing the outer multipart
-                final String fieldName = fileUploadBase.getFieldName(headers);
+                String fieldName = fileUploadBase.getFieldName(headers);
                 if (fieldName != null) {
-                    final String subContentType = headers.getHeader(FileUploadBase.CONTENT_TYPE);
+                    String subContentType = headers.getHeader(FileUploadBase.CONTENT_TYPE);
                     if (subContentType != null
                             &&  subContentType.toLowerCase(Locale.ENGLISH)
                                     .startsWith(FileUploadBase.MULTIPART_MIXED)) {
                         currentFieldName = fieldName;
                         // Multiple files associated with this field name
-                        final byte[] subBoundary = fileUploadBase.getBoundary(subContentType);
+                        byte[] subBoundary = fileUploadBase.getBoundary(subContentType);
                         multi.setBoundary(subBoundary);
                         skipPreamble = true;
                         continue;
                     }
-                    final String fileName = fileUploadBase.getFileName(headers);
+                    String fileName = fileUploadBase.getFileName(headers);
                     currentItem = new FileItemStreamImpl(this, fileName,
                             fieldName, headers.getHeader(FileUploadBase.CONTENT_TYPE),
                             fileName == null, getContentLength(headers));
@@ -266,7 +255,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
                     return true;
                 }
             } else {
-                final String fileName = fileUploadBase.getFileName(headers);
+                String fileName = fileUploadBase.getFileName(headers);
                 if (fileName != null) {
                     currentItem = new FileItemStreamImpl(this, fileName,
                             currentFieldName,
@@ -282,10 +271,10 @@ public class FileItemIteratorImpl implements FileItemIterator {
         }
     }
 
-    private long getContentLength(final FileItemHeaders pHeaders) {
+    private long getContentLength(FileItemHeaders pHeaders) {
         try {
             return Long.parseLong(pHeaders.getHeader(FileUploadBase.CONTENT_LENGTH));
-        } catch (final Exception e) {
+        } catch (Exception e) {
             return -1;
         }
     }
@@ -310,7 +299,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
         }
         try {
             return findNextItem();
-        } catch (final FileUploadIOException e) {
+        } catch (FileUploadIOException e) {
             // unwrap encapsulated SizeException
             throw (FileUploadException) e.getCause();
         }
@@ -341,8 +330,7 @@ public class FileItemIteratorImpl implements FileItemIterator {
         final List<FileItem> items = new ArrayList<>();
         while (hasNext()) {
             final FileItemStream fis = next();
-            final FileItem fi = fileUploadBase.getFileItemFactory().createItem(fis.getFieldName(),
-                    fis.getContentType(), fis.isFormField(), fis.getName());
+            final FileItem fi = fileUploadBase.getFileItemFactory().createItem(fis.getFieldName(), fis.getContentType(), fis.isFormField(), fis.getName());
             items.add(fi);
         }
         return items;

@@ -34,8 +34,7 @@ public class AbandonPercentageTest extends DefaultTestCase {
         this.datasource.getPoolProperties().setTimeBetweenEvictionRunsMillis(100);
         this.datasource.getPoolProperties().setRemoveAbandoned(true);
         this.datasource.getPoolProperties().setRemoveAbandonedTimeout(1);
-        try (@SuppressWarnings("unused")
-        Connection con = datasource.getConnection()) {
+        try (Connection con = datasource.getConnection()) {
             Assert.assertEquals("Number of connections active/busy should be 1",1,datasource.getPool().getActive());
             Thread.sleep(2000);
             Assert.assertEquals("Number of connections active/busy should be 0",0,datasource.getPool().getActive());
@@ -52,8 +51,7 @@ public class AbandonPercentageTest extends DefaultTestCase {
         this.datasource.getPoolProperties().setTimeBetweenEvictionRunsMillis(100);
         this.datasource.getPoolProperties().setRemoveAbandoned(true);
         this.datasource.getPoolProperties().setRemoveAbandonedTimeout(1);
-        try (@SuppressWarnings("unused")
-        Connection con = datasource.getConnection()) {
+        try (Connection con = datasource.getConnection()) {
             Assert.assertEquals("Number of connections active/busy should be 1",1,datasource.getPool().getActive());
             Thread.sleep(2000);
             Assert.assertEquals("Number of connections active/busy should be 1",1,datasource.getPool().getActive());

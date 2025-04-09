@@ -206,7 +206,7 @@ public class TestLimitLatch {
         private final LimitLatch latch;
         private volatile int stage = 0;
 
-        TestThread(LimitLatch latch, Object lock) {
+        public TestThread(LimitLatch latch, Object lock) {
             this.latch = latch;
             this.lock = lock;
         }

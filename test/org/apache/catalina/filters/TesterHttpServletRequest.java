@@ -19,7 +19,6 @@ package org.apache.catalina.filters;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,27 +29,27 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletConnection;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletMapping;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpUpgradeHandler;
-import jakarta.servlet.http.Part;
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletMapping;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
+import javax.servlet.http.PushBuilder;
 
 public class TesterHttpServletRequest implements HttpServletRequest {
 
-    private final Map<String, Object> attributes = new HashMap<>();
-    private final Map<String, List<String>> headers = new HashMap<>();
+    private Map<String, Object> attributes = new HashMap<>();
+    private Map<String, List<String>> headers = new HashMap<>();
     private String method;
     private String scheme;
     private String serverName;
@@ -73,8 +72,8 @@ public class TesterHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public void setCharacterEncoding(String env) throws UnsupportedEncodingException {
-        throw new RuntimeException("Not implemented");
+    public void setCharacterEncoding(String env)
+            throws UnsupportedEncodingException {
     }
 
     @Override
@@ -111,14 +110,9 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return an empty Hashmap.
-     */
     @Override
-    public Map<String, String[]> getParameterMap() {
-        return new HashMap<>();
+    public Map<String,String[]> getParameterMap() {
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -189,18 +183,18 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return false.
-     */
     @Override
     public boolean isSecure() {
-        return false;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
     public RequestDispatcher getRequestDispatcher(String path) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public String getRealPath(String path) {
         throw new RuntimeException("Not implemented");
     }
 
@@ -257,7 +251,7 @@ public class TesterHttpServletRequest implements HttpServletRequest {
 
     @Override
     public Enumeration<String> getHeaders(String name) {
-        return Collections.enumeration(headers.get(name));
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -299,14 +293,9 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return null.
-     */
     @Override
     public String getQueryString() {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -319,14 +308,9 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return null.
-     */
     @Override
     public Principal getUserPrincipal() {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -334,14 +318,9 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return null.
-     */
     @Override
     public String getRequestURI() {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -354,14 +333,9 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return null.
-     */
     @Override
     public HttpSession getSession(boolean create) {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -385,6 +359,11 @@ public class TesterHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public boolean isRequestedSessionIdFromUrl() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
     public long getContentLengthLong() {
         throw new RuntimeException("Not implemented");
     }
@@ -400,8 +379,8 @@ public class TesterHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse)
-            throws IllegalStateException {
+    public AsyncContext startAsync(ServletRequest servletRequest,
+            ServletResponse servletResponse) throws IllegalStateException {
         throw new RuntimeException("Not implemented");
     }
 
@@ -431,12 +410,14 @@ public class TesterHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
+    public boolean authenticate(HttpServletResponse response)
+            throws IOException, ServletException {
         throw new RuntimeException("Not implemented");
     }
 
     @Override
-    public void login(String username, String password) throws ServletException {
+    public void login(String username, String password)
+            throws ServletException {
         throw new RuntimeException("Not implemented");
     }
 
@@ -455,20 +436,15 @@ public class TesterHttpServletRequest implements HttpServletRequest {
         throw new RuntimeException("Not implemented");
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * This test implementation is hard coded to return a new instance of the httpUpgradeHandlerClass.
-     */
     @Override
-    public <T extends HttpUpgradeHandler> T upgrade(Class<T> httpUpgradeHandlerClass)
-        throws IOException, ServletException {
-        try {
-            return httpUpgradeHandlerClass.getDeclaredConstructor().newInstance();
-        }catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ignore){
+    public <T extends HttpUpgradeHandler> T upgrade(
+            Class<T> httpUpgradeHandlerClass) throws IOException, ServletException {
+        throw new RuntimeException("Not implemented");
+    }
 
-        }
-        return null;
+    @Override
+    public PushBuilder newPushBuilder() {
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -478,21 +454,6 @@ public class TesterHttpServletRequest implements HttpServletRequest {
 
     @Override
     public Map<String, String> getTrailerFields() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public String getRequestId() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public String getProtocolRequestId() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public ServletConnection getServletConnection() {
         throw new RuntimeException("Not implemented");
     }
 }

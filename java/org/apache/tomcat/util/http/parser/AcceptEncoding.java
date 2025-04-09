@@ -52,7 +52,7 @@ public class AcceptEncoding {
                 continue;
             }
 
-            if (encoding.isEmpty()) {
+            if (encoding.length() == 0) {
                 // No more data to read
                 break;
             }

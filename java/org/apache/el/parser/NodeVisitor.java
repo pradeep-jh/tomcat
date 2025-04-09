@@ -20,5 +20,5 @@ package org.apache.el.parser;
  * @author Jacob Hookom [jacob@hookom.net]
  */
 public interface NodeVisitor {
-    void visit(Node node) throws Exception;
+    public void visit(Node node) throws Exception;
 }

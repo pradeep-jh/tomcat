@@ -64,7 +64,7 @@ public class ManagedConcurrentWeakHashMap<K, V> extends AbstractMap<K, V> implem
         private final int hash;
         private boolean dead;
 
-        Key(Object key, ReferenceQueue<Object> queue) {
+        public Key(Object key, ReferenceQueue<Object> queue) {
             super(key, queue);
             hash = key.hashCode();
         }
@@ -214,7 +214,7 @@ public class ManagedConcurrentWeakHashMap<K, V> extends AbstractMap<K, V> implem
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return new AbstractSet<>() {
+        return new AbstractSet<Map.Entry<K, V>>() {
             @Override
             public boolean isEmpty() {
                 return map.isEmpty();
@@ -227,7 +227,7 @@ public class ManagedConcurrentWeakHashMap<K, V> extends AbstractMap<K, V> implem
 
             @Override
             public Iterator<Map.Entry<K, V>> iterator() {
-                return new Iterator<>() {
+                return new Iterator<Map.Entry<K, V>>() {
                     private final Iterator<Map.Entry<Key, V>> it = map
                             .entrySet().iterator();
 
@@ -238,7 +238,7 @@ public class ManagedConcurrentWeakHashMap<K, V> extends AbstractMap<K, V> implem
 
                     @Override
                     public Map.Entry<K, V> next() {
-                        return new Map.Entry<>() {
+                        return new Map.Entry<K, V>() {
                             private final Map.Entry<Key, V> en = it.next();
 
                             @SuppressWarnings("unchecked")

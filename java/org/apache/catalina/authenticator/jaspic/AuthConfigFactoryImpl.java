@@ -1,18 +1,18 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+/**
+ *  Licensed to the Apache Software Foundation (ASF) under one or more
+ *  contributor license agreements.  See the NOTICE file distributed with
+ *  this work for additional information regarding copyright ownership.
+ *  The ASF licenses this file to You under the Apache License, Version 2.0
+ *  (the "License"); you may not use this file except in compliance with
+ *  the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package org.apache.catalina.authenticator.jaspic;
 
@@ -27,20 +27,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.security.auth.Subject;
-import javax.security.auth.callback.CallbackHandler;
-
-import jakarta.security.auth.message.AuthException;
-import jakarta.security.auth.message.AuthStatus;
-import jakarta.security.auth.message.MessageInfo;
-import jakarta.security.auth.message.config.AuthConfigFactory;
-import jakarta.security.auth.message.config.AuthConfigProvider;
-import jakarta.security.auth.message.config.ClientAuthConfig;
-import jakarta.security.auth.message.config.RegistrationListener;
-import jakarta.security.auth.message.config.ServerAuthConfig;
-import jakarta.security.auth.message.config.ServerAuthContext;
-import jakarta.security.auth.message.module.ServerAuthModule;
-import jakarta.servlet.ServletContext;
+import javax.security.auth.message.config.AuthConfigFactory;
+import javax.security.auth.message.config.AuthConfigProvider;
+import javax.security.auth.message.config.RegistrationListener;
 
 import org.apache.catalina.Globals;
 import org.apache.catalina.authenticator.jaspic.PersistentProviderRegistrations.Provider;
@@ -55,21 +44,24 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     private static final StringManager sm = StringManager.getManager(AuthConfigFactoryImpl.class);
 
     private static final String CONFIG_PATH = "conf/jaspic-providers.xml";
-    private static final File CONFIG_FILE = new File(System.getProperty(Globals.CATALINA_BASE_PROP), CONFIG_PATH);
+    private static final File CONFIG_FILE =
+            new File(System.getProperty(Globals.CATALINA_BASE_PROP), CONFIG_PATH);
     private static final Object CONFIG_FILE_LOCK = new Object();
 
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    private static final String SERVLET_LAYER_ID = "HttpServlet";
+    private static String DEFAULT_REGISTRATION_ID = getRegistrationID(null, null);
 
-    private static final String DEFAULT_REGISTRATION_ID = getRegistrationID(null, null);
-
-    private final Map<String,RegistrationContextImpl> layerAppContextRegistrations = new ConcurrentHashMap<>();
-    private final Map<String,RegistrationContextImpl> appContextRegistrations = new ConcurrentHashMap<>();
-    private final Map<String,RegistrationContextImpl> layerRegistrations = new ConcurrentHashMap<>();
+    private final Map<String,RegistrationContextImpl> layerAppContextRegistrations =
+            new ConcurrentHashMap<>();
+    private final Map<String,RegistrationContextImpl> appContextRegistrations =
+            new ConcurrentHashMap<>();
+    private final Map<String,RegistrationContextImpl> layerRegistrations =
+            new ConcurrentHashMap<>();
     // Note: Although there will only ever be a maximum of one entry in this
-    // Map, use a ConcurrentHashMap for consistency
-    private final Map<String,RegistrationContextImpl> defaultRegistration = new ConcurrentHashMap<>(1);
+    //       Map, use a ConcurrentHashMap for consistency
+    private final Map<String,RegistrationContextImpl> defaultRegistration =
+            new ConcurrentHashMap<>(1);
 
 
     public AuthConfigFactoryImpl() {
@@ -78,11 +70,14 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
 
 
     @Override
-    public AuthConfigProvider getConfigProvider(String layer, String appContext, RegistrationListener listener) {
-        RegistrationContextImpl registrationContext = findRegistrationContextImpl(layer, appContext);
+    public AuthConfigProvider getConfigProvider(String layer, String appContext,
+            RegistrationListener listener) {
+        RegistrationContextImpl registrationContext =
+                findRegistrationContextImpl(layer, appContext);
         if (registrationContext != null) {
             if (listener != null) {
-                RegistrationListenerWrapper wrapper = new RegistrationListenerWrapper(layer, appContext, listener);
+                RegistrationListenerWrapper wrapper = new RegistrationListenerWrapper(
+                        layer, appContext, listener);
                 registrationContext.addListener(wrapper);
             }
             return registrationContext.getProvider();
@@ -92,18 +87,23 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
 
 
     @Override
-    public String registerConfigProvider(String className, Map<String,String> properties, String layer,
-            String appContext, String description) {
-        String registrationID = doRegisterConfigProvider(className, properties, layer, appContext, description);
+    public String registerConfigProvider(String className,
+            @SuppressWarnings("rawtypes") Map properties, String layer, String appContext,
+            String description) {
+        String registrationID =
+                doRegisterConfigProvider(className, properties, layer, appContext, description);
         savePersistentRegistrations();
         return registrationID;
     }
 
 
-    private String doRegisterConfigProvider(String className, Map<String,String> properties, String layer,
-            String appContext, String description) {
+    @SuppressWarnings("unchecked")
+    private String doRegisterConfigProvider(String className,
+            @SuppressWarnings("rawtypes") Map properties, String layer, String appContext,
+            String description) {
         if (log.isDebugEnabled()) {
-            log.debug(sm.getString("authConfigFactoryImpl.registerClass", className, layer, appContext));
+            log.debug(sm.getString("authConfigFactoryImpl.registerClass",
+                    className, layer, appContext));
         }
 
         AuthConfigProvider provider = null;
@@ -112,17 +112,17 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
         }
 
         String registrationID = getRegistrationID(layer, appContext);
-        RegistrationContextImpl registrationContextImpl =
-                new RegistrationContextImpl(layer, appContext, description, true, provider, properties);
+        RegistrationContextImpl registrationContextImpl = new RegistrationContextImpl(
+                layer, appContext, description, true, provider, properties);
         addRegistrationContextImpl(layer, appContext, registrationID, registrationContextImpl);
         return registrationID;
     }
 
 
-    private AuthConfigProvider createAuthConfigProvider(String className, Map<String,String> properties)
-            throws SecurityException {
+    private AuthConfigProvider createAuthConfigProvider(String className,
+            @SuppressWarnings("rawtypes") Map properties) throws SecurityException {
         Class<?> clazz = null;
-        AuthConfigProvider provider;
+        AuthConfigProvider provider = null;
         try {
             clazz = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
         } catch (ClassNotFoundException e) {
@@ -142,30 +142,30 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
 
 
     @Override
-    public String registerConfigProvider(AuthConfigProvider provider, String layer, String appContext,
-            String description) {
+    public String registerConfigProvider(AuthConfigProvider provider, String layer,
+            String appContext, String description) {
         if (log.isDebugEnabled()) {
-            log.debug(sm.getString("authConfigFactoryImpl.registerInstance", provider.getClass().getName(), layer,
-                    appContext));
+            log.debug(sm.getString("authConfigFactoryImpl.registerInstance",
+                    provider.getClass().getName(), layer, appContext));
         }
         String registrationID = getRegistrationID(layer, appContext);
-        RegistrationContextImpl registrationContextImpl =
-                new RegistrationContextImpl(layer, appContext, description, false, provider, null);
+        RegistrationContextImpl registrationContextImpl = new RegistrationContextImpl(
+                layer, appContext, description, false, provider, null);
         addRegistrationContextImpl(layer, appContext, registrationID, registrationContextImpl);
         return registrationID;
     }
 
 
-    private void addRegistrationContextImpl(String layer, String appContext, String registrationID,
-            RegistrationContextImpl registrationContextImpl) {
-        RegistrationContextImpl previous;
+    private void addRegistrationContextImpl(String layer, String appContext,
+            String registrationID, RegistrationContextImpl registrationContextImpl) {
+        RegistrationContextImpl previous = null;
 
         // Add the registration, noting any registration it replaces
         if (layer != null && appContext != null) {
             previous = layerAppContextRegistrations.put(registrationID, registrationContextImpl);
         } else if (layer == null && appContext != null) {
             previous = appContextRegistrations.put(registrationID, registrationContextImpl);
-        } else if (layer != null) {
+        } else if (layer != null && appContext == null) {
             previous = layerRegistrations.put(registrationID, registrationContextImpl);
         } else {
             previous = defaultRegistration.put(registrationID, registrationContextImpl);
@@ -180,10 +180,12 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
                 // Need to check existing appContext registrations
                 // (and layer and default)
                 // appContext must match
-                RegistrationContextImpl registration = appContextRegistrations.get(getRegistrationID(null, appContext));
+                RegistrationContextImpl registration =
+                        appContextRegistrations.get(getRegistrationID(null, appContext));
                 if (registration != null) {
                     for (RegistrationListenerWrapper wrapper : registration.listeners) {
-                        if (layer.equals(wrapper.messageLayer()) && appContext.equals(wrapper.appContext())) {
+                        if (layer.equals(wrapper.getMessageLayer()) &&
+                                appContext.equals(wrapper.getAppContext())) {
                             registration.listeners.remove(wrapper);
                             wrapper.listener.notify(wrapper.messageLayer, wrapper.appContext);
                         }
@@ -196,7 +198,7 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
                 // Need to check registrations for all layers
                 for (RegistrationContextImpl registration : layerRegistrations.values()) {
                     for (RegistrationListenerWrapper wrapper : registration.listeners) {
-                        if (appContext.equals(wrapper.appContext())) {
+                        if (appContext.equals(wrapper.getAppContext())) {
                             registration.listeners.remove(wrapper);
                             wrapper.listener.notify(wrapper.messageLayer, wrapper.appContext);
                         }
@@ -207,8 +209,8 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
                 // Need to check default
                 for (RegistrationContextImpl registration : defaultRegistration.values()) {
                     for (RegistrationListenerWrapper wrapper : registration.listeners) {
-                        if (appContext != null && appContext.equals(wrapper.appContext()) ||
-                                layer != null && layer.equals(wrapper.messageLayer())) {
+                        if (appContext != null && appContext.equals(wrapper.getAppContext()) ||
+                                layer != null && layer.equals(wrapper.getMessageLayer())) {
                             registration.listeners.remove(wrapper);
                             wrapper.listener.notify(wrapper.messageLayer, wrapper.appContext);
                         }
@@ -235,7 +237,7 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
             registration = layerAppContextRegistrations.remove(registrationID);
         }
         if (registration == null) {
-            registration = appContextRegistrations.remove(registrationID);
+            registration =  appContextRegistrations.remove(registrationID);
         }
         if (registration == null) {
             registration = layerRegistrations.remove(registrationID);
@@ -245,7 +247,7 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
             return false;
         } else {
             for (RegistrationListenerWrapper wrapper : registration.listeners) {
-                wrapper.listener().notify(wrapper.messageLayer(), wrapper.appContext());
+                wrapper.getListener().notify(wrapper.getMessageLayer(), wrapper.getAppContext());
             }
             if (registration.isPersistent()) {
                 savePersistentRegistrations();
@@ -286,8 +288,8 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     }
 
 
-    private void findProvider(AuthConfigProvider provider, Map<String,RegistrationContextImpl> registrations,
-            List<String> result) {
+    private void findProvider(AuthConfigProvider provider,
+            Map<String,RegistrationContextImpl> registrations, List<String> result) {
         for (Entry<String,RegistrationContextImpl> entry : registrations.entrySet()) {
             if (provider.equals(entry.getValue().getProvider())) {
                 result.add(entry.getKey());
@@ -318,51 +320,14 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     }
 
 
-    @Override
-    public String registerServerAuthModule(ServerAuthModule serverAuthModule, Object context) {
-        if (context == null) {
-            throw new IllegalArgumentException(sm.getString("authConfigFactoryImpl.nullContext"));
-        }
-
-        if (context instanceof ServletContext servletContext) {
-            String appContext = servletContext.getVirtualServerName() + " " + servletContext.getContextPath();
-
-            AuthConfigProvider authConfigProvider = new SingleConfigAuthConfigProvider(serverAuthModule, appContext);
-
-            return registerConfigProvider(authConfigProvider, SERVLET_LAYER_ID, appContext, "");
-        }
-
-        // Unsupported context type
-        throw new IllegalArgumentException(
-                sm.getString("authConfigFactoryImpl.unsupportedContextType", context.getClass().getName()));
-    }
-
-
-    @Override
-    public void removeServerAuthModule(Object context) {
-        if (context == null) {
-            throw new IllegalArgumentException(sm.getString("authConfigFactoryImpl.nullContext"));
-        }
-
-        if (context instanceof ServletContext servletContext) {
-            String layer = "HttpServlet";
-            String appContextID = servletContext.getVirtualServerName() + " " + servletContext.getContextPath();
-
-            removeRegistration(getRegistrationID(layer, appContextID));
-        }
-
-        // Unsupported context type
-        throw new IllegalArgumentException(
-                sm.getString("authConfigFactoryImpl.unsupportedContextType", context.getClass().getName()));
-    }
-
-
     private static String getRegistrationID(String layer, String appContext) {
-        if (layer != null && layer.isEmpty()) {
-            throw new IllegalArgumentException(sm.getString("authConfigFactoryImpl.zeroLengthMessageLayer"));
+        if (layer != null && layer.length() == 0) {
+            throw new IllegalArgumentException(
+                    sm.getString("authConfigFactoryImpl.zeroLengthMessageLayer"));
         }
-        if (appContext != null && appContext.isEmpty()) {
-            throw new IllegalArgumentException(sm.getString("authConfigFactoryImpl.zeroLengthAppContext"));
+        if (appContext != null && appContext.length() == 0) {
+            throw new IllegalArgumentException(
+                    sm.getString("authConfigFactoryImpl.zeroLengthAppContext"));
         }
         return (layer == null ? "" : layer) + ":" + (appContext == null ? "" : appContext);
     }
@@ -371,15 +336,16 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     private void loadPersistentRegistrations() {
         synchronized (CONFIG_FILE_LOCK) {
             if (log.isDebugEnabled()) {
-                log.debug(sm.getString("authConfigFactoryImpl.load", CONFIG_FILE.getAbsolutePath()));
+                log.debug(sm.getString("authConfigFactoryImpl.load",
+                        CONFIG_FILE.getAbsolutePath()));
             }
             if (!CONFIG_FILE.isFile()) {
                 return;
             }
             Providers providers = PersistentProviderRegistrations.loadProviders(CONFIG_FILE);
             for (Provider provider : providers.getProviders()) {
-                doRegisterConfigProvider(provider.getClassName(), provider.getProperties(), provider.getLayer(),
-                        provider.getAppContext(), provider.getDescription());
+                doRegisterConfigProvider(provider.getClassName(), provider.getProperties(),
+                        provider.getLayer(), provider.getAppContext(), provider.getDescription());
             }
         }
     }
@@ -397,14 +363,16 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     }
 
 
-    private void savePersistentProviders(Providers providers, Map<String,RegistrationContextImpl> registrations) {
+    private void savePersistentProviders(Providers providers,
+            Map<String,RegistrationContextImpl> registrations) {
         for (Entry<String,RegistrationContextImpl> entry : registrations.entrySet()) {
             savePersistentProvider(providers, entry.getValue());
         }
     }
 
 
-    private void savePersistentProvider(Providers providers, RegistrationContextImpl registrationContextImpl) {
+    private void savePersistentProvider(Providers providers,
+            RegistrationContextImpl registrationContextImpl) {
         if (registrationContextImpl != null && registrationContextImpl.isPersistent()) {
             Provider provider = new Provider();
             provider.setAppContext(registrationContextImpl.getAppContext());
@@ -439,8 +407,8 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
 
     private static class RegistrationContextImpl implements RegistrationContext {
 
-        private RegistrationContextImpl(String messageLayer, String appContext, String description, boolean persistent,
-                AuthConfigProvider provider, Map<String,String> properties) {
+        private RegistrationContextImpl(String messageLayer, String appContext, String description,
+                boolean persistent, AuthConfigProvider provider, Map<String,String> properties) {
             this.messageLayer = messageLayer;
             this.appContext = appContext;
             this.description = description;
@@ -504,7 +472,7 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
         private boolean removeListener(RegistrationListener listener) {
             boolean result = false;
             for (RegistrationListenerWrapper wrapper : listeners) {
-                if (wrapper.listener().equals(listener)) {
+                if (wrapper.getListener().equals(listener)) {
                     listeners.remove(wrapper);
                     result = true;
                 }
@@ -514,126 +482,33 @@ public class AuthConfigFactoryImpl extends AuthConfigFactory {
     }
 
 
-    private record RegistrationListenerWrapper(String messageLayer, String appContext, RegistrationListener listener) {
-    }
+    private static class RegistrationListenerWrapper {
 
-
-    private record SingleModuleServerAuthContext(ServerAuthModule module) implements ServerAuthContext {
-        @Override
-        public AuthStatus validateRequest(MessageInfo messageInfo, Subject clientSubject, Subject serviceSubject)
-            throws AuthException {
-            return module.validateRequest(messageInfo, clientSubject, serviceSubject);
-        }
-
-        @Override
-        public AuthStatus secureResponse(MessageInfo messageInfo, Subject serviceSubject) throws AuthException {
-            return module.secureResponse(messageInfo, serviceSubject);
-        }
-
-        @Override
-        public void cleanSubject(MessageInfo messageInfo, Subject subject) throws AuthException {
-            module.cleanSubject(messageInfo, subject);
-        }
-    }
-
-
-    private static class SingleContextServerAuthConfig implements ServerAuthConfig {
-
-        private final ServerAuthModule serverAuthModule;
+        private final String messageLayer;
         private final String appContext;
-        private final CallbackHandler handler;
-        private final Object serverAuthContextLock = new Object();
-        private volatile ServerAuthContext serverAuthContext;
+        private final RegistrationListener listener;
 
-        SingleContextServerAuthConfig(ServerAuthModule serverAuthModule, String appContext, CallbackHandler handler) {
-            this.serverAuthModule = serverAuthModule;
+
+        public RegistrationListenerWrapper(String messageLayer, String appContext,
+                RegistrationListener listener) {
+            this.messageLayer = messageLayer;
             this.appContext = appContext;
-            this.handler = handler;
+            this.listener = listener;
         }
 
-        @Override
+
         public String getMessageLayer() {
-            return SERVLET_LAYER_ID;
+            return messageLayer;
         }
 
-        @Override
+
         public String getAppContext() {
             return appContext;
         }
 
-        @Override
-        public String getAuthContextID(MessageInfo messageInfo) {
-            return messageInfo.toString();
-        }
 
-        @Override
-        public void refresh() {
-            // NO-OP
-        }
-
-        @Override
-        public boolean isProtected() {
-            return false;
-        }
-
-        @Override
-        public ServerAuthContext getAuthContext(String authContextID, Subject serviceSubject,
-                Map<String,Object> properties) throws AuthException {
-            /*
-             * Lazy initialization since we need to pass in the properties which aren't available until this point.
-             */
-            if (serverAuthContext == null) {
-                synchronized (serverAuthContextLock) {
-                    if (serverAuthContext == null) {
-                        serverAuthContext = new SingleModuleServerAuthContext(serverAuthModule);
-                        serverAuthModule.initialize(null, null, handler, properties);
-                    }
-                }
-            }
-            return serverAuthContext;
-        }
-    }
-
-
-    private static class SingleConfigAuthConfigProvider implements AuthConfigProvider {
-
-        private final ServerAuthModule serverAuthModule;
-        private final String appContext;
-        private final Object serverAuthConfigLock = new Object();
-        private volatile ServerAuthConfig serverAuthConfig;
-
-        SingleConfigAuthConfigProvider(ServerAuthModule serverAuthModule, String appContext) {
-            this.serverAuthModule = serverAuthModule;
-            this.appContext = appContext;
-        }
-
-        @Override
-        public ClientAuthConfig getClientAuthConfig(String layer, String appContext, CallbackHandler handler)
-                throws AuthException {
-            // Should never be called
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public ServerAuthConfig getServerAuthConfig(String layer, String appContext, CallbackHandler handler)
-                throws AuthException {
-            /*
-             * Lazy initialization since we need to pass in the CallbackHandler which isn't available until this point.
-             */
-            if (serverAuthConfig == null) {
-                synchronized (serverAuthConfigLock) {
-                    if (serverAuthConfig == null) {
-                        serverAuthConfig =
-                                new SingleContextServerAuthConfig(serverAuthModule, this.appContext, handler);
-                    }
-                }
-            }
-            return serverAuthConfig;
-        }
-
-        @Override
-        public void refresh() {
-            // NO-OP
+        public RegistrationListener getListener() {
+            return listener;
         }
     }
 }

@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.digester;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 
@@ -24,7 +23,7 @@ import java.util.EmptyStackException;
  * <p>Imported copy of the <code>ArrayStack</code> class from
  * Commons Collections, which was the only direct dependency from Digester.</p>
  *
- * <p><strong>WARNING</strong> - This class is public solely to allow it to be
+ * <p><strong>WARNNG</strong> - This class is public solely to allow it to be
  * used from subpackages of <code>org.apache.commons.digester</code>.
  * It should not be considered part of the public API of Commons Digester.
  * If you want to use such a class yourself, you should use the one from
@@ -47,7 +46,6 @@ import java.util.EmptyStackException;
 public class ArrayStack<E> extends ArrayList<E> {
 
     /** Ensure serialization compatibility */
-    @Serial
     private static final long serialVersionUID = 2130079159931574599L;
 
     /**
@@ -89,7 +87,7 @@ public class ArrayStack<E> extends ArrayList<E> {
      */
     public E peek() throws EmptyStackException {
         int n = size();
-        if (n == 0) {
+        if (n <= 0) {
             throw new EmptyStackException();
         } else {
             return get(n - 1);
@@ -122,7 +120,7 @@ public class ArrayStack<E> extends ArrayList<E> {
      */
     public E pop() throws EmptyStackException {
         int n = size();
-        if (n == 0) {
+        if (n <= 0) {
             throw new EmptyStackException();
         } else {
             return remove(n - 1);

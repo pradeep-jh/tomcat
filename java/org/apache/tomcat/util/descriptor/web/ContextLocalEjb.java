@@ -17,7 +17,6 @@
 package org.apache.tomcat.util.descriptor.web;
 
 
-import java.io.Serial;
 
 /**
  * Representation of a local EJB resource reference for a web application, as
@@ -29,7 +28,6 @@ import java.io.Serial;
  */
 public class ContextLocalEjb extends ResourceBase {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -49,7 +47,7 @@ public class ContextLocalEjb extends ResourceBase {
 
 
     /**
-     * The link to a Jakarta EE EJB definition.
+     * The link to a J2EE EJB definition.
      */
     private String link = null;
 
@@ -108,7 +106,7 @@ public class ContextLocalEjb extends ResourceBase {
             sb.append(", local=");
             sb.append(local);
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 
@@ -151,9 +149,12 @@ public class ContextLocalEjb extends ResourceBase {
             return false;
         }
         if (local == null) {
-            return other.local == null;
-        } else {
-            return local.equals(other.local);
+            if (other.local != null) {
+                return false;
+            }
+        } else if (!local.equals(other.local)) {
+            return false;
         }
+        return true;
     }
 }

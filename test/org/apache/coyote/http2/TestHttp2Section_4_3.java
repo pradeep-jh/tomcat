@@ -22,8 +22,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Unit tests for Section 4.3 of <a href="https://tools.ietf.org/html/rfc7540">RFC 7540</a>. <br>
- * The order of tests in this class is aligned with the order of the requirements in the RFC.
+ * Unit tests for Section 4.3 of
+ * <a href="https://tools.ietf.org/html/rfc7540">RFC 7540</a>.
+ * <br>
+ * The order of tests in this class is aligned with the order of the
+ * requirements in the RFC.
  */
 public class TestHttp2Section_4_3 extends Http2TestBase {
 
@@ -43,7 +46,7 @@ public class TestHttp2Section_4_3 extends Http2TestBase {
         // Process the request
         writeFrame(frameHeader, headersPayload);
 
-        handleGoAwayResponse(1, Http2Error.COMPRESSION_ERROR);
+        handleGoAwayResponse(1,  Http2Error.COMPRESSION_ERROR);
     }
 
 
@@ -64,8 +67,8 @@ public class TestHttp2Section_4_3 extends Http2TestBase {
         writeFrame(frameHeader, headersPayload);
 
         // headers, body
-        parser.readFrame();
-        parser.readFrame();
+        parser.readFrame(true);
+        parser.readFrame(true);
 
         Assert.assertEquals(getSimpleResponseTrace(3), output.getTrace());
     }
@@ -84,6 +87,6 @@ public class TestHttp2Section_4_3 extends Http2TestBase {
 
         sendPing();
 
-        handleGoAwayResponse(1, Http2Error.COMPRESSION_ERROR);
+        handleGoAwayResponse(1,  Http2Error.COMPRESSION_ERROR);
     }
 }

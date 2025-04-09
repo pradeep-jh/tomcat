@@ -20,19 +20,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
 /**
- * Provides a single configuration point for security measures that required the addition of one or more HTTP headers to
- * the response.
+ * Provides a single configuration point for security measures that required the
+ * addition of one or more HTTP headers to the response.
  */
 public class HttpHeaderSecurityFilter extends FilterBase {
 
@@ -60,6 +60,11 @@ public class HttpHeaderSecurityFilter extends FilterBase {
     private static final String BLOCK_CONTENT_TYPE_SNIFFING_HEADER_VALUE = "nosniff";
     private boolean blockContentTypeSniffingEnabled = true;
 
+    // Cross-site scripting filter protection
+    private static final String XSS_PROTECTION_HEADER_NAME = "X-XSS-Protection";
+    private static final String XSS_PROTECTION_HEADER_VALUE = "1; mode=block";
+    private boolean xssProtectionEnabled = true;
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         super.init(filterConfig);
@@ -86,10 +91,12 @@ public class HttpHeaderSecurityFilter extends FilterBase {
 
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response,
+            FilterChain chain) throws IOException, ServletException {
 
-        if (response instanceof HttpServletResponse httpResponse) {
+        if (response instanceof HttpServletResponse) {
+            HttpServletResponse httpResponse = (HttpServletResponse) response;
+
             if (response.isCommitted()) {
                 throw new ServletException(sm.getString("httpHeaderSecurityFilter.committed"));
             }
@@ -108,6 +115,11 @@ public class HttpHeaderSecurityFilter extends FilterBase {
             if (blockContentTypeSniffingEnabled) {
                 httpResponse.setHeader(BLOCK_CONTENT_TYPE_SNIFFING_HEADER_NAME,
                         BLOCK_CONTENT_TYPE_SNIFFING_HEADER_VALUE);
+            }
+
+            // cross-site scripting filter protection
+            if (xssProtectionEnabled) {
+                httpResponse.setHeader(XSS_PROTECTION_HEADER_NAME, XSS_PROTECTION_HEADER_VALUE);
             }
         }
 
@@ -145,7 +157,11 @@ public class HttpHeaderSecurityFilter extends FilterBase {
 
 
     public void setHstsMaxAgeSeconds(int hstsMaxAgeSeconds) {
-        this.hstsMaxAgeSeconds = Math.max(hstsMaxAgeSeconds, 0);
+        if (hstsMaxAgeSeconds < 0) {
+            this.hstsMaxAgeSeconds = 0;
+        } else {
+            this.hstsMaxAgeSeconds = hstsMaxAgeSeconds;
+        }
     }
 
 
@@ -206,7 +222,8 @@ public class HttpHeaderSecurityFilter extends FilterBase {
     }
 
 
-    public void setBlockContentTypeSniffingEnabled(boolean blockContentTypeSniffingEnabled) {
+    public void setBlockContentTypeSniffingEnabled(
+            boolean blockContentTypeSniffingEnabled) {
         this.blockContentTypeSniffingEnabled = blockContentTypeSniffingEnabled;
     }
 
@@ -222,6 +239,16 @@ public class HttpHeaderSecurityFilter extends FilterBase {
     }
 
 
+    public boolean isXssProtectionEnabled() {
+        return xssProtectionEnabled;
+    }
+
+
+    public void setXssProtectionEnabled(boolean xssProtectionEnabled) {
+        this.xssProtectionEnabled = xssProtectionEnabled;
+    }
+
+
     private enum XFrameOption {
         DENY("DENY"),
         SAME_ORIGIN("SAMEORIGIN"),
@@ -230,7 +257,7 @@ public class HttpHeaderSecurityFilter extends FilterBase {
 
         private final String headerValue;
 
-        XFrameOption(String headerValue) {
+        private XFrameOption(String headerValue) {
             this.headerValue = headerValue;
         }
 

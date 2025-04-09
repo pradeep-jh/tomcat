@@ -21,10 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class TestWebappClassLoaderExecutorMemoryLeak extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         if (ctx instanceof StandardContext) {
             ((StandardContext) ctx).setClearReferencesStopThreads(true);
@@ -64,7 +64,7 @@ public class TestWebappClassLoaderExecutorMemoryLeak extends TomcatBaseTest {
 
         // The time taken to shutdown the executor can vary between systems. Try
         // to avoid false test failures due to timing issues. Give the executor
-        // up to 10 seconds to close down.
+        // upto 10 seconds to close down.
         int count = 0;
         while (count < 100 && !executorServlet.tpe.isTerminated()) {
             count++;
@@ -92,7 +92,7 @@ public class TestWebappClassLoaderExecutorMemoryLeak extends TomcatBaseTest {
             resp.getWriter().println(
                     "The current thread served " + this + " servlet");
             tpe = new ThreadPoolExecutor(tpSize, tpSize, 50000L,
-                    TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+                    TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
             Task[] tasks = new Task[nTasks];
             for (int i = 0; i < nTasks; i++) {
@@ -108,21 +108,22 @@ public class TestWebappClassLoaderExecutorMemoryLeak extends TomcatBaseTest {
 
             String _id;
 
-            Task(String id) {
+            public Task(String id) {
                 this._id = id;
             }
 
             @Override
             public void run() {
-                Thread currentThread = Thread.currentThread();
                 try {
-                    while (!currentThread.isInterrupted()) {
+                    while (!Thread.currentThread().isInterrupted()) {
                         Thread.sleep(20000);
-                        System.out.println(
-                                currentThread.getClass() + " [" + currentThread.getName() + "] executing " + this._id);
+                        System.out.println(Thread.currentThread().getClass()
+                                + " [" + Thread.currentThread().getName()
+                                + "] executing " + this._id);
                     }
                 } catch (InterruptedException e) {
-                    System.out.println(currentThread.getClass() + " [" + currentThread.getName() + "] EXITING");
+                    System.out.println(Thread.currentThread().getClass() + " ["
+                            + Thread.currentThread().getName() + "] EXITING");
                 }
             }
         }

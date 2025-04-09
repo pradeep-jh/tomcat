@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.coyote.http11;
 
 import java.io.IOException;
@@ -34,22 +35,23 @@ public interface InputFilter extends InputBuffer {
      *
      * @param request The request to be associated with this filter
      */
-    void setRequest(Request request);
+    public void setRequest(Request request);
 
 
     /**
      * Make the filter ready to process the next request.
      */
-    void recycle();
+    public void recycle();
 
 
     /**
      * Get the name of the encoding handled by this filter.
      *
-     * @return The encoding name as a byte chunk to facilitate comparison with the value read from the HTTP headers
-     *             which will also be a ByteChunk
+     * @return The encoding name as a byte chunk to facilitate comparison with
+     *         the value read from the HTTP headers which will also be a
+     *         ByteChunk
      */
-    ByteChunk getEncodingName();
+    public ByteChunk getEncodingName();
 
 
     /**
@@ -57,25 +59,35 @@ public interface InputFilter extends InputBuffer {
      *
      * @param buffer The next buffer
      */
-    void setBuffer(InputBuffer buffer);
+    public void setBuffer(InputBuffer buffer);
 
 
     /**
      * End the current request.
      *
-     * @return 0 is the expected return value. A positive value indicates that too many bytes were read. This method is
-     *             allowed to use buffer.doRead to consume extra bytes. The result of this method can't be negative (if
-     *             an error happens, an IOException should be thrown instead).
+     * @return 0 is the expected return value. A positive value indicates that
+     * too many bytes were read. This method is allowed to use buffer.doRead
+     * to consume extra bytes. The result of this method can't be negative (if
+     * an error happens, an IOException should be thrown instead).
      *
      * @throws IOException If an error happens
      */
-    long end() throws IOException;
+    public long end() throws IOException;
+
+
+    /**
+     * Amount of bytes still available in a buffer.
+     *
+     * @return The number of bytes in the buffer
+     */
+    public int available();
 
 
     /**
      * Has the request body been read fully?
      *
-     * @return {@code true} if the request body has been fully read, otherwise {@code false}
+     * @return {@code true} if the request body has been fully read, otherwise
+     *         {@code false}
      */
-    boolean isFinished();
+    public boolean isFinished();
 }

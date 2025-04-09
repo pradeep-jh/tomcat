@@ -26,11 +26,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +40,6 @@ import org.junit.runners.Parameterized.Parameter;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
-import org.apache.catalina.servlets.DefaultServlet.BomConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.B2CConverter;
@@ -110,27 +109,16 @@ public abstract class DefaultServletEncodingBaseTest extends TomcatBaseTest {
     }
 
 
-    private static boolean getExpected(String fileEncoding, BomConfig bomConfig, String targetFile,
+    private static boolean getExpected(String fileEncoding, boolean useBom, String targetFile,
             String outputEncoding, boolean callSetCharacterEncoding, boolean useWriter) {
-        if (targetFile.endsWith("-bom") && !bomConfig.stripBom) {
-            /*
-             * If the target file contains a BOM and the BOM is not stripped the
-             * test should always fail because BOM will be kept untouched
-             * and may result in a different character in the output
-             *
-             * We could differentiate iso-8859-1 and cp1252 but we would need logic here and in
-             * the asserts and that would make the logic in the test as complex as the code
-             * under test.
-             */
-            return false;
-        } else if (useWriter || callSetCharacterEncoding) {
+        if (useWriter || callSetCharacterEncoding) {
             /*
              * Using a writer or setting the output character encoding means the
              * response will specify a character set. These cases therefore
              * reduce to can the file be read with the correct encoding.
              * (Assuming any BOM is always skipped in the included output.)
              */
-            if (targetFile.endsWith("-bom") && bomConfig.useBomEncoding ||
+            if (targetFile.endsWith("-bom") && useBom ||
                     targetFile.startsWith(fileEncoding) ||
                     targetFile.equals("cp1252") && fileEncoding.equals("iso-8859-1") ||
                     targetFile.equals("iso-8859-1") && fileEncoding.equals("cp1252")) {
@@ -172,7 +160,7 @@ public abstract class DefaultServletEncodingBaseTest extends TomcatBaseTest {
     public boolean useWriter;
 
 
-    protected abstract BomConfig getUseBom();
+    protected abstract boolean getUseBom();
 
 
     @Test
@@ -188,7 +176,7 @@ public abstract class DefaultServletEncodingBaseTest extends TomcatBaseTest {
         ctxt.setResponseCharacterEncoding(contextResponseEncoding);
         Wrapper defaultServlet = Tomcat.addServlet(ctxt, "default", DefaultServlet.class.getName());
         defaultServlet.addInitParameter("fileEncoding", fileEncoding);
-        defaultServlet.addInitParameter("useBomIfPresent", getUseBom().configurationValue);
+        defaultServlet.addInitParameter("useBomIfPresent", Boolean.toString(getUseBom()));
 
         ctxt.addServletMappingDecoded("/", "default");
 
@@ -226,10 +214,10 @@ public abstract class DefaultServletEncodingBaseTest extends TomcatBaseTest {
         }
         String body = res.toString();
         /*
-         * Remove BOM before checking content if DefaultServlet is configured to
-         * remove BOM.
+         * Remove BOM before checking content
+         * BOM (should be) removed by Tomcat when file is included
          */
-        if (!useInclude && targetFile.endsWith("-bom") && getUseBom().stripBom) {
+        if (!useInclude && targetFile.endsWith("-bom")) {
             body = body.substring(1);
         }
 
@@ -258,7 +246,7 @@ public abstract class DefaultServletEncodingBaseTest extends TomcatBaseTest {
         private final String includeTarget;
         private final boolean useWriter;
 
-        EncodingServlet(String outputEncoding, boolean callSetCharacterEncoding,
+        public EncodingServlet(String outputEncoding, boolean callSetCharacterEncoding,
                 String includeTarget, boolean useWriter) {
             this.outputEncoding = outputEncoding;
             this.callSetCharacterEncoding = callSetCharacterEncoding;

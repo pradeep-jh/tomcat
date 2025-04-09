@@ -21,21 +21,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -191,7 +186,7 @@ public class TestTomcat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "myServlet", new HelloWorld());
         ctx.addServletMappingDecoded("/", "myServlet");
@@ -242,7 +237,7 @@ public class TestTomcat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "myServlet", new HelloWorldSession());
         ctx.addServletMappingDecoded("/", "myServlet");
@@ -272,7 +267,7 @@ public class TestTomcat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         // Enable JNDI - it is disabled by default
         tomcat.enableNaming();
@@ -300,7 +295,7 @@ public class TestTomcat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         // Enable JNDI - it is disabled by default
         tomcat.enableNaming();
@@ -379,7 +374,7 @@ public class TestTomcat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         InitCount initCount = new InitCount();
         Tomcat.addServlet(ctx, "initCount", initCount);
@@ -576,7 +571,7 @@ public class TestTomcat extends TomcatBaseTest {
             tomcat.start();
             Assert.fail();
         } catch (Throwable t) {
-            assertThat(getRootCause(t), instanceOf(LifecycleException.class));
+            Assert.assertTrue(getRootCause(t) instanceof LifecycleException);
         }
     }
 
@@ -594,7 +589,7 @@ public class TestTomcat extends TomcatBaseTest {
             tomcat.start();
             Assert.fail();
         } catch (Throwable t) {
-            assertThat(getRootCause(t), instanceOf(MultiThrowable.class));
+            Assert.assertTrue(getRootCause(t) instanceof MultiThrowable);
         }
     }
 
@@ -628,7 +623,7 @@ public class TestTomcat extends TomcatBaseTest {
 
     @Test
     public void testAddWebappUrl() throws Exception {
-        URL docBase = URI.create("jar:" + new File("test/deployment/context.jar").toURI().toString() + "!/context.war").toURL();
+        URL docBase = new URL("jar:" + new File("test/deployment/context.jar").toURI().toString() + "!/context.war");
 
         Tomcat tomcat = getTomcatInstance();
         tomcat.addWebapp("", docBase);

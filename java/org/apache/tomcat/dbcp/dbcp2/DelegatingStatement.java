@@ -23,7 +23,6 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A base delegating implementation of {@link Statement}.
@@ -44,7 +43,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     /** The connection that created me. **/
     private DelegatingConnection<?> connection;
 
-    private boolean closed;
+    private boolean closed = false;
 
     /**
      * Create a wrapper for the Statement which traces this Statement to the Connection which created it and the code
@@ -62,6 +61,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     /**
+     *
      * @throws SQLException
      *             thrown by the delegating statement.
      * @since 2.4.0 made public, was protected in 2.3.0.
@@ -94,7 +94,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
 
     protected void checkOpen() throws SQLException {
         if (isClosed()) {
-            throw new SQLException(this.getClass().getName() + " with address: \"" + toString() + "\" is closed.");
+            throw new SQLException(this.getClass().getName() + " with address: \"" + this.toString() + "\" is closed.");
         }
     }
 
@@ -137,24 +137,36 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
             // ResultSet's when it is closed.
             // FIXME The PreparedStatement we're wrapping should handle this for us.
             // See bug 17301 for what could happen when ResultSets are closed twice.
-            final List<AbandonedTrace> traceList = getTrace();
-            if (traceList != null) {
-                traceList.forEach(trace -> trace.close(e -> {
+            final List<AbandonedTrace> resultSetList = getTrace();
+            if (resultSetList != null) {
+                final int size = resultSetList.size();
+                final ResultSet[] resultSets = resultSetList.toArray(new ResultSet[size]);
+                for (final ResultSet resultSet : resultSets) {
+                    if (resultSet != null) {
+                        try {
+                            resultSet.close();
+                        } catch (Exception e) {
+                            if (connection != null) {
+                                // Does not rethrow e.
+                                connection.handleExceptionNoThrow(e);
+                            }
+                            thrownList.add(e);
+                        }
+                    }
+                }
+                clearTrace();
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (Exception e) {
                     if (connection != null) {
                         // Does not rethrow e.
                         connection.handleExceptionNoThrow(e);
                     }
                     thrownList.add(e);
-                }));
-                clearTrace();
-            }
-            Utils.close(statement, e -> {
-                if (connection != null) {
-                    // Does not rethrow e.
-                    connection.handleExceptionNoThrow(e);
                 }
-                thrownList.add(e);
-            });
+            }
         } finally {
             closed = true;
             statement = null;
@@ -199,7 +211,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     @Override
-    public boolean execute(final String sql, final int[] columnIndexes) throws SQLException {
+    public boolean execute(final String sql, final int columnIndexes[]) throws SQLException {
         checkOpen();
         setLastUsedInParent();
         try {
@@ -211,7 +223,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     @Override
-    public boolean execute(final String sql, final String[] columnNames) throws SQLException {
+    public boolean execute(final String sql, final String columnNames[]) throws SQLException {
         checkOpen();
         setLastUsedInParent();
         try {
@@ -346,7 +358,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     @Override
-    public int executeUpdate(final String sql, final int[] columnIndexes) throws SQLException {
+    public int executeUpdate(final String sql, final int columnIndexes[]) throws SQLException {
         checkOpen();
         setLastUsedInParent();
         try {
@@ -358,7 +370,7 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     @Override
-    public int executeUpdate(final String sql, final String[] columnNames) throws SQLException {
+    public int executeUpdate(final String sql, final String columnNames[]) throws SQLException {
         checkOpen();
         setLastUsedInParent();
         try {
@@ -369,7 +381,6 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
         }
     }
 
-    @SuppressWarnings("removal") // Need Commons DBCP to address this
     @Override
     protected void finalize() throws Throwable {
         // This is required because of statement pooling. The poolable
@@ -449,18 +460,19 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
      * a "genuine" {@link Statement}.
      * </p>
      *
-     * @return The innermost delegate, may return null.
+     * @return The innermost delegate.
+     *
      * @see #getDelegate
      */
     public Statement getInnermostDelegate() {
-        Statement stmt = statement;
-        while (stmt instanceof DelegatingStatement) {
-            stmt = ((DelegatingStatement) stmt).getDelegate();
-            if (this == stmt) {
+        Statement s = statement;
+        while (s != null && s instanceof DelegatingStatement) {
+            s = ((DelegatingStatement) s).getDelegate();
+            if (this == s) {
                 return null;
             }
         }
-        return stmt;
+        return s;
     }
 
     /**
@@ -613,10 +625,11 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     }
 
     protected void handleException(final SQLException e) throws SQLException {
-        if (connection == null) {
+        if (connection != null) {
+            connection.handleException(e);
+        } else {
             throw e;
         }
-        connection.handleException(e);
     }
 
     /*
@@ -657,14 +670,15 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
     public boolean isWrapperFor(final Class<?> iface) throws SQLException {
         if (iface.isAssignableFrom(getClass())) {
             return true;
-        }
-        if (iface.isAssignableFrom(statement.getClass())) {
+        } else if (iface.isAssignableFrom(statement.getClass())) {
             return true;
+        } else {
+            return statement.isWrapperFor(iface);
         }
-        return statement.isWrapperFor(iface);
     }
 
     /**
+     *
      * @throws SQLException
      *             thrown by the delegating statement.
      * @since 2.4.0 made public, was protected in 2.3.0.
@@ -795,17 +809,17 @@ public class DelegatingStatement extends AbandonedTrace implements Statement {
      */
     @Override
     public synchronized String toString() {
-        return Objects.toString(statement, "NULL");
+        return statement == null ? "NULL" : statement.toString();
     }
 
     @Override
     public <T> T unwrap(final Class<T> iface) throws SQLException {
         if (iface.isAssignableFrom(getClass())) {
             return iface.cast(this);
-        }
-        if (iface.isAssignableFrom(statement.getClass())) {
+        } else if (iface.isAssignableFrom(statement.getClass())) {
             return iface.cast(statement);
+        } else {
+            return statement.unwrap(iface);
         }
-        return statement.unwrap(iface);
     }
 }

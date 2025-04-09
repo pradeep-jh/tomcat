@@ -125,9 +125,16 @@ public class TestTokenList {
     }
 
 
+    @SuppressWarnings("deprecation")
     private void doTestVary(String input, Set<String> expectedTokens, boolean expectedResult) throws IOException {
         StringReader reader = new StringReader(input);
         Set<String> tokens = new HashSet<>();
+        Vary.parseVary(reader, tokens);
+        Assert.assertEquals(expectedTokens, tokens);
+
+        // Can't use reset(). Parser uses marks.
+        reader = new StringReader(input);
+        tokens.clear();
         boolean result = TokenList.parseTokenList(reader, tokens);
         Assert.assertEquals(expectedTokens, tokens);
         Assert.assertEquals(Boolean.valueOf(expectedResult), Boolean.valueOf(result));
@@ -190,33 +197,4 @@ public class TestTokenList {
         Assert.assertFalse(result);
     }
 
-
-    @Test
-    public void testMultipleWithEmptyStart() throws IOException {
-        Set<String> expected = new HashSet<>();
-        expected.add("bar");
-        expected.add("foo");
-        expected.add("host");
-        doTestVary(",Host, Foo, Bar", expected, true);
-    }
-
-
-    @Test
-    public void testMultipleWithEmptyMiddle() throws IOException {
-        Set<String> expected = new HashSet<>();
-        expected.add("bar");
-        expected.add("foo");
-        expected.add("host");
-        doTestVary("Host, Foo,,Bar", expected, true);
-    }
-
-
-    @Test
-    public void testMultipleWithEmptyEnd() throws IOException {
-        Set<String> expected = new HashSet<>();
-        expected.add("bar");
-        expected.add("foo");
-        expected.add("host");
-        doTestVary("Host, Foo, Bar,", expected, true);
-    }
 }

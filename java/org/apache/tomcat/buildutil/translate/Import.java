@@ -1,19 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements.  See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License.  You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.apache.tomcat.buildutil.translate;
 
 import java.io.File;
@@ -43,12 +43,8 @@ public class Import {
     private static void processFile(File f) throws IOException {
         String language = Utils.getLanguage(f.getName());
 
-        // Skip the original
-        if (language.isEmpty()) {
-            // Comment this line out if the originals need to be imported.
-            return;
-        }
-
+        // Unlike the master branch, don't skip the original so we can import
+        // updates to the English translations
         Properties props = Utils.load(f);
         Object[] objKeys = props.keySet().toArray();
         Arrays.sort(objKeys);
@@ -61,14 +57,13 @@ public class Import {
             String key = (String) objKey;
             String value = props.getProperty(key);
             // Skip untranslated values
-            if (value.trim().isEmpty()) {
+            if (value.trim().length() == 0) {
                 continue;
             }
             CompositeKey cKey = new CompositeKey(key);
 
             if (!cKey.pkg.equals(currentPkg)) {
                 currentPkg = cKey.pkg;
-                currentGroup = "zzz";
                 if (w != null) {
                     w.close();
                 }
@@ -76,7 +71,6 @@ public class Import {
                 FileOutputStream fos = new FileOutputStream(outFile);
                 w = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
                 org.apache.tomcat.buildutil.Utils.insertLicense(w);
-                Utils.insertEditInstructions(w);
             }
 
             if (!currentGroup.equals(cKey.group)) {
@@ -84,10 +78,7 @@ public class Import {
                 w.write(System.lineSeparator());
             }
 
-            value = Utils.formatValueImport(value);
-            value = Utils.fixUnnecessaryEscaping(cKey.key, value);
-
-            w.write(cKey.key + "=" + value);
+            w.write(cKey.key + "=" + Utils.formatValue(value));
             w.write(System.lineSeparator());
         }
         if (w != null) {
@@ -102,9 +93,9 @@ public class Import {
         public final String key;
         public final String group;
 
-        CompositeKey(String in) {
+        public CompositeKey(String in) {
             int posPkg = in.indexOf(Constants.END_PACKAGE_MARKER);
-            pkg = in.substring(0, posPkg).replace(Constants.JAVA_EE_SUBSTRING, Constants.JAKARTA_EE_SUBSTRING);
+            pkg = in.substring(0, posPkg);
             key = in.substring(posPkg + Constants.END_PACKAGE_MARKER.length());
             int posGroup = key.indexOf('.');
             if (posGroup == -1) {

@@ -18,7 +18,7 @@ package org.apache.catalina.core;
 
 import java.io.IOException;
 
-import jakarta.servlet.ServletException;
+import javax.servlet.ServletException;
 
 import org.apache.catalina.Host;
 import org.apache.catalina.connector.Request;
@@ -26,16 +26,18 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.ValveBase;
 
 /**
- * Valve that implements the default basic behavior for the <code>StandardEngine</code> container implementation.
+ * Valve that implements the default basic behavior for the
+ * <code>StandardEngine</code> container implementation.
  * <p>
- * <b>USAGE CONSTRAINT</b>: This implementation is likely to be useful only when processing HTTP requests.
+ * <b>USAGE CONSTRAINT</b>:  This implementation is likely to be useful only
+ * when processing HTTP requests.
  *
  * @author Craig R. McClanahan
  */
 final class StandardEngineValve extends ValveBase {
 
-    // ------------------------------------------------------ Constructor
-    StandardEngineValve() {
+    //------------------------------------------------------ Constructor
+    public StandardEngineValve() {
         super(true);
     }
 
@@ -43,27 +45,25 @@ final class StandardEngineValve extends ValveBase {
     // --------------------------------------------------------- Public Methods
 
     /**
-     * Select the appropriate child Host to process this request, based on the requested server name. If no matching
-     * Host can be found, return an appropriate HTTP error.
+     * Select the appropriate child Host to process this request,
+     * based on the requested server name.  If no matching Host can
+     * be found, return an appropriate HTTP error.
      *
-     * @param request  Request to be processed
+     * @param request Request to be processed
      * @param response Response to be produced
      *
-     * @exception IOException      if an input/output error occurred
+     * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
      */
     @Override
-    public void invoke(Request request, Response response) throws IOException, ServletException {
+    public final void invoke(Request request, Response response)
+        throws IOException, ServletException {
 
         // Select the Host to be used for this Request
         Host host = request.getHost();
         if (host == null) {
             // HTTP 0.9 or HTTP 1.0 request without a host when no default host
-            // is defined.
-            // Don't overwrite an existing error
-            if (!response.isError()) {
-                response.sendError(404);
-            }
+            // is defined. This is handled by the CoyoteAdapter.
             return;
         }
         if (request.isAsyncSupported()) {

@@ -41,7 +41,7 @@ public class TestNamingContext extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
         tomcat.enableNaming();
 
-        org.apache.catalina.Context ctx = getProgrammaticRootContext();
+        org.apache.catalina.Context ctx = tomcat.addContext("", null);
 
         tomcat.start();
 

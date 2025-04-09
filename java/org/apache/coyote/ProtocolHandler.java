@@ -23,22 +23,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.tomcat.util.net.SSLHostConfig;
 
 /**
- * Abstract the protocol implementation, including threading, etc. This is the main interface to be implemented by a
- * coyote protocol. Adapter is the main interface to be implemented by a coyote servlet container.
+ * Abstract the protocol implementation, including threading, etc.
+ *
+ * This is the main interface to be implemented by a coyote protocol.
+ * Adapter is the main interface to be implemented by a coyote servlet
+ * container.
  *
  * @author Remy Maucherat
  * @author Costin Manolache
- *
  * @see Adapter
  */
 public interface ProtocolHandler {
 
     /**
      * Return the adapter associated with the protocol handler.
-     *
      * @return the adapter
      */
-    Adapter getAdapter();
+    public Adapter getAdapter();
 
 
     /**
@@ -46,7 +47,7 @@ public interface ProtocolHandler {
      *
      * @param adapter The adapter to associate
      */
-    void setAdapter(Adapter adapter);
+    public void setAdapter(Adapter adapter);
 
 
     /**
@@ -54,31 +55,28 @@ public interface ProtocolHandler {
      *
      * @return The executor used to process requests
      */
-    Executor getExecutor();
+    public Executor getExecutor();
 
 
     /**
      * Set the optional executor that will be used by the connector.
-     *
      * @param executor the executor
      */
-    void setExecutor(Executor executor);
+    public void setExecutor(Executor executor);
 
 
     /**
      * Get the utility executor that should be used by the protocol handler.
-     *
      * @return the executor
      */
-    ScheduledExecutorService getUtilityExecutor();
+    public ScheduledExecutorService getUtilityExecutor();
 
 
     /**
      * Set the utility executor that should be used by the protocol handler.
-     *
      * @param utilityExecutor the executor
      */
-    void setUtilityExecutor(ScheduledExecutorService utilityExecutor);
+    public void setUtilityExecutor(ScheduledExecutorService utilityExecutor);
 
 
     /**
@@ -86,7 +84,7 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to initialise
      */
-    void init() throws Exception;
+    public void init() throws Exception;
 
 
     /**
@@ -94,7 +92,7 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to start
      */
-    void start() throws Exception;
+    public void start() throws Exception;
 
 
     /**
@@ -102,7 +100,7 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to pause
      */
-    void pause() throws Exception;
+    public void pause() throws Exception;
 
 
     /**
@@ -110,7 +108,7 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to resume
      */
-    void resume() throws Exception;
+    public void resume() throws Exception;
 
 
     /**
@@ -118,7 +116,7 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to stop
      */
-    void stop() throws Exception;
+    public void stop() throws Exception;
 
 
     /**
@@ -126,126 +124,107 @@ public interface ProtocolHandler {
      *
      * @throws Exception If the protocol handler fails to destroy
      */
-    void destroy() throws Exception;
+    public void destroy() throws Exception;
 
 
     /**
-     * Close the server socket (to prevent further connections) if the server socket was bound on {@link #start()}
-     * (rather than on {@link #init()}) but do not perform any further shutdown.
+     * Close the server socket (to prevent further connections) if the server
+     * socket was bound on {@link #start()} (rather than on {@link #init()}
+     * but do not perform any further shutdown.
      */
-    void closeServerSocketGraceful();
+    public void closeServerSocketGraceful();
 
 
     /**
-     * Wait for the client connections to the server to close gracefully. The method will return when all of the client
-     * connections have closed or the method has been waiting for {@code waitTimeMillis}.
+     * Requires APR/native library
      *
-     * @param waitMillis The maximum time to wait in milliseconds for the client connections to close.
-     *
-     * @return The wait time, if any remaining when the method returned
+     * @return <code>true</code> if this Protocol Handler requires the
+     *         APR/native library, otherwise <code>false</code>
      */
-    long awaitConnectionsClose(long waitMillis);
+    public boolean isAprRequired();
 
 
     /**
      * Does this ProtocolHandler support sendfile?
      *
-     * @return <code>true</code> if this Protocol Handler supports sendfile, otherwise <code>false</code>
+     * @return <code>true</code> if this Protocol Handler supports sendfile,
+     *         otherwise <code>false</code>
      */
-    boolean isSendfileSupported();
+    public boolean isSendfileSupported();
 
 
     /**
      * Add a new SSL configuration for a virtual host.
-     *
      * @param sslHostConfig the configuration
      */
-    void addSslHostConfig(SSLHostConfig sslHostConfig);
+    public void addSslHostConfig(SSLHostConfig sslHostConfig);
 
 
     /**
-     * Add a new SSL configuration for a virtual host.
-     *
-     * @param sslHostConfig the configuration
-     * @param replace       If {@code true} replacement of an existing configuration is permitted, otherwise any such
-     *                          attempted replacement will trigger an exception
-     *
-     * @throws IllegalArgumentException If the host name is not valid or if a configuration has already been provided
-     *                                      for that host and replacement is not allowed
-     */
-    void addSslHostConfig(SSLHostConfig sslHostConfig, boolean replace);
-
-
-    /**
-     * Find all configured SSL virtual host configurations which will be used by SNI.
-     *
+     * Find all configured SSL virtual host configurations which will be used
+     * by SNI.
      * @return the configurations
      */
-    SSLHostConfig[] findSslHostConfigs();
+    public SSLHostConfig[] findSslHostConfigs();
 
 
     /**
      * Add a new protocol for used by HTTP/1.1 upgrade or ALPN.
-     *
      * @param upgradeProtocol the protocol
      */
-    void addUpgradeProtocol(UpgradeProtocol upgradeProtocol);
+    public void addUpgradeProtocol(UpgradeProtocol upgradeProtocol);
 
 
     /**
      * Return all configured upgrade protocols.
-     *
      * @return the protocols
      */
-    UpgradeProtocol[] findUpgradeProtocols();
+    public UpgradeProtocol[] findUpgradeProtocols();
 
 
     /**
-     * Some protocols, like AJP, have a packet length that shouldn't be exceeded, and this can be used to adjust the
-     * buffering used by the application layer.
-     *
+     * Some protocols, like AJP, have a packet length that
+     * shouldn't be exceeded, and this can be used to adjust the buffering
+     * used by the application layer.
      * @return the desired buffer size, or -1 if not relevant
      */
-    default int getDesiredBufferSize() {
+    public default int getDesiredBufferSize() {
         return -1;
     }
 
 
     /**
-     * The default behavior is to identify connectors uniquely with address and port. However, certain connectors are
-     * not using that and need some other identifier, which then can be used as a replacement.
-     *
-     * @return the id
-     */
-    default String getId() {
-        return null;
-    }
-
-
-    /**
      * Create a new ProtocolHandler for the given protocol.
-     *
      * @param protocol the protocol
-     *
+     * @param apr if <code>true</code> the APR protcol handler will be used
      * @return the newly instantiated protocol handler
-     *
-     * @throws ClassNotFoundException    Specified protocol was not found
-     * @throws InstantiationException    Specified protocol could not be instantiated
-     * @throws IllegalAccessException    Exception occurred
-     * @throws IllegalArgumentException  Exception occurred
+     * @throws ClassNotFoundException Specified protocol was not found
+     * @throws InstantiationException Specified protocol could not be instantiated
+     * @throws IllegalAccessException Exception occurred
+     * @throws IllegalArgumentException Exception occurred
      * @throws InvocationTargetException Exception occurred
-     * @throws NoSuchMethodException     Exception occurred
-     * @throws SecurityException         Exception occurred
+     * @throws NoSuchMethodException Exception occurred
+     * @throws SecurityException Exception occurred
      */
-    static ProtocolHandler create(String protocol)
-            throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-            InvocationTargetException, NoSuchMethodException, SecurityException {
-        if (protocol == null || "HTTP/1.1".equals(protocol) ||
-                org.apache.coyote.http11.Http11NioProtocol.class.getName().equals(protocol)) {
-            return new org.apache.coyote.http11.Http11NioProtocol();
-        } else if ("AJP/1.3".equals(protocol) ||
-                org.apache.coyote.ajp.AjpNioProtocol.class.getName().equals(protocol)) {
-            return new org.apache.coyote.ajp.AjpNioProtocol();
+    public static ProtocolHandler create(String protocol, boolean apr)
+            throws ClassNotFoundException, InstantiationException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        if (protocol == null || "HTTP/1.1".equals(protocol)
+                || (!apr && org.apache.coyote.http11.Http11NioProtocol.class.getName().equals(protocol))
+                || (apr && org.apache.coyote.http11.Http11AprProtocol.class.getName().equals(protocol))) {
+            if (apr) {
+                return new org.apache.coyote.http11.Http11AprProtocol();
+            } else {
+                return new org.apache.coyote.http11.Http11NioProtocol();
+            }
+        } else if ("AJP/1.3".equals(protocol)
+                || (!apr && org.apache.coyote.ajp.AjpNioProtocol.class.getName().equals(protocol))
+                || (apr && org.apache.coyote.ajp.AjpAprProtocol.class.getName().equals(protocol))) {
+            if (apr) {
+                return new org.apache.coyote.ajp.AjpAprProtocol();
+            } else {
+                return new org.apache.coyote.ajp.AjpNioProtocol();
+            }
         } else {
             // Instantiate protocol handler
             Class<?> clazz = Class.forName(protocol);

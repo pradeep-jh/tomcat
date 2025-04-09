@@ -21,7 +21,7 @@ import java.io.InputStream;
 
 /**
  * <p> This interface provides access to a file or form item that was
- * received within a {@code multipart/form-data} POST request.
+ * received within a <code>multipart/form-data</code> POST request.
  * The items contents are retrieved by calling {@link #openStream()}.</p>
  * <p>Instances of this class are created by accessing the
  * iterator, returned by
@@ -40,7 +40,7 @@ public interface FileItemStream extends FileItemHeadersSupport {
      * {@link java.util.Iterator#hasNext()} has been invoked on the
      * iterator, which created the {@link FileItemStream}.
      */
-    class ItemSkippedException extends IOException {
+    public static class ItemSkippedException extends IOException {
 
         /**
          * The exceptions serial version UID, which is being used
@@ -64,10 +64,10 @@ public interface FileItemStream extends FileItemHeadersSupport {
     InputStream openStream() throws IOException;
 
     /**
-     * Returns the content type passed by the browser or {@code null} if
+     * Returns the content type passed by the browser or <code>null</code> if
      * not defined.
      *
-     * @return The content type passed by the browser or {@code null} if
+     * @return The content type passed by the browser or <code>null</code> if
      *         not defined.
      */
     String getContentType();
@@ -91,11 +91,11 @@ public interface FileItemStream extends FileItemHeadersSupport {
     String getFieldName();
 
     /**
-     * Determines whether or not a {@code FileItem} instance represents
+     * Determines whether or not a <code>FileItem</code> instance represents
      * a simple form field.
      *
-     * @return {@code true} if the instance represents a simple form
-     *         field; {@code false} if it represents an uploaded file.
+     * @return <code>true</code> if the instance represents a simple form
+     *         field; <code>false</code> if it represents an uploaded file.
      */
     boolean isFormField();
 

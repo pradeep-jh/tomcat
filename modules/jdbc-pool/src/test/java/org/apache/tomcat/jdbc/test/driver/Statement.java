@@ -41,18 +41,7 @@ import java.util.Calendar;
 import java.util.Map;
 
 public class Statement implements CallableStatement {
-
-    private boolean throwExceptionOnExecute = false;
-    private int timeout=-1;
-
-    public Statement() {
-        this(false);
-    }
-
-    public Statement(boolean throwExceptionOnExecute) {
-        this.throwExceptionOnExecute = throwExceptionOnExecute;
-    }
-
+    int timeout=-1;
     @Override
     public Array getArray(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
@@ -739,7 +728,8 @@ public class Statement implements CallableStatement {
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        return new org.apache.tomcat.jdbc.test.driver.ResultSet(this);
+        // TODO Auto-generated method stub
+        return new org.apache.tomcat.jdbc.test.driver.ResultSet();
     }
 
     @Override
@@ -1110,10 +1100,8 @@ public class Statement implements CallableStatement {
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
-        if (throwExceptionOnExecute) {
-            throw new SQLException("Throwing exception on execute");
-        }
-        return new org.apache.tomcat.jdbc.test.driver.ResultSet(this);
+        // TODO Auto-generated method stub
+        return new org.apache.tomcat.jdbc.test.driver.ResultSet();
     }
 
     @Override
@@ -1160,10 +1148,8 @@ public class Statement implements CallableStatement {
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        if (throwExceptionOnExecute) {
-            throw new SQLException("Throwing exception on execute");
-        }
-        return new org.apache.tomcat.jdbc.test.driver.ResultSet(this);
+        // TODO Auto-generated method stub
+        return new org.apache.tomcat.jdbc.test.driver.ResultSet();
     }
 
     @Override
@@ -1192,15 +1178,14 @@ public class Statement implements CallableStatement {
 
     @Override
     public int getQueryTimeout() throws SQLException {
+        // TODO Auto-generated method stub
         return timeout;
     }
 
     @Override
     public ResultSet getResultSet() throws SQLException {
-        if (throwExceptionOnExecute) {
-            throw new SQLException("Throwing exception on execute");
-        }
-        return new org.apache.tomcat.jdbc.test.driver.ResultSet(this);
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

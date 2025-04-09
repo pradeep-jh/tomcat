@@ -36,7 +36,7 @@ public class TestJarResourceSetInternal extends AbstractTestResourceSet {
     }
 
     @Override
-    protected boolean isWritable() {
+    protected boolean isWriteable() {
         return false;
     }
 

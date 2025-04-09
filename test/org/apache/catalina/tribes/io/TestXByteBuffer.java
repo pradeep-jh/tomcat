@@ -16,9 +16,6 @@
  */
 package org.apache.catalina.tribes.io;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,7 +32,7 @@ public class TestXByteBuffer {
         String test = "This is as test.";
         byte[] msg = XByteBuffer.serialize(test);
         Object obj = XByteBuffer.deserialize(msg);
-        assertThat(obj, instanceOf(String.class));
+        Assert.assertTrue(obj instanceof String);
         Assert.assertEquals(test, obj);
     }
 }

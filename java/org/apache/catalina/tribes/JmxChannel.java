@@ -23,44 +23,38 @@ public interface JmxChannel extends MBeanRegistration {
 
     /**
      * If set to true, this channel is registered with jmx.
-     *
      * @return true if this channel will be registered with jmx.
      */
-    boolean isJmxEnabled();
+    public boolean isJmxEnabled();
 
     /**
      * If set to true, this channel is registered with jmx.
-     *
      * @param jmxEnabled set to true if this channel should be registered with jmx.
      */
-    void setJmxEnabled(boolean jmxEnabled);
+    public void setJmxEnabled(boolean jmxEnabled);
 
     /**
      * Return the jmx domain which this channel is registered.
-     *
      * @return jmxDomain
      */
-    String getJmxDomain();
+    public String getJmxDomain();
 
     /**
      * Set the jmx domain which this channel should be registered.
-     *
      * @param jmxDomain The jmx domain which this channel should be registered.
      */
-    void setJmxDomain(String jmxDomain);
+    public void setJmxDomain(String jmxDomain);
 
     /**
      * Return the jmx prefix which will be used with channel ObjectName.
-     *
      * @return jmxPrefix
      */
-    String getJmxPrefix();
+    public String getJmxPrefix();
 
     /**
      * Set the jmx prefix which will be used with channel ObjectName.
-     *
      * @param jmxPrefix The jmx prefix which will be used with channel ObjectName.
      */
-    void setJmxPrefix(String jmxPrefix);
+    public void setJmxPrefix(String jmxPrefix);
 
 }

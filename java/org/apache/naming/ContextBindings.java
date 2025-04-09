@@ -16,8 +16,7 @@
  */
 package org.apache.naming;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Hashtable;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -43,31 +42,31 @@ public class ContextBindings {
     /**
      * Bindings object - naming context. Keyed by object.
      */
-    private static final Map<Object,Context> objectBindings = new ConcurrentHashMap<>();
+    private static final Hashtable<Object,Context> objectBindings = new Hashtable<>();
 
 
     /**
      * Bindings thread - naming context. Keyed by thread.
      */
-    private static final Map<Thread,Context> threadBindings = new ConcurrentHashMap<>();
+    private static final Hashtable<Thread,Context> threadBindings = new Hashtable<>();
 
 
     /**
      * Bindings thread - object. Keyed by thread.
      */
-    private static final Map<Thread,Object> threadObjectBindings = new ConcurrentHashMap<>();
+    private static final Hashtable<Thread,Object> threadObjectBindings = new Hashtable<>();
 
 
     /**
      * Bindings class loader - naming context. Keyed by class loader.
      */
-    private static final Map<ClassLoader,Context> clBindings = new ConcurrentHashMap<>();
+    private static final Hashtable<ClassLoader,Context> clBindings = new Hashtable<>();
 
 
     /**
      * Bindings class loader - object. Keyed by class loader.
      */
-    private static final Map<ClassLoader,Object> clObjectBindings = new ConcurrentHashMap<>();
+    private static final Hashtable<ClassLoader,Object> clObjectBindings = new Hashtable<>();
 
 
     /**
@@ -142,9 +141,8 @@ public class ContextBindings {
                 throw new NamingException(
                         sm.getString("contextBindings.unknownContext", obj));
             }
-            Thread currentThread = Thread.currentThread();
-            threadBindings.put(currentThread, context);
-            threadObjectBindings.put(currentThread, obj);
+            threadBindings.put(Thread.currentThread(), context);
+            threadObjectBindings.put(Thread.currentThread(), obj);
         }
     }
 
@@ -157,9 +155,8 @@ public class ContextBindings {
      */
     public static void unbindThread(Object obj, Object token) {
         if (ContextAccessController.checkSecurityToken(obj, token)) {
-            Thread currentThread = Thread.currentThread();
-            threadBindings.remove(currentThread);
-            threadObjectBindings.remove(currentThread);
+            threadBindings.remove(Thread.currentThread());
+            threadObjectBindings.remove(Thread.currentThread());
         }
     }
 
@@ -261,7 +258,7 @@ public class ContextBindings {
      */
     public static Context getClassLoader() throws NamingException {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Context context;
+        Context context = null;
         do {
             context = clBindings.get(cl);
             if (context != null) {
@@ -278,7 +275,7 @@ public class ContextBindings {
      */
     static String getClassLoaderName() throws NamingException {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Object obj;
+        Object obj = null;
         do {
             obj = clObjectBindings.get(cl);
             if (obj != null) {

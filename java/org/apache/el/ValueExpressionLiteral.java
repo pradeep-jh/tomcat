@@ -20,19 +20,18 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serial;
 
-import jakarta.el.ELContext;
-import jakarta.el.PropertyNotWritableException;
-import jakarta.el.ValueExpression;
+import javax.el.ELContext;
+import javax.el.PropertyNotWritableException;
+import javax.el.ValueExpression;
 
 import org.apache.el.util.MessageFactory;
 import org.apache.el.util.ReflectionUtil;
 
 
-public final class ValueExpressionLiteral extends ValueExpression implements Externalizable {
+public final class ValueExpressionLiteral extends ValueExpression implements
+        Externalizable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private Object value;
@@ -49,9 +48,8 @@ public final class ValueExpressionLiteral extends ValueExpression implements Ext
         this.expectedType = expectedType;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T> T getValue(ELContext context) {
+    public Object getValue(ELContext context) {
         context.notifyBeforeEvaluation(getExpressionString());
         Object result;
         if (this.expectedType != null) {
@@ -60,13 +58,14 @@ public final class ValueExpressionLiteral extends ValueExpression implements Ext
             result = this.value;
         }
         context.notifyAfterEvaluation(getExpressionString());
-        return (T) result;
+        return result;
     }
 
     @Override
     public void setValue(ELContext context, Object value) {
         context.notifyBeforeEvaluation(getExpressionString());
-        throw new PropertyNotWritableException(MessageFactory.get("error.value.literal.write", this.value));
+        throw new PropertyNotWritableException(MessageFactory.get(
+                "error.value.literal.write", this.value));
     }
 
     @Override
@@ -99,12 +98,13 @@ public final class ValueExpressionLiteral extends ValueExpression implements Ext
 
     @Override
     public boolean equals(Object obj) {
-        return (obj instanceof ValueExpressionLiteral && this.equals((ValueExpressionLiteral) obj));
+        return (obj instanceof ValueExpressionLiteral && this
+                .equals((ValueExpressionLiteral) obj));
     }
 
     public boolean equals(ValueExpressionLiteral ve) {
-        return (ve != null &&
-                (this.value != null && ve.value != null && (this.value == ve.value || this.value.equals(ve.value))));
+        return (ve != null && (this.value != null && ve.value != null && (this.value == ve.value || this.value
+                .equals(ve.value))));
     }
 
     @Override
@@ -120,14 +120,16 @@ public final class ValueExpressionLiteral extends ValueExpression implements Ext
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(this.value);
-        out.writeUTF((this.expectedType != null) ? this.expectedType.getName() : "");
+        out.writeUTF((this.expectedType != null) ? this.expectedType.getName()
+                : "");
     }
 
     @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternal(ObjectInput in) throws IOException,
+            ClassNotFoundException {
         this.value = in.readObject();
         String type = in.readUTF();
-        if (!type.isEmpty()) {
+        if (!"".equals(type)) {
             this.expectedType = ReflectionUtil.forName(type);
         }
     }

@@ -14,10 +14,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package org.apache.tomcat.util.net;
 
-import java.util.List;
-import java.util.Map;
+package org.apache.tomcat.util.net;
 
 import javax.net.ssl.SSLSession;
 
@@ -41,7 +39,7 @@ public abstract class SSLImplementation {
      * class name.
      *
      * @param className The class name of the required implementation or null to
-     *                  use the default (currently {@link JSSEImplementation}).
+     *                  use the default (currently {@link JSSEImplementation}.
      *
      * @return An instance of the required implementation
      *
@@ -50,9 +48,8 @@ public abstract class SSLImplementation {
      */
     public static SSLImplementation getInstance(String className)
             throws ClassNotFoundException {
-        if (className == null) {
+        if (className == null)
             return new JSSEImplementation();
-        }
 
         try {
             Class<?> clazz = Class.forName(className);
@@ -66,17 +63,10 @@ public abstract class SSLImplementation {
         }
     }
 
-    /**
-     * Obtain an instance of SSLSupport.
-     *
-     * @param session   The SSL session
-     * @param additionalAttributes  Additional SSL attributes that are not
-     *                              available from the session.
-     *
-     * @return An instance of SSLSupport based on the given session and the
-     *         provided additional attributes
-     */
-    public abstract SSLSupport getSSLSupport(SSLSession session, Map<String,List<String>> additionalAttributes);
+
+    public abstract SSLSupport getSSLSupport(SSLSession session);
 
     public abstract SSLUtil getSSLUtil(SSLHostConfigCertificate certificate);
+
+    public abstract boolean isAlpnSupported();
 }

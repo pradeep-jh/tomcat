@@ -14,21 +14,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.connector;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +38,6 @@ import org.apache.tomcat.unittest.TesterContext;
 import org.apache.tomcat.unittest.TesterRequest;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.collections.CaseInsensitiveKeyMap;
-import org.apache.tomcat.util.descriptor.web.ErrorPage;
 
 /**
  * Test case for {@link Request}.
@@ -53,7 +50,7 @@ public class TestResponse extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "servlet", new Bug49598Servlet());
         ctx.addServletMappingDecoded("/", "servlet");
@@ -109,7 +106,7 @@ public class TestResponse extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "servlet", new CharsetServlet());
         ctx.addServletMappingDecoded("/", "servlet");
@@ -148,7 +145,7 @@ public class TestResponse extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "servlet", new Bug52811Servlet());
         ctx.addServletMappingDecoded("/", "servlet");
@@ -164,7 +161,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062a() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./bar.html");
@@ -177,7 +174,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062b() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute(".");
@@ -189,7 +186,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062c() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("..");
@@ -201,7 +198,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062d() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute(".././..");
@@ -213,7 +210,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test(expected=IllegalArgumentException.class)
     public void testBug53062e() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         resp.toAbsolute("../../..");
@@ -223,7 +220,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062f() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("bar.html");
@@ -236,7 +233,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062g() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("bar.html?x=/../");
@@ -249,7 +246,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062h() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("bar.html?x=/../../");
@@ -263,7 +260,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062i() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./.?x=/../../");
@@ -276,7 +273,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062j() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./..?x=/../../");
@@ -288,7 +285,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062k() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./..?x=/../..");
@@ -302,7 +299,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062l() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("bar.html#/../");
@@ -315,7 +312,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062m() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("bar.html#/../../");
@@ -328,7 +325,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062n() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./.#/../../");
@@ -341,7 +338,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062o() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./..#/../../");
@@ -353,7 +350,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53062p() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.toAbsolute("./..#/../..");
@@ -366,7 +363,7 @@ public class TestResponse extends TomcatBaseTest {
         Request req = new TesterRequest(true);
         req.setRequestedSessionId("1234");
         req.setRequestedSessionURL(true);
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.encodeURL(location);
@@ -473,7 +470,7 @@ public class TestResponse extends TomcatBaseTest {
         Request req = new TesterRequest(true);
         req.setRequestedSessionId("1234");
         req.setRequestedSessionURL(true);
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.encodeRedirectURL(location);
@@ -600,9 +597,11 @@ public class TestResponse extends TomcatBaseTest {
         // Note: Not sufficient for testing relative -> absolute
         Connector connector = new Connector();
         org.apache.coyote.Response cResponse = new org.apache.coyote.Response();
-        Response response = new Response(cResponse);
+        Response response = new Response();
+        response.setCoyoteResponse(cResponse);
+        Request request = new Request(connector);
         org.apache.coyote.Request cRequest = new org.apache.coyote.Request();
-        Request request = new Request(connector, cRequest);
+        request.setCoyoteRequest(cRequest);
         Context context = new TesterContext();
         request.getMappingData().context = context;
         response.setRequest(request);
@@ -616,7 +615,7 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53469a() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.encodeURL("../bar.html");
@@ -628,370 +627,12 @@ public class TestResponse extends TomcatBaseTest {
     @Test
     public void testBug53469b() throws Exception {
         Request req = new TesterRequest();
-        Response resp = new Response(null);
+        Response resp = new Response();
         resp.setRequest(req);
 
         String result = resp.encodeURL("../../../../bar.html");
 
         Assert.assertEquals("../../../../bar.html", result);
-    }
-
-
-    private static final String ISO_8859_1 = StandardCharsets.ISO_8859_1.name();
-    private static final String UTF_8 = StandardCharsets.UTF_8.name();
-    private static final String UNKNOWN = "unknown";
-    private static final String TEXT = "text/plain";
-    private static final String TEXT_ISO_8859_1 = TEXT + ";charset=" + ISO_8859_1;
-    private static final String TEXT_UTF_8 = TEXT + ";charset=" + UTF_8;
-    private static final String TEXT_UNKNOWN = TEXT + ";charset=" + UNKNOWN;
-    private static final Locale UNDETERMINED = Locale.forLanguageTag("xxx");
-
-    @Test
-    public void testSetCharacterEncoding01() {
-        Response response = setupResponse();
-
-        // Check default
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding02() {
-        Response response = setupResponse();
-
-        // Check multiple calls
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setCharacterEncoding(ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding03() throws IOException {
-        Response response = setupResponse();
-
-        // Check after getWriter()
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.getWriter();
-        response.setCharacterEncoding(ISO_8859_1);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding04() throws IOException {
-        Response response = setupResponse();
-
-        // Check after commit
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.flushBuffer();
-        response.setCharacterEncoding(ISO_8859_1);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding05() {
-        Response response = setupResponse();
-
-        // Check calling with null
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setCharacterEncoding((String) null);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test(expected =  UnsupportedEncodingException.class)
-    public void testSetCharacterEncoding06() throws IOException {
-        Response response = setupResponse();
-
-        // Check calling with an unknown character set and writer
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UNKNOWN);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getWriter();
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding07() throws IOException {
-        Response response = setupResponse();
-
-        // Check calling with an unknown character set
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UNKNOWN);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getOutputStream();
-    }
-
-
-    @Test
-    public void testSetCharacterEncoding08() {
-        Response response = setupResponse();
-
-        // Check multiple calls with different methods
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setContentType(TEXT_ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setCharacterEncoding(ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetContentType01() {
-        Response response = setupResponse();
-
-        // Check multiple calls
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setContentType(TEXT_ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetContentType02() throws IOException {
-        Response response = setupResponse();
-
-        // Check after getWriter()
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.getWriter();
-        response.setContentType(TEXT_ISO_8859_1);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetContentType03() throws IOException {
-        Response response = setupResponse();
-
-        // Check after commit
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.flushBuffer();
-        response.setContentType(TEXT_ISO_8859_1);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetContentType04() {
-        Response response = setupResponse();
-
-        // Check calling with null
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setContentType(null);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test(expected =  UnsupportedEncodingException.class)
-    public void testSetContentType05() throws IOException {
-        Response response = setupResponse();
-        response.getContext().addLocaleEncodingMappingParameter(Locale.UK.toLanguageTag(), UNKNOWN);
-
-        // Check calling with an unknown character set and writer
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UNKNOWN);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getWriter();
-    }
-
-
-    @Test
-    public void testSetContentType06() throws IOException {
-        Response response = setupResponse();
-
-        // Check calling with an unknown character set
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setContentType(TEXT_UNKNOWN);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getOutputStream();
-    }
-
-
-    @Test
-    public void testSetLocale01() {
-        Response response = setupResponse();
-
-        // Check multiple calls
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setLocale(Locale.ENGLISH);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetLocale02() throws IOException {
-        Response response = setupResponse();
-
-        // Check after getWriter()
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.getWriter();
-        response.setLocale(Locale.ENGLISH);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetLocale03() throws IOException {
-        Response response = setupResponse();
-
-        // Check after commit
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.flushBuffer();
-        response.setLocale(Locale.ENGLISH);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetLocale04() {
-        Response response = setupResponse();
-
-        // Check calling with null
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setLocale(null);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test(expected =  UnsupportedEncodingException.class)
-    public void testSetLocale05() throws IOException {
-        Response response = setupResponse();
-
-        // Check calling with an unknown character set and writer
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(UNDETERMINED);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getWriter();
-    }
-
-
-    @Test
-    public void testSetLocale06() throws IOException {
-        Response response = setupResponse();
-
-        // Check calling with an unknown character set
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-        response.setLocale(UNDETERMINED);
-        Assert.assertEquals(UNKNOWN, response.getCharacterEncoding());
-        response.getOutputStream();
-    }
-
-
-    @Test
-    public void testSetLocale07() {
-        Response response = setupResponse();
-
-        // Check setLocale() is over-ridden by setCharacterEncoding
-
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-
-        // setLocale doesn't change previous value
-        response.setCharacterEncoding(UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setLocale(Locale.ENGLISH);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-
-        // Reset
-        response.setCharacterEncoding((String) null);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-
-        // setLocale is over-ridden by setCharacterEncoding
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setCharacterEncoding(ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-
-    @Test
-    public void testSetLocale08() {
-        Response response = setupResponse();
-
-        // Check setLocale() is over-ridden by setContentType
-
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-
-        // setLocale doesn't change previous value
-        response.setContentType(TEXT_UTF_8);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setLocale(Locale.ENGLISH);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-
-        // Reset
-        response.setContentType(null);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-
-        // setLocale is over-ridden by setContentTpe
-        response.setLocale(Locale.CHINESE);
-        Assert.assertEquals(UTF_8, response.getCharacterEncoding());
-        response.setContentType(TEXT_ISO_8859_1);
-        Assert.assertEquals(ISO_8859_1, response.getCharacterEncoding());
-    }
-
-    @Test
-    public void testStatusChange() throws Exception {
-        // Setup Tomcat instance
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
-
-        Tomcat.addServlet(ctx, "servlet", new ErrorPageServlet());
-        ctx.addServletMappingDecoded("/error", "servlet");
-        ErrorPage servletErrorPage = new ErrorPage();
-        servletErrorPage.setErrorCode(404);
-        servletErrorPage.setLocation("/error");
-        ctx.addErrorPage(servletErrorPage);
-
-        tomcat.start();
-
-        int rc = getUrl("http://localhost:" + getPort() + "/missing", new ByteChunk(), null);
-        Assert.assertEquals(202, rc);
-    }
-
-    private Response setupResponse() {
-        Connector connector = new Connector();
-        org.apache.coyote.Response cResponse = new org.apache.coyote.Response();
-        Response response = new Response(cResponse);
-        org.apache.coyote.Request cRequest = new org.apache.coyote.Request();
-        Request request = new Request(connector, cRequest);
-        Context context = new TesterContext();
-        request.getMappingData().context = context;
-        response.setRequest(request);
-        context.addLocaleEncodingMappingParameter(Locale.ENGLISH.getLanguage(), ISO_8859_1);
-        context.addLocaleEncodingMappingParameter(Locale.CHINESE.getLanguage(), UTF_8);
-        context.addLocaleEncodingMappingParameter(UNDETERMINED.toLanguageTag(), UNKNOWN);
-        return response;
     }
 
 
@@ -1017,18 +658,5 @@ public class TestResponse extends TomcatBaseTest {
             }
         }
 
-    }
-
-    private static final class ErrorPageServlet extends HttpServlet {
-        private static final long serialVersionUID = 1L;
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-            if (resp.getStatus() == 404) {
-                resp.setStatus(202);
-            } else {
-                resp.setStatus(500);
-            }
-        }
     }
 }

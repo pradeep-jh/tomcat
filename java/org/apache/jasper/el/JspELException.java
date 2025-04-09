@@ -16,13 +16,10 @@
  */
 package org.apache.jasper.el;
 
-import java.io.Serial;
-
-import jakarta.el.ELException;
+import javax.el.ELException;
 
 public class JspELException extends ELException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public JspELException(String mark, ELException e) {

@@ -16,8 +16,6 @@
  */
 package org.apache.tomcat.util.digester;
 
-import java.util.Arrays;
-
 import org.apache.tomcat.util.IntrospectionUtils;
 import org.xml.sax.Attributes;
 
@@ -55,7 +53,7 @@ import org.xml.sax.Attributes;
  * not configurable. </p>
  *
  * <p>Note also that if a CallMethodRule is expecting exactly one parameter
- * and that parameter is not available (e.g. CallParamRule is used with an
+ * and that parameter is not available (eg CallParamRule is used with an
  * attribute name but the attribute does not exist) then the method will
  * not be invoked. If a CallMethodRule is expecting more than one parameter,
  * then it is always invoked, regardless of whether the parameters were
@@ -98,7 +96,9 @@ public class CallMethodRule extends Rule {
             this.paramTypes = new Class[] { String.class };
         } else {
             this.paramTypes = new Class[paramCount];
-            Arrays.fill(this.paramTypes, String.class);
+            for (int i = 0; i < this.paramTypes.length; i++) {
+                this.paramTypes[i] = String.class;
+            }
         }
     }
 
@@ -135,14 +135,16 @@ public class CallMethodRule extends Rule {
      *  for a <code>boolean</code> parameter)
      */
     public CallMethodRule(int targetOffset, String methodName, int paramCount,
-                          Class<?>[] paramTypes) {
+            Class<?> paramTypes[]) {
 
         this.targetOffset = targetOffset;
         this.methodName = methodName;
         this.paramCount = paramCount;
         if (paramTypes == null) {
             this.paramTypes = new Class[paramCount];
-            Arrays.fill(this.paramTypes, String.class);
+            for (int i = 0; i < this.paramTypes.length; i++) {
+                this.paramTypes[i] = String.class;
+            }
         } else {
             this.paramTypes = new Class[paramTypes.length];
             System.arraycopy(paramTypes, 0, this.paramTypes, 0, this.paramTypes.length);
@@ -183,7 +185,7 @@ public class CallMethodRule extends Rule {
     /**
      * The parameter types of the parameters to be collected.
      */
-    protected final Class<?>[] paramTypes;
+    protected Class<?> paramTypes[] = null;
 
 
     /**
@@ -230,7 +232,10 @@ public class CallMethodRule extends Rule {
 
         // Push an array to capture the parameter values if necessary
         if (paramCount > 0) {
-            Object[] parameters = new Object[paramCount];
+            Object parameters[] = new Object[paramCount];
+            for (int i = 0; i < parameters.length; i++) {
+                parameters[i] = null;
+            }
             digester.pushParams(parameters);
         }
 
@@ -272,7 +277,7 @@ public class CallMethodRule extends Rule {
     public void end(String namespace, String name) throws Exception {
 
         // Retrieve or construct the parameter values array
-        Object[] parameters = null;
+        Object parameters[] = null;
         if (paramCount > 0) {
 
             parameters = (Object[]) digester.popParams();
@@ -291,7 +296,7 @@ public class CallMethodRule extends Rule {
                 return;
             }
 
-        } else if (paramTypes.length != 0) {
+        } else if (paramTypes != null && paramTypes.length != 0) {
 
             // In the case where the parameter for the method
             // is taken from the body text, but there is no
@@ -308,15 +313,15 @@ public class CallMethodRule extends Rule {
         // Construct the parameter values array we will need
         // We only do the conversion if the param value is a String and
         // the specified paramType is not String.
-        Object[] paramValues = new Object[paramTypes.length];
+        Object paramValues[] = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
             // convert nulls and convert stringy parameters
             // for non-stringy param types
             Object param = parameters[i];
             // Tolerate null non-primitive values
-            if(null == param && !paramTypes[i].isPrimitive()) {
+            if(null == param && !paramTypes[i].isPrimitive())
                 paramValues[i] = null;
-            } else if(param instanceof String &&
+            else if(param instanceof String &&
                     !String.class.isAssignableFrom(paramTypes[i])) {
 
                 paramValues[i] =
@@ -335,62 +340,49 @@ public class CallMethodRule extends Rule {
         }
 
         if (target == null) {
-            String sb = "[CallMethodRule]{" + digester.match + "} Call target is null (" +
-                    "targetOffset=" + targetOffset + ",stackdepth=" + digester.getCount() + ')';
-            throw new org.xml.sax.SAXException(sb);
+            StringBuilder sb = new StringBuilder();
+            sb.append("[CallMethodRule]{");
+            sb.append(digester.match);
+            sb.append("} Call target is null (");
+            sb.append("targetOffset=");
+            sb.append(targetOffset);
+            sb.append(",stackdepth=");
+            sb.append(digester.getCount());
+            sb.append(")");
+            throw new org.xml.sax.SAXException(sb.toString());
         }
 
         // Invoke the required method on the top object
-        if (digester.log.isTraceEnabled()) {
+        if (digester.log.isDebugEnabled()) {
             StringBuilder sb = new StringBuilder("[CallMethodRule]{");
             sb.append(digester.match);
             sb.append("} Call ");
             sb.append(target.getClass().getName());
-            sb.append('.');
+            sb.append(".");
             sb.append(methodName);
-            sb.append('(');
+            sb.append("(");
             for (int i = 0; i < paramValues.length; i++) {
                 if (i > 0) {
-                    sb.append(',');
+                    sb.append(",");
                 }
                 if (paramValues[i] == null) {
                     sb.append("null");
                 } else {
                     sb.append(paramValues[i].toString());
                 }
-                sb.append('/');
+                sb.append("/");
                 if (paramTypes[i] == null) {
                     sb.append("null");
                 } else {
                     sb.append(paramTypes[i].getName());
                 }
             }
-            sb.append(')');
-            digester.log.trace(sb.toString());
+            sb.append(")");
+            digester.log.debug(sb.toString());
         }
         Object result = IntrospectionUtils.callMethodN(target, methodName,
                 paramValues, paramTypes);
         processMethodCallResult(result);
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(digester.toVariableName(target)).append('.').append(methodName);
-            code.append('(');
-            for (int i = 0; i < paramValues.length; i++) {
-                if (i > 0) {
-                    code.append(", ");
-                }
-                if (bodyText != null) {
-                    code.append("\"").append(IntrospectionUtils.escape(bodyText)).append("\"");
-                } else if (paramValues[i] instanceof String) {
-                    code.append("\"").append(IntrospectionUtils.escape(paramValues[i].toString())).append("\"");
-                } else {
-                    code.append(digester.toVariableName(paramValues[i]));
-                }
-            }
-            code.append(");");
-            code.append(System.lineSeparator());
-        }
     }
 
 
@@ -433,8 +425,8 @@ public class CallMethodRule extends Rule {
                 sb.append(paramTypes[i].getName());
             }
         }
-        sb.append('}');
-        sb.append(']');
+        sb.append("}");
+        sb.append("]");
         return sb.toString();
     }
 }

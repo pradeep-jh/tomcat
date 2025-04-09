@@ -20,7 +20,6 @@ import org.apache.tools.ant.BuildException;
 
 /**
  * <b>Definition</b>:
- *
  * <pre>
  *   &lt;path id="catalina_ant"&gt;
  *       &lt;fileset dir="${catalina.home}/server/lib"&gt;
@@ -39,7 +38,6 @@ import org.apache.tools.ant.BuildException;
  * </pre>
  *
  * <b>Usage</b>: Wait for start backup node
- *
  * <pre>
  *     &lt;target name="wait"&gt;
  *       &lt;jmxOpen
@@ -63,30 +61,28 @@ import org.apache.tools.ant.BuildException;
  *       &lt;fail if="server.timeout" message="Server ${url} don't answer inside ${maxwait} sec" /&gt;
  *       &lt;echo message="Server ${url} alive" /&gt;
  *   &lt;/target&gt;
- * </pre>
  *
+ * </pre>
  * Allowed operation between jmx attribute and reference value:
  * <ul>
- * <li>== equals</li>
- * <li>!= not equals</li>
+ * <li>==  equals</li>
+ * <li>!=  not equals</li>
  * <li>&gt; greater than (&amp;gt;)</li>
  * <li>&gt;= greater than or equals (&amp;gt;=)</li>
  * <li>&lt; lesser than (&amp;lt;)</li>
  * <li>&lt;= lesser than or equals (&amp;lt;=)</li>
  * </ul>
- * <b>NOTE</b>: For numeric expressions the type must be set and use xml entities as operations.<br>
+ * <b>NOTE</b>:  For numeric expressions the type must be set and use xml entities as operations.<br>
  * As type we currently support <em>long</em> and <em>double</em>.
- *
  * @author Peter Rossbach
- *
  * @since 5.5.10
  */
 public class JMXAccessorCondition extends JMXAccessorConditionBase {
 
     // ----------------------------------------------------- Instance Variables
 
-    private String operation = "==";
-    private String type = "long";
+    private String operation = "==" ;
+    private String type = "long" ;
     private String unlessCondition;
     private String ifCondition;
 
@@ -99,7 +95,6 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
     public String getOperation() {
         return operation;
     }
-
     /**
      * @param operation The operation to set.
      */
@@ -113,7 +108,6 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
     public String getType() {
         return type;
     }
-
     /**
      * @param type The type to set.
      */
@@ -127,26 +121,23 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
     public String getIf() {
         return ifCondition;
     }
-
     /**
      * Only execute if a property of the given name exists in the current project.
-     *
      * @param c property name
      */
     public void setIf(String c) {
         ifCondition = c;
     }
 
-    /**
+   /**
      * @return Returns the unlessCondition.
      */
     public String getUnless() {
         return unlessCondition;
     }
-
     /**
-     * Only execute if a property of the given name does not exist in the current project.
-     *
+     * Only execute if a property of the given name does not
+     * exist in the current project.
      * @param c property name
      */
     public void setUnless(String c) {
@@ -155,11 +146,10 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
 
     /**
      * test the if condition
-     *
      * @return true if there is no if condition, or the named property exists
      */
     protected boolean testIfCondition() {
-        if (ifCondition == null || ifCondition.isEmpty()) {
+        if (ifCondition == null || "".equals(ifCondition)) {
             return true;
         }
         return getProject().getProperty(ifCondition) != null;
@@ -167,20 +157,19 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
 
     /**
      * test the unless condition
-     *
-     * @return true if there is no unless condition, or there is a named property but it doesn't exist
+     * @return true if there is no unless condition,
+     *  or there is a named property but it doesn't exist
      */
     protected boolean testUnlessCondition() {
-        if (unlessCondition == null || unlessCondition.isEmpty()) {
+        if (unlessCondition == null || "".equals(unlessCondition)) {
             return true;
         }
         return getProject().getProperty(unlessCondition) == null;
     }
 
     /**
-     * This method evaluates the condition It support for operation "&gt;,&gt;=,&lt;,&lt;=" the types <code>long</code>
-     * and <code>double</code>.
-     *
+     * This method evaluates the condition
+     * It support for operation "&gt;,&gt;=,&lt;,&lt;=" the types <code>long</code> and <code>double</code>.
      * @return expression <em>jmxValue</em> <em>operation</em> <em>value</em>
      */
     @Override
@@ -193,7 +182,8 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
             throw new BuildException("value attribute is not set");
         }
         if ((getName() == null || getAttribute() == null)) {
-            throw new BuildException("Must specify an MBean name and attribute for condition");
+            throw new BuildException(
+                    "Must specify an MBean name and attribute for condition");
         }
         if (testIfCondition() && testUnlessCondition()) {
             String jmxValue = accessJMXValue();
@@ -235,5 +225,5 @@ public class JMXAccessorCondition extends JMXAccessorConditionBase {
         }
         return true;
     }
-}
+ }
 

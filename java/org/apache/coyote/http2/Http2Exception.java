@@ -16,11 +16,8 @@
  */
 package org.apache.coyote.http2;
 
-import java.io.Serial;
-
 abstract class Http2Exception extends Exception {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Http2Error error;

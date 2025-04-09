@@ -59,7 +59,7 @@ public class TestDirResourceSetMount extends AbstractTestResourceSetMount {
     }
 
     @Override
-    protected boolean isWritable() {
+    protected boolean isWriteable() {
         return true;
     }
 

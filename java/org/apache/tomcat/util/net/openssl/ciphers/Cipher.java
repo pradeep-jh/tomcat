@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.net.openssl.ciphers;
 
 import java.util.Arrays;
@@ -512,7 +513,7 @@ public enum Cipher {
             new String[] {"SSL_DH_anon_WITH_3DES_EDE_CBC_SHA"},
             null
     ),
-    /* Fortezza cipher suite from SSL 3.0 spec
+    /* Fortezza ciphersuite from SSL 3.0 spec
      * Neither OpenSSL nor Java implement these ciphers and the IDs used
      * overlap partially with the IDs used by the Kerberos ciphers
     // Cipher 1C
@@ -844,7 +845,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* New AES cipher suites */
+    /* New AES ciphersuites */
     // Cipher 2F
     TLS_RSA_WITH_AES_128_CBC_SHA(
             0x002f,
@@ -1049,7 +1050,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* TLS v1.2 cipher suites */
+    /* TLS v1.2 ciphersuites */
     // Cipher 3B
     TLS_RSA_WITH_NULL_SHA256(
             0x003B,
@@ -1152,7 +1153,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* Camellia cipher suites from RFC4132 (
+    /* Camellia ciphersuites from RFC4132 (
             128-bit portion) */
     // Cipher 41
     TLS_RSA_WITH_CAMELLIA_128_CBC_SHA(
@@ -1379,7 +1380,7 @@ public enum Cipher {
             null
     ),
 
-    /* TLS v1.2 cipher suites */
+    /* TLS v1.2 ciphersuites */
     // Cipher 67
     TLS_DHE_RSA_WITH_AES_128_CBC_SHA256(
             0x0067,
@@ -1499,7 +1500,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* GOST cipher suites. Unsupported by Java. OpenSSL lists them with IDs
+    /* GOST Ciphersuites. Unsupported by Java. OpenSSL lists them with IDs
      * 0x3000080 to 0x3000083
      * The ciphers are not listed in the IANA registry. */
     /*
@@ -1567,7 +1568,7 @@ public enum Cipher {
             null,
             null
     ),*/
-    /* Camellia cipher suites from RFC4132 (
+    /* Camellia ciphersuites from RFC4132 (
             256-bit portion) */
     // Cipher 84
     TLS_RSA_WITH_CAMELLIA_256_CBC_SHA(
@@ -1875,7 +1876,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* SEED cipher suites from RFC4162 */
+    /* SEED ciphersuites from RFC4162 */
     // Cipher 96
     TLS_RSA_WITH_SEED_CBC_SHA(
             0x0096,
@@ -1978,7 +1979,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* GCM cipher suites from RFC5288 */
+    /* GCM ciphersuites from RFC5288 */
     // Cipher 9C
     TLS_RSA_WITH_AES_128_GCM_SHA256(
             0x009C,
@@ -2776,7 +2777,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_3,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             true,
             128,
             128,
@@ -2790,7 +2791,7 @@ public enum Cipher {
      * No other ciphers defined until 0xC001 below
      */
 
-    /* ECC cipher suites from draft-ietf-tls-ecc-01.txt (
+    /* ECC ciphersuites from draft-ietf-tls-ecc-01.txt (
             Mar 15, 2001) */
     // Cipher C001
     TLS_ECDH_ECDSA_WITH_NULL_SHA(
@@ -3217,7 +3218,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* SRP cipher suite from RFC 5054 */
+    /* SRP ciphersuite from RFC 5054 */
     // Cipher C01A
     TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA(
             0xC01A,
@@ -3371,7 +3372,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* HMAC based TLS v1.2 cipher suites from RFC5289 */
+    /* HMAC based TLS v1.2 ciphersuites from RFC5289 */
     // Cipher C023
     TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256(
             0xC023,
@@ -3508,7 +3509,7 @@ public enum Cipher {
             null,
             null
     ),
-    /* GCM based TLS v1.2 cipher suites from RFC5289 */
+    /* GCM based TLS v1.2 ciphersuites from RFC5289 */
     // Cipher C02B
     TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256(
             0xC02B,
@@ -4353,7 +4354,7 @@ public enum Cipher {
             null,
             null
     ),
-    // CCM cipher suites from RFC6655
+    // CCM ciphersuites from RFC6655
     // Cipher C09C
     TLS_RSA_WITH_AES_128_CCM(
             0xC09C,
@@ -4432,7 +4433,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             128,
             128,
@@ -4449,7 +4450,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             256,
             256,
@@ -4466,7 +4467,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             128,
             128,
@@ -4483,7 +4484,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             256,
             256,
@@ -4568,7 +4569,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             128,
             128,
@@ -4585,7 +4586,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             256,
             256,
@@ -4602,7 +4603,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             128,
             128,
@@ -4619,14 +4620,14 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             256,
             256,
             null,
             null
     ),
-    // CCM cipher suites from RFC7251
+    // CCM ciphersuites from RFC7251
     // Cipher C0AC
     TLS_ECDHE_ECDSA_WITH_AES_128_CCM(
             0xC0AC,
@@ -4671,7 +4672,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             128,
             128,
@@ -4688,7 +4689,7 @@ public enum Cipher {
             MessageDigest.AEAD,
             Protocol.TLSv1_2,
             false,
-            EncryptionLevel.MEDIUM,
+            EncryptionLevel.HIGH,
             false,
             256,
             256,
@@ -5011,7 +5012,7 @@ public enum Cipher {
      */
     private final int alg_bits;
 
-    Cipher(int id, String openSSLAlias, KeyExchange kx, Authentication au, Encryption enc,
+    private Cipher(int id, String openSSLAlias, KeyExchange kx, Authentication au, Encryption enc,
             MessageDigest mac, Protocol protocol, boolean export, EncryptionLevel level,
             boolean fipsCompatible, int strength_bits, int alg_bits, String[] jsseAltNames,
             String[] openSSlAltNames) {
@@ -5101,7 +5102,7 @@ public enum Cipher {
     private static final Map<Integer,Cipher> idMap = new HashMap<>();
 
     static {
-        for (Cipher cipher : values()) {
+        for (Cipher cipher : Cipher.values()) {
             int id = cipher.getId();
 
             if (id > 0 && id < 0xFFFF) {

@@ -24,16 +24,14 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.InvalidPathException;
 
-import org.apache.tomcat.util.buf.UriUtil;
 import org.apache.tomcat.util.file.ConfigurationSource;
 import org.apache.tomcat.util.res.StringManager;
 
 public class CatalinaBaseConfigurationSource implements ConfigurationSource {
 
     protected static final StringManager sm = StringManager.getManager(Constants.Package);
-
-    public static final String LEGACY_SERVER_EMBED_XML = "server-embed.xml";
 
     private final String serverXmlPath;
     private final File catalinaBaseFile;
@@ -60,11 +58,10 @@ public class CatalinaBaseConfigurationSource implements ConfigurationSource {
         }
         if (result == null) {
             // Compatibility with legacy server-embed.xml location
-            InputStream stream = getClass().getClassLoader().getResourceAsStream(LEGACY_SERVER_EMBED_XML);
+            InputStream stream = getClass().getClassLoader().getResourceAsStream("server-embed.xml");
             if (stream != null) {
                 try {
-                    result = new Resource(stream,
-                            getClass().getClassLoader().getResource(LEGACY_SERVER_EMBED_XML).toURI());
+                    result = new Resource(stream, getClass().getClassLoader().getResource("server-embed.xml").toURI());
                 } catch (URISyntaxException e) {
                     stream.close();
                 }
@@ -80,39 +77,42 @@ public class CatalinaBaseConfigurationSource implements ConfigurationSource {
 
     @Override
     public Resource getResource(String name) throws IOException {
-        // Originally only File was supported. Class loader and URI were added
-        // later. However (see bug 65106) treating some URIs as files can cause
-        // problems. Therefore, if path starts with a valid URI scheme then skip
-        // straight to processing this as a URI.
-        if (!UriUtil.isAbsoluteURI(name)) {
-            File f = new File(name);
-            if (!f.isAbsolute()) {
-                f = new File(catalinaBaseFile, name);
-            }
-            if (f.isFile()) {
-                FileInputStream fis = new FileInputStream(f);
-                return new Resource(fis, f.toURI());
-            }
+        // Location was originally always a file before URI support was added so
+        // try file first.
 
-            // Try classloader
-            InputStream stream = null;
-            try {
-                stream = getClass().getClassLoader().getResourceAsStream(name);
-                if (stream != null) {
-                    return new Resource(stream, getClass().getClassLoader().getResource(name).toURI());
-                }
-            } catch (URISyntaxException e) {
-                stream.close();
-                throw new IOException(sm.getString("catalinaConfigurationSource.cannotObtainURL", name), e);
+        File f = new File(name);
+        if (!f.isAbsolute()) {
+            f = new File(catalinaBaseFile, name);
+        }
+        if (f.isFile()) {
+            FileInputStream fis = new FileInputStream(f);
+            return new Resource(fis, f.toURI());
+        }
+
+        // Try classloader
+        InputStream stream = null;
+        try {
+            stream = getClass().getClassLoader().getResourceAsStream(name);
+            if (stream != null) {
+                return new Resource(stream, getClass().getClassLoader().getResource(name).toURI());
             }
+        } catch (InvalidPathException e) {
+            // Ignore. Some valid file URIs can trigger this.
+            // Stream should be null here but check to be on the safe side.
+            if (stream != null) {
+                stream.close();
+            }
+        } catch (URISyntaxException e) {
+            stream.close();
+            throw new IOException(sm.getString("catalinaConfigurationSource.cannotObtainURL", name), e);
         }
 
         // Then try URI.
-        URI uri;
+        URI uri = null;
         try {
-            uri = getURIInternal(name);
+            uri = getURI(name);
         } catch (IllegalArgumentException e) {
-            throw new IOException(sm.getString("catalinaConfigurationSource.cannotObtainURL", name));
+            throw new IOException(sm.getString("catalinaConfigurationSource.cannotObtainURL", name), e);
         }
 
         // Obtain the input stream we need
@@ -126,34 +126,24 @@ public class CatalinaBaseConfigurationSource implements ConfigurationSource {
 
     @Override
     public URI getURI(String name) {
-        // Originally only File was supported. Class loader and URI were added
-        // later. However (see bug 65106) treating some URIs as files can cause
-        // problems. Therefore, if path starts with a valid URI scheme then skip
-        // straight to processing this as a URI.
-        if (!UriUtil.isAbsoluteURI(name)) {
-            File f = new File(name);
-            if (!f.isAbsolute()) {
-                f = new File(catalinaBaseFile, name);
-            }
-            if (f.isFile()) {
-                return f.toURI();
-            }
-
-            // Try classloader
-            try {
-                URL resource = getClass().getClassLoader().getResource(name);
-                if (resource != null) {
-                    return resource.toURI();
-                }
-            } catch (Exception e) {
-                // Ignore
-            }
+        File f = new File(name);
+        if (!f.isAbsolute()) {
+            f = new File(catalinaBaseFile, name);
+        }
+        if (f.isFile()) {
+            return f.toURI();
         }
 
-        return getURIInternal(name);
-    }
+        // Try classloader
+        try {
+            URL resource = getClass().getClassLoader().getResource(name);
+            if (resource != null) {
+                return resource.toURI();
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
 
-    private URI getURIInternal(String name) {
         // Then try URI.
         // Using resolve() enables the code to handle relative paths that did
         // not point to a file
@@ -165,4 +155,5 @@ public class CatalinaBaseConfigurationSource implements ConfigurationSource {
         }
         return uri;
     }
+
 }

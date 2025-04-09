@@ -224,12 +224,20 @@ public class StandardJarScanFilter implements JarScanFilter {
             }
             if (defaultScan) {
                 if (Matcher.matchName(toSkip, jarName)) {
-                    return Matcher.matchName(toScan, jarName);
+                    if (Matcher.matchName(toScan, jarName)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
                 return true;
             } else {
                 if (Matcher.matchName(toScan, jarName)) {
-                    return !Matcher.matchName(toSkip, jarName);
+                    if (Matcher.matchName(toSkip, jarName)) {
+                        return false;
+                    } else {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -244,7 +252,7 @@ public class StandardJarScanFilter implements JarScanFilter {
             StringTokenizer tokenizer = new StringTokenizer(attribute, ",");
             while (tokenizer.hasMoreElements()) {
                 String token = tokenizer.nextToken().trim();
-                if (!token.isEmpty()) {
+                if (token.length() > 0) {
                     set.add(token);
                 }
             }

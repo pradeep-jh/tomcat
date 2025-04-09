@@ -18,12 +18,8 @@ package org.apache.catalina.valves;
 
 import java.io.IOException;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
 
-import org.apache.catalina.Container;
-import org.apache.catalina.Context;
-import org.apache.catalina.LifecycleException;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.tomcat.util.buf.MessageBytes;
@@ -34,21 +30,12 @@ import org.apache.tomcat.util.buf.MessageBytes;
  */
 public class HealthCheckValve extends ValveBase {
 
-    private static final String UP = "{\n" + "  \"status\": \"UP\",\n" + "  \"checks\": []\n" + "}";
-
-    private static final String DOWN = "{\n" + "  \"status\": \"DOWN\",\n" + "  \"checks\": []\n" + "}";
-
+    private static final String UP =
+            "{\n" +
+            "  \"status\": \"UP\",\n" +
+            "  \"checks\": []\n" +
+            "}";
     private String path = "/health";
-
-    /**
-     * Will be set to true if the valve is associated with a context.
-     */
-    protected boolean context = false;
-
-    /**
-     * Check if all child containers are available.
-     */
-    protected boolean checkContainersAvailable = true;
 
     public HealthCheckValve() {
         super(true);
@@ -62,43 +49,15 @@ public class HealthCheckValve extends ValveBase {
         this.path = path;
     }
 
-    public boolean getCheckContainersAvailable() {
-        return this.checkContainersAvailable;
-    }
-
-    public void setCheckContainersAvailable(boolean checkContainersAvailable) {
-        this.checkContainersAvailable = checkContainersAvailable;
-    }
-
     @Override
-    protected void startInternal() throws LifecycleException {
-        super.startInternal();
-        context = (getContainer() instanceof Context);
-    }
-
-    @Override
-    public void invoke(Request request, Response response) throws IOException, ServletException {
-        MessageBytes urlMB = context ? request.getRequestPathMB() : request.getDecodedRequestURIMB();
-        if (urlMB.equals(path)) {
+    public void invoke(Request request, Response response)
+            throws IOException, ServletException {
+        MessageBytes requestPathMB = request.getRequestPathMB();
+        if (requestPathMB.equals(path)) {
             response.setContentType("application/json");
-            if (!checkContainersAvailable || isAvailable(getContainer())) {
-                response.getOutputStream().print(UP);
-            } else {
-                response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-                response.getOutputStream().print(DOWN);
-            }
+            response.getOutputStream().print(UP);
         } else {
             getNext().invoke(request, response);
         }
     }
-
-    protected boolean isAvailable(Container container) {
-        for (Container child : container.findChildren()) {
-            if (!isAvailable(child)) {
-                return false;
-            }
-        }
-        return container.getState().isAvailable();
-    }
-
 }

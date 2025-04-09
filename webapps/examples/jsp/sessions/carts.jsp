@@ -27,10 +27,10 @@
 <br> You have the following items in your cart:
 <ol>
 <%
-    Item[] items = cart.getItems();
-    for (Item item : items) {
+    String[] items = cart.getItems();
+    for (String item : items) {
 %>
-<li> <% out.print(util.HTMLFilter.filter(item.getTitle())); %>
+<li> <% out.print(util.HTMLFilter.filter(item)); %>
 <%
     }
 %>
@@ -39,5 +39,5 @@
 </FONT>
 
 <hr>
-<%@ include file ="shopping.jsp" %>
+<%@ include file ="carts.html" %>
 </html>

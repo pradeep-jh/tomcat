@@ -19,55 +19,48 @@ package org.apache.tomcat.dbcp.pool2.impl;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
-import java.util.Objects;
 
 import org.apache.tomcat.dbcp.pool2.PooledObject;
 
 /**
- * Implements providing information on pooled
+ * Implementation of object that is used to provide information on pooled
  * objects via JMX.
  *
  * @since 2.0
  */
 public class DefaultPooledObjectInfo implements DefaultPooledObjectInfoMBean {
 
-    private static final String PATTERN = "yyyy-MM-dd HH:mm:ss Z";
-
     private final PooledObject<?> pooledObject;
 
     /**
-     * Constructs a new instance for the given pooled object.
+     * Create a new instance for the given pooled object.
      *
      * @param pooledObject The pooled object that this instance will represent
-     * @throws NullPointerException if {@code obj} is {@code null}
      */
     public DefaultPooledObjectInfo(final PooledObject<?> pooledObject) {
-        this.pooledObject = Objects.requireNonNull(pooledObject, "pooledObject");
-    }
-
-    @Override
-    public long getBorrowedCount() {
-        return pooledObject.getBorrowedCount();
+        this.pooledObject = pooledObject;
     }
 
     @Override
     public long getCreateTime() {
-        return pooledObject.getCreateInstant().toEpochMilli();
+        return pooledObject.getCreateTime();
     }
 
     @Override
     public String getCreateTimeFormatted() {
-        return getTimeMillisFormatted(getCreateTime());
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        return sdf.format(Long.valueOf(pooledObject.getCreateTime()));
     }
 
     @Override
     public long getLastBorrowTime() {
-        return pooledObject.getLastBorrowInstant().toEpochMilli();
+        return pooledObject.getLastBorrowTime();
     }
 
     @Override
     public String getLastBorrowTimeFormatted() {
-        return getTimeMillisFormatted(getLastBorrowTime());
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        return sdf.format(Long.valueOf(pooledObject.getLastBorrowTime()));
     }
 
     @Override
@@ -79,27 +72,28 @@ public class DefaultPooledObjectInfo implements DefaultPooledObjectInfoMBean {
 
     @Override
     public long getLastReturnTime() {
-        return pooledObject.getLastReturnInstant().toEpochMilli();
+        return pooledObject.getLastReturnTime();
     }
 
     @Override
     public String getLastReturnTimeFormatted() {
-        return getTimeMillisFormatted(getLastReturnTime());
-    }
-
-    @Override
-    public String getPooledObjectToString() {
-        return Objects.toString(pooledObject.getObject(), null);
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+        return sdf.format(Long.valueOf(pooledObject.getLastReturnTime()));
     }
 
     @Override
     public String getPooledObjectType() {
-        final Object object = pooledObject.getObject();
-        return object != null ? object.getClass().getName() : null;
+        return pooledObject.getObject().getClass().getName();
     }
 
-    private String getTimeMillisFormatted(final long millis) {
-        return new SimpleDateFormat(PATTERN).format(Long.valueOf(millis));
+    @Override
+    public String getPooledObjectToString() {
+        return pooledObject.getObject().toString();
+    }
+
+    @Override
+    public long getBorrowedCount() {
+        return pooledObject.getBorrowedCount();
     }
 
     /**

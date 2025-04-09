@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.startup;
 
 import java.io.BufferedReader;
@@ -29,15 +30,11 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import org.junit.Assert;
-
-import org.apache.catalina.Globals;
 
 /**
  * Simple client for unit testing. It isn't robust, it isn't secure and
@@ -51,9 +48,6 @@ public abstract class SimpleHttpClient {
     public static final String CR = "\r";
     public static final String LF = "\n";
     public static final String CRLF = CR + LF;
-
-    public static final String HTTP_HEADER_CONTENT_TYPE_FORM_URL_ENCODING =
-            "Content-Type: " + Globals.CONTENT_TYPE_FORM_URL_ENCODING + CRLF;
 
     public static final String INFO_100 = "HTTP/1.1 100 ";
     public static final String OK_200 = "HTTP/1.1 200 ";
@@ -103,7 +97,6 @@ public abstract class SimpleHttpClient {
     private boolean useCookies = true;
     private boolean useHttp09 = false;
     private int requestPause = 1000;
-    private Charset requestBodyEncoding = StandardCharsets.ISO_8859_1;
 
     private String responseLine;
     private List<String> responseHeaders = new ArrayList<>();
@@ -114,7 +107,6 @@ public abstract class SimpleHttpClient {
 
     private String responseBody;
     private List<String> bodyUriElements = null;
-    private Charset responseBodyEncoding = StandardCharsets.ISO_8859_1;
 
     public void setPort(int thePort) {
         port = thePort;
@@ -155,19 +147,8 @@ public abstract class SimpleHttpClient {
         return responseLine;
     }
 
-    public int getStatusCode() {
-        if (responseLine.length() < 13) {
-            throw new IllegalStateException();
-        }
-        return Integer.parseInt(responseLine.substring(9, 12));
-    }
-
     public List<String> getResponseHeaders() {
         return responseHeaders;
-    }
-
-    public void setResponseBodyEncoding(Charset charset) {
-        responseBodyEncoding = charset;
     }
 
     public String getResponseBody() {
@@ -207,18 +188,19 @@ public abstract class SimpleHttpClient {
 
     public void connect(int connectTimeout, int soTimeout)
            throws UnknownHostException, IOException {
+        final String encoding = "ISO-8859-1";
         SocketAddress addr = new InetSocketAddress("localhost", port);
         socket = new Socket();
         socket.setSoTimeout(soTimeout);
         socket.connect(addr,connectTimeout);
         OutputStream os = createOutputStream(socket);
-        writer = new OutputStreamWriter(os, requestBodyEncoding);
+        writer = new OutputStreamWriter(os, encoding);
         InputStream is = socket.getInputStream();
-        Reader r = new InputStreamReader(is, responseBodyEncoding);
+        Reader r = new InputStreamReader(is, encoding);
         reader = new BufferedReader(r);
     }
     public void connect() throws UnknownHostException, IOException {
-        connect(10000, 10000);
+        connect(0,0);
     }
 
     protected OutputStream createOutputStream(Socket socket) throws IOException {
@@ -335,15 +317,14 @@ public abstract class SimpleHttpClient {
             if (useContentLength && (contentLength > -1)) {
                 char[] body = new char[contentLength];
                 int read = reader.read(body);
-                builder.append(body, 0 , read);
-                Assert.assertEquals(contentLength, builder.toString().getBytes(responseBodyEncoding).length);
+                Assert.assertEquals(contentLength, read);
+                builder.append(body);
             } else {
-                // Not using content length, so just read until EOF
-                char[] buf = new char[1024];
-                int read;
+                // not using content length, so just read it line by line
+                String line = null;
                 try {
-                    while ((read = reader.read(buf)) != -1) {
-                        builder.append(buf, 0, read);
+                    while ((line = readLine()) != null) {
+                        builder.append(line);
                     }
                 } catch (SocketException e) {
                     // Ignore
@@ -381,7 +362,7 @@ public abstract class SimpleHttpClient {
     }
 
     /*
-     * Scan an HTML body for a given HTML uri element, starting from the
+     * Scan an html body for a given html uri element, starting from the
      * given index into the source string. If any are found, simply
      * accumulate them as literal strings, including angle brackets.
      * note: nested elements will not be collected.

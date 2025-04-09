@@ -22,20 +22,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Serial;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Locale;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 /**
- * Servlet to process SSI requests within a webpage. Mapped to a path from within web.xml.
+ * Servlet to process SSI requests within a webpage. Mapped to a path from
+ * within web.xml.
  *
  * @author Bip Thelin
  * @author Amy Roh
@@ -43,7 +42,6 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author David Becker
  */
 public class SSIServlet extends HttpServlet {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /** Debug level for this servlet. */
@@ -62,70 +60,78 @@ public class SSIServlet extends HttpServlet {
     protected boolean allowExec = false;
 
 
-    // ----------------- Public methods.
-
+    //----------------- Public methods.
+    /**
+     * Initialize this servlet.
+     *
+     * @exception ServletException
+     *                if an error occurs
+     */
     @Override
     public void init() throws ServletException {
 
-        if (getServletConfig().getInitParameter("debug") != null) {
+        if (getServletConfig().getInitParameter("debug") != null)
             debug = Integer.parseInt(getServletConfig().getInitParameter("debug"));
-        }
 
-        isVirtualWebappRelative = Boolean.parseBoolean(getServletConfig().getInitParameter("isVirtualWebappRelative"));
+        isVirtualWebappRelative =
+            Boolean.parseBoolean(getServletConfig().getInitParameter("isVirtualWebappRelative"));
 
-        if (getServletConfig().getInitParameter("expires") != null) {
+        if (getServletConfig().getInitParameter("expires") != null)
             expires = Long.valueOf(getServletConfig().getInitParameter("expires"));
-        }
 
         buffered = Boolean.parseBoolean(getServletConfig().getInitParameter("buffered"));
 
         inputEncoding = getServletConfig().getInitParameter("inputEncoding");
 
-        if (getServletConfig().getInitParameter("outputEncoding") != null) {
+        if (getServletConfig().getInitParameter("outputEncoding") != null)
             outputEncoding = getServletConfig().getInitParameter("outputEncoding");
-        }
 
-        allowExec = Boolean.parseBoolean(getServletConfig().getInitParameter("allowExec"));
+        allowExec = Boolean.parseBoolean(
+                getServletConfig().getInitParameter("allowExec"));
 
-        if (debug > 0) {
+        if (debug > 0)
             log("SSIServlet.init() SSI invoker started with 'debug'=" + debug);
-        }
 
     }
 
 
     /**
-     * Process and forward the GET request to our <code>requestHandler()</code>.
+     * Process and forward the GET request to our <code>requestHandler()</code>*
      *
-     * @param req a value of type 'HttpServletRequest'
-     * @param res a value of type 'HttpServletResponse'
-     *
-     * @exception IOException      if an error occurs
-     * @exception ServletException if an error occurs
+     * @param req
+     *            a value of type 'HttpServletRequest'
+     * @param res
+     *            a value of type 'HttpServletResponse'
+     * @exception IOException
+     *                if an error occurs
+     * @exception ServletException
+     *                if an error occurs
      */
     @Override
-    public void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
-        if (debug > 0) {
-            log("SSIServlet.doGet()");
-        }
+    public void doGet(HttpServletRequest req, HttpServletResponse res)
+            throws IOException, ServletException {
+        if (debug > 0) log("SSIServlet.doGet()");
         requestHandler(req, res);
     }
 
 
     /**
-     * Process and forward the POST request to our <code>requestHandler()</code>.
+     * Process and forward the POST request to our
+     * <code>requestHandler()</code>.
      *
-     * @param req a value of type 'HttpServletRequest'
-     * @param res a value of type 'HttpServletResponse'
-     *
-     * @exception IOException      if an error occurs
-     * @exception ServletException if an error occurs
+     * @param req
+     *            a value of type 'HttpServletRequest'
+     * @param res
+     *            a value of type 'HttpServletResponse'
+     * @exception IOException
+     *                if an error occurs
+     * @exception ServletException
+     *                if an error occurs
      */
     @Override
-    public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
-        if (debug > 0) {
-            log("SSIServlet.doPost()");
-        }
+    public void doPost(HttpServletRequest req, HttpServletResponse res)
+            throws IOException, ServletException {
+        if (debug > 0) log("SSIServlet.doPost()");
         requestHandler(req, res);
     }
 
@@ -133,22 +139,24 @@ public class SSIServlet extends HttpServlet {
     /**
      * Process our request and locate right SSI command.
      *
-     * @param req a value of type 'HttpServletRequest'
-     * @param res a value of type 'HttpServletResponse'
-     *
+     * @param req
+     *            a value of type 'HttpServletRequest'
+     * @param res
+     *            a value of type 'HttpServletResponse'
      * @throws IOException an IO error occurred
      */
-    protected void requestHandler(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    protected void requestHandler(HttpServletRequest req,
+            HttpServletResponse res) throws IOException {
         ServletContext servletContext = getServletContext();
         String path = SSIServletRequestUtil.getRelativePath(req);
-        if (debug > 0) {
-            log("SSIServlet.requestHandler()\n" + "Serving " + (buffered ? "buffered " : "unbuffered ") + "resource '" +
-                    path + "'");
-        }
+        if (debug > 0)
+            log("SSIServlet.requestHandler()\n" + "Serving "
+                    + (buffered?"buffered ":"unbuffered ") + "resource '"
+                    + path + "'");
         // Exclude any resource in the /WEB-INF and /META-INF subdirectories
         // (the "toUpperCase()" avoids problems on Windows systems)
-        if (path == null || path.toUpperCase(Locale.ENGLISH).startsWith("/WEB-INF") ||
-                path.toUpperCase(Locale.ENGLISH).startsWith("/META-INF")) {
+        if (path == null || path.toUpperCase(Locale.ENGLISH).startsWith("/WEB-INF")
+                || path.toUpperCase(Locale.ENGLISH).startsWith("/META-INF")) {
             res.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -163,17 +171,21 @@ public class SSIServlet extends HttpServlet {
         }
         res.setContentType(resourceMimeType + ";charset=" + outputEncoding);
         if (expires != null) {
-            res.setDateHeader("Expires", (new java.util.Date()).getTime() + expires.longValue() * 1000);
+            res.setDateHeader("Expires", (new java.util.Date()).getTime()
+                    + expires.longValue() * 1000);
         }
         processSSI(req, res, resource);
     }
 
 
-    protected void processSSI(HttpServletRequest req, HttpServletResponse res, URL resource) throws IOException {
-        SSIExternalResolver ssiExternalResolver = new SSIServletExternalResolver(getServletContext(), req, res,
-                isVirtualWebappRelative, debug, inputEncoding);
-        SSIProcessor ssiProcessor = new SSIProcessor(ssiExternalResolver, debug, allowExec);
-        PrintWriter printWriter;
+    protected void processSSI(HttpServletRequest req, HttpServletResponse res,
+            URL resource) throws IOException {
+        SSIExternalResolver ssiExternalResolver =
+            new SSIServletExternalResolver(getServletContext(), req, res,
+                    isVirtualWebappRelative, debug, inputEncoding);
+        SSIProcessor ssiProcessor = new SSIProcessor(ssiExternalResolver,
+                debug, allowExec);
+        PrintWriter printWriter = null;
         StringWriter stringWriter = null;
         if (buffered) {
             stringWriter = new StringWriter();
@@ -194,17 +206,19 @@ public class SSIServlet extends HttpServlet {
         } else {
             isr = new InputStreamReader(resourceInputStream, encoding);
         }
+        BufferedReader bufferedReader = new BufferedReader(isr);
 
-        try (BufferedReader bufferedReader = new BufferedReader(isr)) {
-            long lastModified = ssiProcessor.process(bufferedReader, resourceInfo.getLastModified(), printWriter);
-            if (lastModified > 0) {
-                res.setDateHeader("last-modified", lastModified);
-            }
-            if (stringWriter != null) {
-                printWriter.flush();
-                String text = stringWriter.toString();
-                res.getWriter().write(text);
-            }
+        long lastModified = ssiProcessor.process(bufferedReader,
+                resourceInfo.getLastModified(), printWriter);
+        if (lastModified > 0) {
+            res.setDateHeader("last-modified", lastModified);
         }
+        if (buffered) {
+            printWriter.flush();
+            @SuppressWarnings("null")
+            String text = stringWriter.toString();
+            res.getWriter().write(text);
+        }
+        bufferedReader.close();
     }
 }

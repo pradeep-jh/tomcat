@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
-import java.io.Serial;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,6 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public class ManagedBean implements java.io.Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private static final StringManager sm = StringManager.getManager(ManagedBean.class);
 
@@ -65,9 +65,9 @@ public class ManagedBean implements java.io.Serializable {
      */
     private transient volatile MBeanInfo info = null;
 
-    private final Map<String,AttributeInfo> attributes = new HashMap<>();
+    private Map<String,AttributeInfo> attributes = new HashMap<>();
 
-    private final Map<String,OperationInfo> operations = new HashMap<>();
+    private Map<String,OperationInfo> operations = new HashMap<>();
 
     protected String className = BASE_MBEAN;
     protected String description = null;
@@ -75,11 +75,11 @@ public class ManagedBean implements java.io.Serializable {
     protected String group = null;
     protected String name = null;
 
-    private NotificationInfo[] notifications = new NotificationInfo[0];
+    private NotificationInfo notifications[] = new NotificationInfo[0];
     protected String type = null;
 
-    /**
-     * Constructor. Will add default attributes.
+    /** Constructor. Will add default attributes.
+     *
      */
     public ManagedBean() {
         AttributeInfo ai=new AttributeInfo();
@@ -97,7 +97,9 @@ public class ManagedBean implements java.io.Serializable {
      * @return the collection of attributes for this MBean.
      */
     public AttributeInfo[] getAttributes() {
-        return attributes.values().toArray(new AttributeInfo[0]);
+        AttributeInfo result[] = new AttributeInfo[attributes.size()];
+        attributes.values().toArray(result);
+        return result;
     }
 
 
@@ -197,7 +199,9 @@ public class ManagedBean implements java.io.Serializable {
      * @return the collection of operations for this MBean.
      */
     public OperationInfo[] getOperations() {
-        return operations.values().toArray(new OperationInfo[0]);
+        OperationInfo[] result = new OperationInfo[operations.size()];
+        operations.values().toArray(result);
+        return result;
     }
 
 
@@ -242,7 +246,7 @@ public class ManagedBean implements java.io.Serializable {
     public void addNotification(NotificationInfo notification) {
         mBeanInfoLock.writeLock().lock();
         try {
-            NotificationInfo[] results =
+            NotificationInfo results[] =
                 new NotificationInfo[notifications.length + 1];
             System.arraycopy(notifications, 0, results, 0,
                              notifications.length);
@@ -286,7 +290,7 @@ public class ManagedBean implements java.io.Serializable {
         throws InstanceNotFoundException,
         MBeanException, RuntimeOperationsException {
 
-        BaseModelMBean mbean;
+        BaseModelMBean mbean = null;
 
         // Load the ModelMBean implementation class
         if(getClassName().equals(BASE_MBEAN)) {
@@ -298,15 +302,13 @@ public class ManagedBean implements java.io.Serializable {
             try {
                 clazz = Class.forName(getClassName());
             } catch (Exception e) {
-                // Ignore
             }
 
             if( clazz==null ) {
                 try {
                     ClassLoader cl= Thread.currentThread().getContextClassLoader();
-                    if ( cl != null) {
+                    if ( cl != null)
                         clazz= cl.loadClass(getClassName());
-                    }
                 } catch (Exception e) {
                     ex=e;
                 }
@@ -330,8 +332,11 @@ public class ManagedBean implements java.io.Serializable {
         mbean.setManagedBean(this);
 
         // Set the managed resource (if any)
-        if (instance != null) {
-            mbean.setManagedResource(instance, "ObjectReference");
+        try {
+            if (instance != null)
+                mbean.setManagedResource(instance, "ObjectReference");
+        } catch (InstanceNotFoundException e) {
+            throw e;
         }
 
         return mbean;
@@ -359,27 +364,24 @@ public class ManagedBean implements java.io.Serializable {
         try {
             if (info == null) {
                 // Create subordinate information descriptors as required
-                AttributeInfo[] attrs = getAttributes();
-                MBeanAttributeInfo[] attributes =
+                AttributeInfo attrs[] = getAttributes();
+                MBeanAttributeInfo attributes[] =
                     new MBeanAttributeInfo[attrs.length];
-                for (int i = 0; i < attrs.length; i++) {
+                for (int i = 0; i < attrs.length; i++)
                     attributes[i] = attrs[i].createAttributeInfo();
-                }
 
-                OperationInfo[] opers = getOperations();
-                MBeanOperationInfo[] operations =
+                OperationInfo opers[] = getOperations();
+                MBeanOperationInfo operations[] =
                     new MBeanOperationInfo[opers.length];
-                for (int i = 0; i < opers.length; i++) {
+                for (int i = 0; i < opers.length; i++)
                     operations[i] = opers[i].createOperationInfo();
-                }
 
 
-                NotificationInfo[] notifs = getNotifications();
-                MBeanNotificationInfo[] notifications =
+                NotificationInfo notifs[] = getNotifications();
+                MBeanNotificationInfo notifications[] =
                     new MBeanNotificationInfo[notifs.length];
-                for (int i = 0; i < notifs.length; i++) {
+                for (int i = 0; i < notifs.length; i++)
                     notifications[i] = notifs[i].createNotificationInfo();
-                }
 
 
                 // Construct and return a new ModelMBeanInfo object
@@ -417,7 +419,7 @@ public class ManagedBean implements java.io.Serializable {
         }
         sb.append(", type=");
         sb.append(type);
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
 
     }
@@ -429,13 +431,12 @@ public class ManagedBean implements java.io.Serializable {
 
         AttributeInfo attrInfo = attributes.get(aname);
         // Look up the actual operation to be used
-        if (attrInfo == null) {
+        if (attrInfo == null)
             throw new AttributeNotFoundException(sm.getString("managedMBean.noAttribute", aname, resource));
-        }
 
         String getMethod = attrInfo.getGetMethod();
 
-        Object object;
+        Object object = null;
         NoSuchMethodException exception = null;
         try {
             object = mbean;
@@ -473,9 +474,9 @@ public class ManagedBean implements java.io.Serializable {
         String setMethod = attrInfo.getSetMethod();
         String argType=attrInfo.getType();
 
-        Class<?>[] signature = new Class[] { BaseModelMBean.getAttributeClass( argType ) };
+        Class<?> signature[] = new Class[] { BaseModelMBean.getAttributeClass( argType ) };
 
-        Object object;
+        Object object = null;
         NoSuchMethodException exception = null;
         try {
             object = bean;
@@ -504,30 +505,26 @@ public class ManagedBean implements java.io.Serializable {
 
         Method method = null;
 
-        if (params == null) {
+        if (params == null)
             params = new Object[0];
-        }
-        if (signature == null) {
+        if (signature == null)
             signature = new String[0];
-        }
-        if (params.length != signature.length) {
+        if (params.length != signature.length)
             throw new RuntimeOperationsException(
                     new IllegalArgumentException(sm.getString("managedMBean.inconsistentArguments")),
                     sm.getString("managedMBean.inconsistentArguments"));
-        }
 
         // Acquire the ModelMBeanOperationInfo information for
         // the requested operation
         OperationInfo opInfo =
                 operations.get(createOperationKey(aname, signature));
-        if (opInfo == null) {
+        if (opInfo == null)
             throw new MBeanException(new ServiceNotFoundException(sm.getString("managedMBean.noOperation", aname)),
                     sm.getString("managedMBean.noOperation", aname));
-        }
 
         // Prepare the signature required by Java reflection APIs
         // FIXME - should we use the signature from opInfo?
-        Class<?>[] types = new Class[signature.length];
+        Class<?> types[] = new Class[signature.length];
         for (int i = 0; i < signature.length; i++) {
             types[i] = BaseModelMBean.getAttributeClass(signature[i]);
         }
@@ -535,7 +532,7 @@ public class ManagedBean implements java.io.Serializable {
         // Locate the method to be invoked, either in this MBean itself
         // or in the corresponding managed resource
         // FIXME - Accessible methods in superinterfaces?
-        Object object;
+        Object object = null;
         Exception exception = null;
         try {
             object = bean;
@@ -562,7 +559,7 @@ public class ManagedBean implements java.io.Serializable {
     private String createOperationKey(OperationInfo operation) {
         StringBuilder key = new StringBuilder(operation.getName());
         key.append('(');
-        StringUtils.join(operation.getSignature(), ',', FeatureInfo::getType, key);
+        StringUtils.join(operation.getSignature(), ',', (x) -> x.getType(), key);
         key.append(')');
 
         return key.toString().intern();

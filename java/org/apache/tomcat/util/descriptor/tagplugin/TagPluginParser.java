@@ -22,7 +22,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.servlet.ServletContext;
+import javax.servlet.ServletContext;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -62,7 +62,7 @@ public class TagPluginParser {
                 handler.logFindings(log, source.getSystemId());
                 if (!handler.getErrors().isEmpty()) {
                     // throw the first to indicate there was an error during processing
-                    throw handler.getErrors().getFirst();
+                    throw handler.getErrors().iterator().next();
                 }
             }
         } finally {

@@ -34,7 +34,7 @@
    <p>
     The page you tried to access
     (<%=Escape.htmlElementContent((String) request.getAttribute(
-            "jakarta.servlet.error.request_uri"))%>)
+            "javax.servlet.error.request_uri"))%>)
     does not exist.
    </p>
    <p>

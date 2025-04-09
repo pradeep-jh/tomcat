@@ -18,7 +18,6 @@ package org.apache.tomcat.util.http.parser;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Locale;
 
 public class ContentRange {
 
@@ -29,21 +28,13 @@ public class ContentRange {
 
 
     public ContentRange(String units, long start, long end, long length) {
-        // Units are lower case (RFC 9110, section 14.1)
-        if (units == null) {
-            this.units = null;
-        } else {
-            this.units = units.toLowerCase(Locale.ENGLISH);
-        }
+        this.units = units;
         this.start = start;
         this.end = end;
         this.length = length;
     }
 
 
-    /**
-     * @return rangeUnits in lower case.
-     */
     public String getUnits() {
         return units;
     }
@@ -76,14 +67,14 @@ public class ContentRange {
     public static ContentRange parse(StringReader input) throws IOException {
         // Units (required)
         String units = HttpParser.readToken(input);
-        if (units == null || units.isEmpty()) {
+        if (units == null || units.length() == 0) {
             return null;
         }
 
-        // Must be followed by SP. Parser is lenient and accepts any LWS here.
-        // No need for explicit check as something must have terminated the
-        // token and if that something was anything other than LWS the following
-        // call to readLong() will fail.
+        // Must be followed by '='
+        if (HttpParser.skipConstant(input, "=") == SkipResult.NOT_FOUND) {
+            return null;
+        }
 
         // Start
         long start = HttpParser.readLong(input);
@@ -112,19 +103,6 @@ public class ContentRange {
             return null;
         }
 
-        ContentRange contentRange = new ContentRange(units, start, end, length);
-        if (!contentRange.isValid()) {
-            // Invalid content range
-            return null;
-        }
-        return contentRange;
-    }
-
-
-    /**
-     * @return <code>true</code> if the content range is valid, per RFC 9110 section 14.4
-     */
-    public boolean isValid() {
-        return start >= 0 && end >= start && length > end;
+        return new ContentRange(units, start, end, length);
     }
 }

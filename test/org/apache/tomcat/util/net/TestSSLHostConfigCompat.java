@@ -30,6 +30,8 @@ import org.junit.runners.Parameterized.Parameter;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.core.AprLifecycleListener;
+import org.apache.catalina.core.StandardServer;
 import org.apache.catalina.startup.TesterServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
@@ -37,7 +39,6 @@ import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.StoreType;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.Type;
 import org.apache.tomcat.util.net.TesterSupport.ClientSSLSocketFactory;
-import org.apache.tomcat.util.net.openssl.OpenSSLStatus;
 
 /*
  * Tests compatibility of JSSE and OpenSSL settings.
@@ -50,12 +51,14 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
         List<Object[]> parameterSets = new ArrayList<>();
 
         for (StoreType storeType : new StoreType[] { StoreType.KEYSTORE, StoreType.PEM } ) {
-            parameterSets.add(new Object[] {
-                    "JSSE", Boolean.FALSE, "org.apache.tomcat.util.net.jsse.JSSEImplementation", storeType});
-            parameterSets.add(new Object[] {
-                    "OpenSSL", Boolean.TRUE, "org.apache.tomcat.util.net.openssl.OpenSSLImplementation", storeType});
-            parameterSets.add(new Object[] {
-                    "OpenSSL-FFM", Boolean.TRUE, "org.apache.tomcat.util.net.openssl.panama.OpenSSLImplementation", storeType});
+            parameterSets.add(new Object[] {"NIO-JSSE", "org.apache.coyote.http11.Http11NioProtocol",
+                    "org.apache.tomcat.util.net.jsse.JSSEImplementation", storeType});
+
+            parameterSets.add(new Object[] {"NIO-OpenSSL", "org.apache.coyote.http11.Http11NioProtocol",
+                    "org.apache.tomcat.util.net.openssl.OpenSSLImplementation", storeType});
+
+            parameterSets.add(new Object[] { "APR/Native", "org.apache.coyote.http11.Http11AprProtocol",
+                    "org.apache.tomcat.util.net.openssl.OpenSSLImplementation", storeType});
         }
 
         return parameterSets;
@@ -65,13 +68,15 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
     public String connectorName;
 
     @Parameter(1)
-    public boolean useOpenSSL;
+    public String protocolName;
 
     @Parameter(2)
     public String sslImplementationName;
 
     @Parameter(3)
     public StoreType storeType;
+
+    private SSLHostConfig sslHostConfig = new SSLHostConfig();
 
 
     @Test
@@ -241,12 +246,10 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
 
 
     private void configureHostRSA() {
-        SSLHostConfig sslHostConfig = getSSLHostConfig();
         switch (storeType) {
         case KEYSTORE: {
             SSLHostConfigCertificate sslHostConfigCertificateRsa = new SSLHostConfigCertificate(sslHostConfig, Type.RSA);
             sslHostConfigCertificateRsa.setCertificateKeystoreFile(getPath(TesterSupport.LOCALHOST_RSA_JKS));
-            sslHostConfigCertificateRsa.setCertificateKeystorePassword(TesterSupport.JKS_PASS);
             sslHostConfig.addCertificate(sslHostConfigCertificateRsa);
             break;
         }
@@ -254,7 +257,6 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
             SSLHostConfigCertificate sslHostConfigCertificateRsa = new SSLHostConfigCertificate(sslHostConfig, Type.RSA);
             sslHostConfigCertificateRsa.setCertificateFile(getPath(TesterSupport.LOCALHOST_RSA_CERT_PEM));
             sslHostConfigCertificateRsa.setCertificateKeyFile(getPath(TesterSupport.LOCALHOST_RSA_KEY_PEM));
-            sslHostConfigCertificateRsa.setCertificateKeystorePassword(TesterSupport.JKS_PASS);
             sslHostConfig.addCertificate(sslHostConfigCertificateRsa);
             break;
         }
@@ -263,12 +265,10 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
 
 
     private void configureHostEC() {
-        SSLHostConfig sslHostConfig = getSSLHostConfig();
         switch (storeType) {
         case KEYSTORE: {
             SSLHostConfigCertificate sslHostConfigCertificateEc = new SSLHostConfigCertificate(sslHostConfig, Type.EC);
             sslHostConfigCertificateEc.setCertificateKeystoreFile(getPath(TesterSupport.LOCALHOST_EC_JKS));
-            sslHostConfigCertificateEc.setCertificateKeystorePassword(TesterSupport.JKS_PASS);
             sslHostConfig.addCertificate(sslHostConfigCertificateEc);
             break;
         }
@@ -276,7 +276,6 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
             SSLHostConfigCertificate sslHostConfigCertificateEc = new SSLHostConfigCertificate(sslHostConfig, Type.EC);
             sslHostConfigCertificateEc.setCertificateFile(getPath(TesterSupport.LOCALHOST_EC_CERT_PEM));
             sslHostConfigCertificateEc.setCertificateKeyFile(getPath(TesterSupport.LOCALHOST_EC_KEY_PEM));
-            sslHostConfigCertificateEc.setCertificateKeyPassword(TesterSupport.JKS_PASS);
             sslHostConfig.addCertificate(sslHostConfigCertificateEc);
             break;
         }
@@ -298,9 +297,6 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
         tomcat.start();
 
-        Assume.assumeFalse("BoringSSL removes support for many ciphers",
-                TesterSupport.isOpenSSLVariant(sslImplementationName, OpenSSLStatus.Name.BORINGSSL));
-
         // Check a request can be made
         ByteChunk res = getUrl("https://localhost:" + getPort() + "/");
         Assert.assertEquals("OK", res.toString());
@@ -308,8 +304,17 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
 
 
     @Override
+    protected String getProtocol() {
+        return protocolName;
+    }
+
+
+    @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        AprLifecycleListener listener = new AprLifecycleListener();
+        Assume.assumeTrue(AprLifecycleListener.isAprAvailable());
 
         Tomcat tomcat = getTomcatInstance();
         Connector connector = tomcat.getConnector();
@@ -318,23 +323,20 @@ public class TestSSLHostConfigCompat extends TomcatBaseTest {
         connector.setScheme("https");
         connector.setSecure(true);
         Assert.assertTrue(connector.setProperty("SSLEnabled", "true"));
-        SSLHostConfig sslHostConfig = new SSLHostConfig();
+        if (!connector.getProtocolHandlerClassName().contains("Apr")) {
+            // Skip this for APR. It is not supported.
+            Assert.assertTrue(connector.setProperty("sslImplementationName", sslImplementationName));
+        }
         sslHostConfig.setProtocols("TLSv1.2");
         connector.addSslHostConfig(sslHostConfig);
 
-        TesterSupport.configureSSLImplementation(tomcat, sslImplementationName, useOpenSSL);
+        StandardServer server = (StandardServer) tomcat.getServer();
+        server.addLifecycleListener(listener);
 
         // Simple webapp
-        Context ctxt = getProgrammaticRootContext();
+        Context ctxt = tomcat.addContext("", null);
         Tomcat.addServlet(ctxt, "TesterServlet", new TesterServlet());
         ctxt.addServletMappingDecoded("/*", "TesterServlet");
-    }
-
-
-    private SSLHostConfig getSSLHostConfig() {
-        Tomcat tomcat = getTomcatInstance();
-        Connector connector = tomcat.getConnector();
-        return connector.findSslHostConfigs()[0];
     }
 
 

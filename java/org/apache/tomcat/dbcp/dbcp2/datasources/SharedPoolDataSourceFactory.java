@@ -14,25 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2.datasources;
 
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 
 /**
- * A JNDI ObjectFactory which creates {@code SharedPoolDataSource}s
+ * A JNDI ObjectFactory which creates <code>SharedPoolDataSource</code>s
  *
  * @since 2.0
  */
 public class SharedPoolDataSourceFactory extends InstanceKeyDataSourceFactory {
-
     private static final String SHARED_POOL_CLASSNAME = SharedPoolDataSource.class.getName();
 
-    /**
-     * Constructs a new instance.
-     */
-    public SharedPoolDataSourceFactory() {
-        // empty
+    @Override
+    protected boolean isCorrectClass(final String className) {
+        return SHARED_POOL_CLASSNAME.equals(className);
     }
 
     @Override
@@ -43,10 +41,5 @@ public class SharedPoolDataSourceFactory extends InstanceKeyDataSourceFactory {
             spds.setMaxTotal(Integer.parseInt(ra.getContent().toString()));
         }
         return spds;
-    }
-
-    @Override
-    protected boolean isCorrectClass(final String className) {
-        return SHARED_POOL_CLASSNAME.equals(className);
     }
 }

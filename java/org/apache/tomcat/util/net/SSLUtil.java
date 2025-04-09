@@ -21,8 +21,6 @@ import java.util.List;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * Provides a common interface for {@link SSLImplementation}s to create the
@@ -31,29 +29,13 @@ import javax.net.ssl.X509TrustManager;
  */
 public interface SSLUtil {
 
-    /**
-     * Creates an instance of Tomcat's {@code SSLContext} from the provided inputs. Typically used when the user wants
-     * to provide a pre-configured {@code javax.net.ssl.SSLContext} instance. There is no need to call
-     * {@link SSLContext#init(KeyManager[], TrustManager[], java.security.SecureRandom)} on the returned value.
-     *
-     * @param sslContext   The JSSE SSL context
-     * @param keyManager   The JSSE key manager
-     * @param trustManager The JSSE trust manager
-     *
-     * @return An instance of Tomcat's {@code SSLContext} formed from the provided inputs.
-     */
-    static SSLContext createSSLContext(javax.net.ssl.SSLContext sslContext, X509KeyManager keyManager,
-            X509TrustManager trustManager) {
-        return new SSLContextWrapper(sslContext, keyManager, trustManager);
-    }
+    public SSLContext createSSLContext(List<String> negotiableProtocols) throws Exception;
 
-    SSLContext createSSLContext(List<String> negotiableProtocols) throws Exception;
+    public KeyManager[] getKeyManagers() throws Exception;
 
-    KeyManager[] getKeyManagers() throws Exception;
+    public TrustManager[] getTrustManagers() throws Exception;
 
-    TrustManager[] getTrustManagers() throws Exception;
-
-    void configureSessionContext(SSLSessionContext sslSessionContext);
+    public void configureSessionContext(SSLSessionContext sslSessionContext);
 
     /**
      * The set of enabled protocols is the intersection of the implemented
@@ -67,7 +49,7 @@ public interface SSLUtil {
      * @throws IllegalArgumentException  If there is no intersection between the
      *         implemented and configured protocols
      */
-    String[] getEnabledProtocols() throws IllegalArgumentException;
+    public String[] getEnabledProtocols() throws IllegalArgumentException;
 
     /**
      * The set of enabled ciphers is the intersection of the implemented ciphers
@@ -83,18 +65,18 @@ public interface SSLUtil {
      * @throws IllegalArgumentException  If there is no intersection between the
      *         implemented and configured ciphers
      */
-    String[] getEnabledCiphers() throws IllegalArgumentException;
+    public String[] getEnabledCiphers() throws IllegalArgumentException;
 
     /**
      * Optional interface that can be implemented by
      * {@link javax.net.ssl.SSLEngine}s to indicate that they support ALPN and
-     * can provide the protocol agreed with the client.
+     * can provided the protocol agreed with the client.
      */
-    interface ProtocolInfo {
+    public interface ProtocolInfo {
         /**
          * ALPN information.
          * @return the protocol selected using ALPN
          */
-        String getNegotiatedProtocol();
+        public String getNegotiatedProtocol();
     }
 }

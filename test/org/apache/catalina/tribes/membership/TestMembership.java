@@ -47,8 +47,10 @@ public class TestMembership {
 
         Assert.assertFalse(original.map == clone.map);
         Assert.assertTrue(original.map.size() == clone.map.size());
+        Iterator<Entry<Member, MbrEntry>> originalEntries = original.map.entrySet().iterator();
         Iterator<Entry<Member, MbrEntry>> cloneEntries = clone.map.entrySet().iterator();
-        for (Entry<Member, MbrEntry> originalEntry : original.map.entrySet()) {
+        while (originalEntries.hasNext()) {
+            Entry<Member, MbrEntry> originalEntry = originalEntries.next();
             Entry<Member, MbrEntry> cloneEntry = cloneEntries.next();
             Assert.assertTrue(originalEntry.getKey() == cloneEntry.getKey());
             Assert.assertTrue(originalEntry.getValue() == cloneEntry.getValue());

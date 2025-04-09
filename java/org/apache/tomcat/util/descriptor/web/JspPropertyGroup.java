@@ -34,12 +34,6 @@ public class JspPropertyGroup extends XmlEncodingBase {
     }
     public Boolean getDeferredSyntax() { return deferredSyntax; }
 
-    private Boolean errorOnELNotFound = null;
-    public void setErrorOnELNotFound(String errorOnELNotFound) {
-        this.errorOnELNotFound = Boolean.valueOf(errorOnELNotFound);
-    }
-    public Boolean getErrorOnELNotFound() { return errorOnELNotFound; }
-
     private Boolean elIgnored = null;
     public void setElIgnored(String elIgnored) {
         this.elIgnored = Boolean.valueOf(elIgnored);
@@ -82,7 +76,7 @@ public class JspPropertyGroup extends XmlEncodingBase {
     }
     public Boolean getTrimWhitespace() { return trimWhitespace; }
 
-    private final LinkedHashSet<String> urlPattern = new LinkedHashSet<>();
+    private LinkedHashSet<String> urlPattern = new LinkedHashSet<>();
     public void addUrlPattern(String urlPattern) {
         addUrlPatternDecoded(UDecoder.URLDecode(urlPattern, getCharset()));
     }

@@ -14,26 +14,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.startup;
 
+
 import java.io.File;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Hashtable;
+
 
 /**
- * Concrete implementation of the <code>UserDatabase</code> interface considers all directories in a directory whose
- * pathname is specified to our constructor to be "home" directories for those users.
+ * Concrete implementation of the <code>UserDatabase</code> interface
+ * considers all directories in a directory whose pathname is specified
+ * to our constructor to be "home" directories for those users.
  *
  * @author Craig R. McClanahan
  */
-public final class HomesUserDatabase implements UserDatabase {
+public final class HomesUserDatabase
+    implements UserDatabase {
+
+
+    // --------------------------------------------------------- Constructors
+
+
+    /**
+     * Initialize a new instance of this user database component.
+     */
+    public HomesUserDatabase() {
+
+        super();
+
+    }
+
+
+    // --------------------------------------------------- Instance Variables
+
 
     /**
      * The set of home directories for all defined users, keyed by username.
      */
-    private final Map<String,String> homes = new HashMap<>();
+    private final Hashtable<String,String> homes = new Hashtable<>();
+
 
     /**
      * The UserConfig listener with which we are associated.
@@ -41,12 +63,23 @@ public final class HomesUserDatabase implements UserDatabase {
     private UserConfig userConfig = null;
 
 
+    // ----------------------------------------------------------- Properties
+
+
+    /**
+     * Return the UserConfig listener with which we are associated.
+     */
     @Override
     public UserConfig getUserConfig() {
         return this.userConfig;
     }
 
 
+    /**
+     * Set the UserConfig listener with which we are associated.
+     *
+     * @param userConfig The new UserConfig listener
+     */
     @Override
     public void setUserConfig(UserConfig userConfig) {
         this.userConfig = userConfig;
@@ -54,16 +87,30 @@ public final class HomesUserDatabase implements UserDatabase {
     }
 
 
+    // ------------------------------------------------------- Public Methods
+
+
+    /**
+     * Return an absolute pathname to the home directory for the specified user.
+     *
+     * @param user User for which a home directory should be retrieved
+     */
     @Override
     public String getHome(String user) {
         return homes.get(user);
     }
 
 
+    /**
+     * Return an enumeration of the usernames defined on this server.
+     */
     @Override
     public Enumeration<String> getUsers() {
-        return Collections.enumeration(homes.keySet());
+        return homes.keys();
     }
+
+
+    // ------------------------------------------------------ Private Methods
 
 
     /**
@@ -73,19 +120,17 @@ public final class HomesUserDatabase implements UserDatabase {
 
         String homeBase = userConfig.getHomeBase();
         File homeBaseDir = new File(homeBase);
-        if (!homeBaseDir.exists() || !homeBaseDir.isDirectory()) {
+        if (!homeBaseDir.exists() || !homeBaseDir.isDirectory())
             return;
-        }
-        String[] homeBaseFiles = homeBaseDir.list();
+        String homeBaseFiles[] = homeBaseDir.list();
         if (homeBaseFiles == null) {
             return;
         }
 
         for (String homeBaseFile : homeBaseFiles) {
             File homeDir = new File(homeBaseDir, homeBaseFile);
-            if (!homeDir.isDirectory() || !homeDir.canRead()) {
+            if (!homeDir.isDirectory() || !homeDir.canRead())
                 continue;
-            }
             homes.put(homeBaseFile, homeDir.toString());
         }
     }

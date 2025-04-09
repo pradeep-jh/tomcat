@@ -21,8 +21,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -74,7 +72,7 @@ public class TestTomcatNoServer {
                 System.out.println("Missing in embedded: [" + missingExtension +
                         "]-[" + webXmlMimeMappings.get(missingExtension) + "]");
             }
-            Assert.fail("Embedded is missing [" + missingInEmbedded.size() + "] entries compared to conf/web.xml");
+            Assert.fail("Embedded is missing [" + missingInEmbedded.size() + "] entires compared to conf/web.xml");
         }
 
         // Find entries present in embedded that are missing in conf/web.xml
@@ -85,17 +83,7 @@ public class TestTomcatNoServer {
                 System.out.println("Missing in embedded: [" + missingExtension +
                         "]-[" + ctx.findMimeMapping(missingExtension) + "]");
             }
-            Assert.fail("Embedded is missing [" + missingInWebXml.size() + "] entries compared to conf/web.xml");
-        }
-    }
-
-    @Test
-    public void testJarsDecoration() throws Exception {
-        File libDir = new File(LoggingBaseTest.getBuildDirectory(), "lib");
-        try (JarFile catalinaJar = new JarFile(new File(libDir, "tomcat-util.jar"))) {
-            Manifest manifest = catalinaJar.getManifest();
-            Assert.assertFalse(manifest.getMainAttributes().getValue("Export-Package").isEmpty());
-            Assert.assertNotNull(catalinaJar.getJarEntry("module-info.class"));
+            Assert.fail("Embedded is missing [" + missingInWebXml.size() + "] entires compared to conf/web.xml");
         }
     }
 }

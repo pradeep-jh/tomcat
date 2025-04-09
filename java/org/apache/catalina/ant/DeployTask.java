@@ -20,8 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
@@ -30,10 +29,10 @@ import java.util.regex.Pattern;
 import org.apache.tools.ant.BuildException;
 
 /**
- * Ant task that implements the <code>/deploy</code> command, supported by the Tomcat manager application.
+ * Ant task that implements the <code>/deploy</code> command, supported by the
+ * Tomcat manager application.
  *
  * @author Craig R. McClanahan
- *
  * @since 4.1
  */
 public class DeployTask extends AbstractCatalinaCommandTask {
@@ -55,7 +54,8 @@ public class DeployTask extends AbstractCatalinaCommandTask {
 
 
     /**
-     * URL of the server local web application archive (WAR) file to be deployed.
+     * URL of the server local web application archive (WAR) file to be
+     * deployed.
      */
     protected String localWar = null;
 
@@ -122,7 +122,8 @@ public class DeployTask extends AbstractCatalinaCommandTask {
             throw new BuildException("Must specify 'path' attribute");
         }
         if ((war == null) && (localWar == null) && (config == null) && (tag == null)) {
-            throw new BuildException("Must specify either 'war', 'localWar', 'config', or 'tag' attribute");
+            throw new BuildException(
+                            "Must specify either 'war', 'localWar', 'config', or 'tag' attribute");
         }
         // Building an input stream on the WAR to upload, if any
         BufferedInputStream stream = null;
@@ -131,28 +132,19 @@ public class DeployTask extends AbstractCatalinaCommandTask {
         if (war != null) {
             if (PROTOCOL_PATTERN.matcher(war).lookingAt()) {
                 try {
-                    URI uri = new URI(war);
-                    URLConnection conn = uri.toURL().openConnection();
+                    URL url = new URL(war);
+                    URLConnection conn = url.openConnection();
                     contentLength = conn.getContentLengthLong();
                     stream = new BufferedInputStream(conn.getInputStream(), 1024);
-                } catch (IOException | URISyntaxException e) {
+                } catch (IOException e) {
                     throw new BuildException(e);
                 }
             } else {
-                FileInputStream fsInput = null;
-                try {
-                    fsInput = new FileInputStream(war);
-                    FileChannel fsChannel = fsInput.getChannel();
+                try (FileInputStream fsInput = new FileInputStream(war);
+                        FileChannel fsChannel = fsInput.getChannel()) {
                     contentLength = fsChannel.size();
                     stream = new BufferedInputStream(fsInput, 1024);
                 } catch (IOException e) {
-                    if (fsInput != null) {
-                        try {
-                            fsInput.close();
-                        } catch (IOException ioe) {
-                            // Ignore
-                        }
-                    }
                     throw new BuildException(e);
                 }
             }

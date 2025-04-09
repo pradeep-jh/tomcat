@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ *
  * A simple implementation of a blocking queue with fairness waiting.
  * invocations to method poll(...) will get handed out in the order they were received.
  * Locking is fine grained, a shared lock is only used during the first level of contention, waiting is done in a
@@ -100,9 +101,7 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
                 c = waiters.poll();
                 //give the object to the thread instead of adding it to the pool
                 c.setItem(e);
-                if (isLinux) {
-                  c.countDown();
-                }
+                if (isLinux) c.countDown();
             } else {
                 //we always add first, so that the most recently used object will be given out
                 items.addFirst(e);
@@ -111,9 +110,7 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
             lock.unlock();
         }
         //if we exchanged an object with another thread, wake it up.
-        if (!isLinux && c!=null) {
-          c.countDown();
-        }
+        if (!isLinux && c!=null) c.countDown();
         //we have an unbounded queue, so always return true
         return true;
     }
@@ -219,6 +216,9 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean remove(Object e) {
         final ReentrantLock lock = this.lock;
@@ -230,22 +230,25 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int size() {
-        final ReentrantLock lock = this.lock;
-        lock.lock();
-        try {
-            return items.size();
-        } finally {
-            lock.unlock();
-        }
+        return items.size();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterator<E> iterator() {
         return new FairIterator();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public E poll() {
         final ReentrantLock lock = this.lock;
@@ -257,6 +260,9 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean contains(Object e) {
         final ReentrantLock lock = this.lock;
@@ -272,6 +278,9 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
     //------------------------------------------------------------------
     // NOT USED BY CONPOOL IMPLEMENTATION
     //------------------------------------------------------------------
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean add(E e) {
         return offer(e);
@@ -296,21 +305,33 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
         return drainTo(c,Integer.MAX_VALUE);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void put(E e) throws InterruptedException {
         offer(e);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int remainingCapacity() {
         return Integer.MAX_VALUE - size();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public E take() throws InterruptedException {
         return this.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean addAll(Collection<? extends E> c) {
         Iterator<? extends E> i = c.iterator();
@@ -340,6 +361,9 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
         throw new UnsupportedOperationException("boolean containsAll(Collection<?> c)");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEmpty() {
         return size() == 0;
@@ -449,11 +473,8 @@ public class FairBlockingQueue<E> implements BlockingQueue<E> {
                 return item;
             } else if (latch!=null) {
                 boolean timedout = !latch.await(timeout, unit);
-                if (timedout) {
-                  throw new TimeoutException();
-                } else {
-                  return latch.getItem();
-                }
+                if (timedout) throw new TimeoutException();
+                else return latch.getItem();
             } else {
                 throw new ExecutionException("ItemFuture incorrectly instantiated. Bug in the code?", new Exception());
             }

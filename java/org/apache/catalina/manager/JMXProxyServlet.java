@@ -18,7 +18,6 @@ package org.apache.catalina.manager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Serial;
 import java.util.Set;
 
 import javax.management.Attribute;
@@ -32,24 +31,23 @@ import javax.management.ObjectName;
 import javax.management.OperationsException;
 import javax.management.ReflectionException;
 import javax.management.openmbean.CompositeData;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.mbeans.MBeanDumper;
+import org.apache.catalina.tribes.util.StringManager;
 import org.apache.tomcat.util.modeler.Registry;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
- * This servlet will dump JMX attributes in a simple format and implement proxy services for modeler.
+ * This servlet will dump JMX attributes in a simple format and implement proxy
+ * services for modeler.
  *
  * @author Costin Manolache
  */
 public class JMXProxyServlet extends HttpServlet {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // Constant for "no parameters" when invoking a JMX operation
@@ -67,17 +65,29 @@ public class JMXProxyServlet extends HttpServlet {
 
 
     // --------------------------------------------------------- Public Methods
-
+    /**
+     * Initialize this servlet.
+     */
     @Override
     public void init() throws ServletException {
         // Retrieve the MBean server
-        registry = Registry.getRegistry(null);
-        mBeanServer = Registry.getRegistry(null).getMBeanServer();
+        registry = Registry.getRegistry(null, null);
+        mBeanServer = Registry.getRegistry(null, null).getMBeanServer();
     }
 
 
+    /**
+     * Process a GET request for the specified resource.
+     *
+     * @param request The servlet request we are processing
+     * @param response The servlet response we are creating
+     *
+     * @exception IOException if an input/output error occurs
+     * @exception ServletException if a servlet-specified error occurs
+     */
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
         response.setContentType("text/plain;charset=" + Constants.CHARSET);
         // Stop older versions of IE thinking they know best. We set text/plain
         // in the line above for a reason. IE's behaviour is unwanted at best
@@ -125,9 +135,8 @@ public class JMXProxyServlet extends HttpServlet {
             ObjectName oname = new ObjectName(onameStr);
             Object value = mBeanServer.getAttribute(oname, att);
 
-            if (null != key && value instanceof CompositeData) {
+            if (null != key && value instanceof CompositeData)
                 value = ((CompositeData) value).get(key);
-            }
 
             String valueStr;
             if (value != null) {
@@ -170,7 +179,7 @@ public class JMXProxyServlet extends HttpServlet {
 
     public void listBeans(PrintWriter writer, String qry) {
 
-        Set<ObjectName> names;
+        Set<ObjectName> names = null;
         try {
             names = mBeanServer.queryNames(new ObjectName(qry), null);
             writer.println("OK - Number of results: " + names.size());
@@ -190,7 +199,6 @@ public class JMXProxyServlet extends HttpServlet {
      * Determines if a type is supported by the {@link JMXProxyServlet}.
      *
      * @param type The type to check
-     *
      * @return Always returns <code>true</code>
      */
     public boolean isSupported(String type) {
@@ -198,7 +206,8 @@ public class JMXProxyServlet extends HttpServlet {
     }
 
 
-    private void invokeOperation(PrintWriter writer, String onameStr, String op, String[] valuesStr) {
+    private void invokeOperation(PrintWriter writer, String onameStr, String op,
+            String[] valuesStr) {
         try {
             Object retVal = invokeOperationInternal(onameStr, op, valuesStr);
             if (retVal != null) {
@@ -217,17 +226,17 @@ public class JMXProxyServlet extends HttpServlet {
     /**
      * Parses parameter values from a parameter string.
      *
-     * @param paramString The string containing comma-separated operation-invocation parameters, or <code>null</code> if
-     *                        there are no parameters.
-     *
-     * @return An array of String parameters (empty array if <code>paramString</code> was <code>null</code>).
+     * @param paramString The string containing comma-separated
+     *            operation-invocation parameters, or <code>null</code> if there
+     *            are no parameters.
+     * @return An array of String parameters (empty array if
+     *         <code>paramString</code> was <code>null</code>).
      */
     private String[] getInvokeParameters(String paramString) {
-        if (paramString == null) {
+        if (paramString == null)
             return NO_PARAMETERS;
-        } else {
+        else
             return paramString.split(",");
-        }
     }
 
 
@@ -246,11 +255,11 @@ public class JMXProxyServlet extends HttpServlet {
     /**
      * Invokes an operation on an MBean.
      *
-     * @param onameStr   The name of the MBean.
-     * @param operation  The name of the operation to invoke.
-     * @param parameters An array of Strings containing the parameters to the operation. They will be converted to the
-     *                       appropriate types to call the requested operation.
-     *
+     * @param onameStr The name of the MBean.
+     * @param operation The name of the operation to invoke.
+     * @param parameters An array of Strings containing the parameters to the
+     *            operation. They will be converted to the appropriate types to
+     *            call the requested operation.
      * @return The value returned by the requested operation.
      */
     @SuppressWarnings("null") // parameters can't be null if signature.length > 0
@@ -259,9 +268,9 @@ public class JMXProxyServlet extends HttpServlet {
         ObjectName oname = new ObjectName(onameStr);
         int paramCount = null == parameters ? 0 : parameters.length;
         MBeanOperationInfo methodInfo = registry.getMethodInfo(oname, operation, paramCount);
-        if (null == methodInfo) {
+        if(null == methodInfo) {
             // getMethodInfo returns null for both "object not found" and "operation not found"
-            MBeanInfo info;
+            MBeanInfo info = null;
             try {
                 info = registry.getMBeanServer().getMBeanInfo(oname);
             } catch (InstanceNotFoundException infe) {
@@ -269,8 +278,9 @@ public class JMXProxyServlet extends HttpServlet {
             } catch (Exception e) {
                 throw new IllegalArgumentException(sm.getString("jmxProxyServlet.noBeanFound", onameStr), e);
             }
-            throw new IllegalArgumentException(sm.getString("jmxProxyServlet.noOperationOnBean", operation,
-                    Integer.valueOf(paramCount), onameStr, info.getClassName()));
+            throw new IllegalArgumentException(
+                    sm.getString("jmxProxyServlet.noOperationOnBean",
+                            operation, Integer.valueOf(paramCount), onameStr, info.getClassName()));
         }
 
         MBeanParameterInfo[] signature = methodInfo.getSignature();

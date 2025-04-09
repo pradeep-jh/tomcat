@@ -80,10 +80,9 @@ public class TesterWebResourceRoot extends StandardRoot {
         return null;
     }
 
-    Context context = new TesterContext();
     @Override
     public Context getContext() {
-        return context;
+        return new TesterContext();
     }
 
     @Override

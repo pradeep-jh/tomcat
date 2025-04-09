@@ -16,6 +16,7 @@
  */
 package org.apache.tomcat.dbcp.pool2.impl;
 
+import java.util.Collection;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,26 +30,29 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @since 2.0
  */
-final class InterruptibleReentrantLock extends ReentrantLock {
+class InterruptibleReentrantLock extends ReentrantLock {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs a new InterruptibleReentrantLock with the given fairness policy.
+     * Create a new InterruptibleReentrantLock with the given fairness policy.
      *
      * @param fairness true means threads should acquire contended locks as if
      * waiting in a FIFO queue
      */
-    InterruptibleReentrantLock(final boolean fairness) {
+    public InterruptibleReentrantLock(final boolean fairness) {
         super(fairness);
     }
 
     /**
-     * Interrupts the threads that are waiting on a specific condition
+     * Interrupt the threads that are waiting on a specific condition
      *
      * @param condition the condition on which the threads are waiting.
      */
     public void interruptWaiters(final Condition condition) {
-        getWaitingThreads(condition).forEach(Thread::interrupt);
+        final Collection<Thread> threads = getWaitingThreads(condition);
+        for (final Thread thread : threads) {
+            thread.interrupt();
+        }
     }
 }

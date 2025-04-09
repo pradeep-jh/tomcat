@@ -24,19 +24,21 @@ import org.apache.tomcat.dbcp.pool2.PooledObject;
  * this interface that provides the required eviction policy.
  *
  * @param <T> the type of objects in the pool
+ *
  * @since 2.0
  */
 public interface EvictionPolicy<T> {
 
     /**
-     * Tests if an idle object in the pool should be evicted or not.
+     * This method is called to test if an idle object in the pool should be
+     * evicted or not.
      *
      * @param config    The pool configuration settings related to eviction
      * @param underTest The pooled object being tested for eviction
      * @param idleCount The current number of idle objects in the pool including
      *                      the object under test
-     * @return {@code true} if the object should be evicted, otherwise
-     *             {@code false}
+     * @return <code>true</code> if the object should be evicted, otherwise
+     *             <code>false</code>
      */
     boolean evict(EvictionConfig config, PooledObject<T> underTest, int idleCount);
 }

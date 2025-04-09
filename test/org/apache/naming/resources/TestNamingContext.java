@@ -26,11 +26,10 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,7 +58,7 @@ public class TestNamingContext extends TomcatBaseTest {
         tomcat.enableNaming();
 
         // No file system docBase required
-        org.apache.catalina.Context ctx = getProgrammaticRootContext();
+        org.apache.catalina.Context ctx = tomcat.addContext("", null);
 
         // Create the resource
         ContextResource cr = new ContextResource();
@@ -120,7 +119,7 @@ public class TestNamingContext extends TomcatBaseTest {
         tomcat.enableNaming();
 
         // No file system docBase required
-        org.apache.catalina.Context ctx = getProgrammaticRootContext();
+        org.apache.catalina.Context ctx = tomcat.addContext("", null);
 
         // Create the resource
         ContextResource cr = new ContextResource();
@@ -171,7 +170,7 @@ public class TestNamingContext extends TomcatBaseTest {
         tomcat.enableNaming();
 
         // No file system docBase required
-        org.apache.catalina.Context ctx = getProgrammaticRootContext();
+        org.apache.catalina.Context ctx = tomcat.addContext("", null);
 
         // Create the resource
         ContextResource cr = new ContextResource();
@@ -230,7 +229,7 @@ public class TestNamingContext extends TomcatBaseTest {
         tomcat.enableNaming();
 
         // No file system docBase required
-        StandardContext ctx = (StandardContext) getProgrammaticRootContext();
+        StandardContext ctx = (StandardContext) tomcat.addContext("", null);
 
         ctx.setJndiExceptionOnFailedWrite(exceptionOnFailedWrite);
 
@@ -288,7 +287,7 @@ public class TestNamingContext extends TomcatBaseTest {
         tomcat.enableNaming();
 
         // No file system docBase required
-        org.apache.catalina.Context ctx = getProgrammaticRootContext();
+        org.apache.catalina.Context ctx = tomcat.addContext("", null);
 
         // Create the resource
         ContextEnvironment env = new ContextEnvironment();

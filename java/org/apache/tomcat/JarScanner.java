@@ -16,7 +16,7 @@
  */
 package org.apache.tomcat;
 
-import jakarta.servlet.ServletContext;
+import javax.servlet.ServletContext;
 
 /**
  * Scans a web application and classloader hierarchy for JAR files. Uses
@@ -36,10 +36,10 @@ public interface JarScanner {
      *                      WEB-INF/lib
      * @param callback      The handler to process any JARs found
      */
-    void scan(JarScanType scanType, ServletContext context,
+    public void scan(JarScanType scanType, ServletContext context,
             JarScannerCallback callback);
 
-    JarScanFilter getJarScanFilter();
+    public JarScanFilter getJarScanFilter();
 
-    void setJarScanFilter(JarScanFilter jarScanFilter);
+    public void setJarScanFilter(JarScanFilter jarScanFilter);
 }

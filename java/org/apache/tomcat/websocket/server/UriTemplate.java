@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.websocket.DeploymentException;
+import javax.websocket.DeploymentException;
 
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Extracts path parameters from URIs used to create web socket connections using the URI template defined for the
- * associated Endpoint.
+ * Extracts path parameters from URIs used to create web socket connections
+ * using the URI template defined for the associated Endpoint.
  */
 public class UriTemplate {
 
@@ -43,9 +43,10 @@ public class UriTemplate {
 
     public UriTemplate(String path) throws DeploymentException {
 
-        if (path == null || !path.startsWith("/") || path.contains("/../") ||
-            path.contains("/./") || path.contains("//")) {
-            throw new DeploymentException(sm.getString("uriTemplate.invalidPath", path));
+        if (path == null || path.length() == 0 || !path.startsWith("/") || path.contains("/../") ||
+                path.contains("/./") || path.contains("//")) {
+            throw new DeploymentException(
+                    sm.getString("uriTemplate.invalidPath", path));
         }
 
         StringBuilder normalized = new StringBuilder(path.length());
@@ -58,7 +59,7 @@ public class UriTemplate {
 
         for (int i = 0; i < segments.length; i++) {
             String segment = segments[i];
-            if (segment.isEmpty()) {
+            if (segment.length() == 0) {
                 if (i == 0 || (i == segments.length - 1 && paramCount == 0)) {
                     // Ignore the first empty segment as the path must always
                     // start with '/'
@@ -68,7 +69,8 @@ public class UriTemplate {
                 } else {
                     // As per EG discussion, all other empty segments are
                     // invalid
-                    throw new DeploymentException(sm.getString("uriTemplate.emptySegment", path));
+                    throw new DeploymentException(sm.getString(
+                            "uriTemplate.emptySegment", path));
                 }
             }
             normalized.append('/');
@@ -80,11 +82,13 @@ public class UriTemplate {
                 normalized.append(paramCount++);
                 normalized.append('}');
                 if (!paramNames.add(segment)) {
-                    throw new DeploymentException(sm.getString("uriTemplate.duplicateParameter", segment));
+                    throw new DeploymentException(sm.getString(
+                            "uriTemplate.duplicateParameter", segment));
                 }
             } else {
                 if (segment.contains("{") || segment.contains("}")) {
-                    throw new DeploymentException(sm.getString("uriTemplate.invalidSegment", segment, path));
+                    throw new DeploymentException(sm.getString(
+                            "uriTemplate.invalidSegment", segment, path));
                 }
                 normalized.append(segment);
             }
@@ -97,29 +101,34 @@ public class UriTemplate {
     }
 
 
-    public Map<String, String> match(UriTemplate candidate) {
+    public Map<String,String> match(UriTemplate candidate) {
 
-        Map<String, String> result = new HashMap<>();
+        Map<String,String> result = new HashMap<>();
 
         // Should not happen but for safety
         if (candidate.getSegmentCount() != getSegmentCount()) {
             return null;
         }
 
+        Iterator<Segment> candidateSegments =
+                candidate.getSegments().iterator();
         Iterator<Segment> targetSegments = segments.iterator();
 
-        for (Segment candidateSegment : candidate.getSegments()) {
+        while (candidateSegments.hasNext()) {
+            Segment candidateSegment = candidateSegments.next();
             Segment targetSegment = targetSegments.next();
 
-            if (targetSegment.parameterIndex() == -1) {
+            if (targetSegment.getParameterIndex() == -1) {
                 // Not a parameter - values must match
-                if (!targetSegment.value().equals(candidateSegment.value())) {
+                if (!targetSegment.getValue().equals(
+                        candidateSegment.getValue())) {
                     // Not a match. Stop here
                     return null;
                 }
             } else {
                 // Parameter
-                result.put(targetSegment.value(), candidateSegment.value());
+                result.put(targetSegment.getValue(),
+                        candidateSegment.getValue());
             }
         }
 
@@ -147,6 +156,23 @@ public class UriTemplate {
     }
 
 
-    private record Segment(int parameterIndex, String value) {
+    private static class Segment {
+        private final int parameterIndex;
+        private final String value;
+
+        public Segment(int parameterIndex, String value) {
+            this.parameterIndex = parameterIndex;
+            this.value = value;
+        }
+
+
+        public int getParameterIndex() {
+            return parameterIndex;
+        }
+
+
+        public String getValue() {
+            return value;
+        }
     }
 }

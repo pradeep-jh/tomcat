@@ -58,7 +58,7 @@ public class TestSocketBufferHandler {
 
 
     @Test
-    public void testReturnWhenWritable() {
+    public void testReturnWhenWriteable() {
         SocketBufferHandler sbh = new SocketBufferHandler(8, 8, direct);
 
         sbh.configureReadBufferForWrite();
@@ -71,7 +71,7 @@ public class TestSocketBufferHandler {
 
 
     @Test(expected = BufferOverflowException.class)
-    public void testReturnWhenWritableAndFull() {
+    public void testReturnWhenWriteableAndFull() {
         SocketBufferHandler sbh = new SocketBufferHandler(8, 8, direct);
 
         sbh.configureReadBufferForWrite();

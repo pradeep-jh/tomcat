@@ -16,8 +16,8 @@
  */
 package org.apache.tomcat.websocket.pojo;
 
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.server.ServerEndpointConfig.Configurator;
+import javax.websocket.ClientEndpoint;
+import javax.websocket.server.ServerEndpointConfig.Configurator;
 
 import org.apache.tomcat.websocket.server.TesterEndpointConfig;
 
@@ -48,7 +48,8 @@ public class TesterUtil {
         }
 
         @Override
-        public <T> T getEndpointInstance(Class<T> clazz) throws InstantiationException {
+        public <T> T getEndpointInstance(Class<T> clazz)
+                throws InstantiationException {
             @SuppressWarnings("unchecked")
             T result = (T) instance;
             return result;

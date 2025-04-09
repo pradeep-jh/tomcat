@@ -16,13 +16,10 @@
  */
 package org.apache.catalina.ha;
 
-import java.io.Serial;
-
 import org.apache.catalina.tribes.Member;
 
 public abstract class ClusterMessageBase implements ClusterMessage {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private long timestamp;

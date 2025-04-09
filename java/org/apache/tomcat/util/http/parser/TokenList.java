@@ -31,13 +31,15 @@ public class TokenList {
 
 
     /**
-     * Parses an enumeration of header values of the form 1#token, forcing all parsed values to lower case.
+     * Parses an enumeration of header values of the form 1#token, forcing all
+     * parsed values to lower case.
      *
      * @param inputs     The headers to parse
-     * @param collection The Collection (usually a list or a set) to which the parsed tokens should be added
+     * @param collection The Collection (usually a list of a set) to which the
+     *                       parsed tokens should be added
      *
-     * @return {@code true} if the header values were parsed cleanly and at least one token was found, otherwise
-     *             {@code false} (e.g. if a non-token value was encountered)
+     * @return {@code} true if the header values were parsed cleanly, otherwise
+     *         {@code false} (e.g. if a non-token value was encountered)
      *
      * @throws IOException If an I/O error occurs reading the header
      */
@@ -46,7 +48,7 @@ public class TokenList {
         while (inputs.hasMoreElements()) {
             String nextHeaderValue = inputs.nextElement();
             if (nextHeaderValue != null) {
-                if (!parseTokenList(new StringReader(nextHeaderValue), collection)) {
+                if (!TokenList.parseTokenList(new StringReader(nextHeaderValue), collection)) {
                     result = false;
                 }
             }
@@ -56,13 +58,15 @@ public class TokenList {
 
 
     /**
-     * Parses a header of the form 1#token, forcing all parsed values to lower case.
+     * Parses a header of the form 1#token, forcing all parsed values to lower
+     * case. This is typically used when header values are case-insensitive.
      *
      * @param input      The header to parse
-     * @param collection The Collection (usually a list or a set) to which the parsed tokens should be added
+     * @param collection The Collection (usually a list of a set) to which the
+     *                       parsed tokens should be added
      *
-     * @return {@code true} if the header values were parsed cleanly and at least one token was found, otherwise
-     *             {@code false} (e.g. if a non-token value was encountered)
+     * @return {@code} true if the header was parsed cleanly, otherwise
+     *         {@code false} (e.g. if a non-token value was encountered)
      *
      * @throws IOException If an I/O error occurs reading the header
      */
@@ -71,20 +75,16 @@ public class TokenList {
         boolean valid = false;
 
         do {
-            String element = HttpParser.readToken(input);
-            if (element == null) {
-                // No token found. Could be empty element (which is OK for
-                // 1#token - see RFC 7230 section 7) or a non-token.
-                if (HttpParser.skipConstant(input, ",") != SkipResult.FOUND) {
-                    // Non-token element, skip to the next one
-                    invalid = true;
-                    HttpParser.skipUntil(input, 0, ',');
-                }
+            String fieldName = HttpParser.readToken(input);
+            if (fieldName == null) {
+                // Invalid field-name, skip to the next one
+                invalid = true;
+                HttpParser.skipUntil(input, 0, ',');
                 continue;
             }
 
-            if (element.isEmpty()) {
-                // EOF after empty element
+            if (fieldName.length() == 0) {
+                // No more data to read
                 break;
             }
 
@@ -92,20 +92,22 @@ public class TokenList {
             if (skipResult == SkipResult.EOF) {
                 // EOF
                 valid = true;
-                collection.add(element.toLowerCase(Locale.ENGLISH));
+                collection.add(fieldName.toLowerCase(Locale.ENGLISH));
                 break;
             } else if (skipResult == SkipResult.FOUND) {
                 valid = true;
-                collection.add(element.toLowerCase(Locale.ENGLISH));
+                collection.add(fieldName.toLowerCase(Locale.ENGLISH));
+                continue;
             } else {
                 // Not a token - ignore it
                 invalid = true;
                 HttpParser.skipUntil(input, 0, ',');
+                continue;
             }
         } while (true);
 
         // Only return true if at least one valid token was read and no invalid
-        // elements were found
+        // entries were found
         return valid && !invalid;
     }
 }

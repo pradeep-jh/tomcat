@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler.modules;
 
 import java.io.InputStream;
@@ -44,13 +46,11 @@ public class MbeansDescriptorsDigesterSource extends ModelerSource
         Digester digester = new Digester();
         digester.setNamespaceAware(false);
         digester.setValidating(false);
-        URL url = Registry.getRegistry(null).getClass().getResource
+        URL url = Registry.getRegistry(null, null).getClass().getResource
             ("/org/apache/tomcat/util/modeler/mbeans-descriptors.dtd");
-        if (url != null) {
-            digester.register
+        digester.register
             ("-//Apache Software Foundation//DTD Model MBeans Configuration File",
-                    url.toString());
-        }
+                url.toString());
 
         // Configure the parsing rules
         digester.addObjectCreate
@@ -151,7 +151,7 @@ public class MbeansDescriptorsDigesterSource extends ModelerSource
 
     public void execute() throws Exception {
         if (registry == null) {
-            registry = Registry.getRegistry(null);
+            registry = Registry.getRegistry(null, null);
         }
 
         InputStream stream = (InputStream) source;

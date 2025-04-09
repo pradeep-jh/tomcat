@@ -19,7 +19,7 @@ package org.apache.tomcat.websocket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import jakarta.websocket.RemoteEndpoint;
+import javax.websocket.RemoteEndpoint;
 
 public abstract class WsRemoteEndpointBase implements RemoteEndpoint {
 
@@ -50,13 +50,15 @@ public abstract class WsRemoteEndpointBase implements RemoteEndpoint {
 
 
     @Override
-    public final void sendPing(ByteBuffer applicationData) throws IOException, IllegalArgumentException {
+    public final void sendPing(ByteBuffer applicationData) throws IOException,
+            IllegalArgumentException {
         base.sendPing(applicationData);
     }
 
 
     @Override
-    public final void sendPong(ByteBuffer applicationData) throws IOException, IllegalArgumentException {
+    public final void sendPong(ByteBuffer applicationData) throws IOException,
+            IllegalArgumentException {
         base.sendPong(applicationData);
     }
 }

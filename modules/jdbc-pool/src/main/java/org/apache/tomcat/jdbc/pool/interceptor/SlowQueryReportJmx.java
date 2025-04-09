@@ -144,9 +144,7 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
     @Override
     protected String reportFailedQuery(String query, Object[] args, String name, long start, Throwable t) {
         query = super.reportFailedQuery(query, args, name, start, t);
-        if (isLogFailed()) {
-          notifyJmx(query,FAILED_QUERY_NOTIFICATION);
-        }
+        if (isLogFailed()) notifyJmx(query,FAILED_QUERY_NOTIFICATION);
         return query;
     }
 
@@ -180,9 +178,7 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
     @Override
     protected String reportSlowQuery(String query, Object[] args, String name, long start, long delta) {
         query = super.reportSlowQuery(query, args, name, start, delta);
-        if (isLogSlow()) {
-          notifyJmx(query,SLOW_QUERY_NOTIFICATION);
-        }
+        if (isLogSlow()) notifyJmx(query,SLOW_QUERY_NOTIFICATION);
         return query;
     }
 
@@ -219,9 +215,7 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
         ConcurrentHashMap<String,QueryStats> queries = perPoolStats.get(poolName);
         if (queries!=null) {
             Iterator<String> it = queries.keySet().iterator();
-            while (it.hasNext()) {
-              it.remove();
-            }
+            while (it.hasNext()) it.remove();
         }
     }
 
@@ -255,7 +249,9 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
                 ObjectName oname = getObjectName(getClass(),poolName);
                 JmxUtil.unregisterJmx(oname);
             }
-        } catch (MalformedObjectNameException | RuntimeOperationsException e) {
+        } catch (MalformedObjectNameException e) {
+            log.warn("Jmx deregistration failed.",e);
+        } catch (RuntimeOperationsException e) {
             log.warn("Jmx deregistration failed.",e);
         }
 
@@ -286,7 +282,9 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
             } else {
                 log.warn(SlowQueryReport.class.getName()+ "- No JMX support, composite type was not found.");
             }
-        } catch (MalformedObjectNameException | RuntimeOperationsException e) {
+        } catch (MalformedObjectNameException e) {
+            log.error("Jmx registration failed, no JMX data will be exposed for the query stats.",e);
+        } catch (RuntimeOperationsException e) {
             log.error("Jmx registration failed, no JMX data will be exposed for the query stats.",e);
         }
     }

@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.jdbc.test.driver;
 
 import java.io.InputStream;
@@ -38,13 +39,7 @@ import java.util.Calendar;
 import java.util.Map;
 
 public class ResultSet implements java.sql.ResultSet {
-
-    private final Statement owner;
-    private boolean hasNext = true;
-
-    public ResultSet(Statement owner) {
-        this.owner = owner;
-    }
+    boolean hasNext = true;
 
     @Override
     public boolean absolute(int row) throws SQLException {
@@ -442,7 +437,8 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public Statement getStatement() throws SQLException {
-        return owner;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
@@ -601,6 +597,7 @@ public class ResultSet implements java.sql.ResultSet {
     public boolean next() throws SQLException {
         boolean next = hasNext;
         hasNext = false;
+        // TODO Auto-generated method stub
         return next;
     }
 
@@ -1222,5 +1219,6 @@ public class ResultSet implements java.sql.ResultSet {
         // TODO Auto-generated method stub
         return null;
     }
+
 
 }

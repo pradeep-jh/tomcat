@@ -16,7 +16,7 @@
  */
 package org.apache.tomcat.websocket;
 
-import jakarta.websocket.Extension.Parameter;
+import javax.websocket.Extension.Parameter;
 
 public class WsExtensionParameter implements Parameter {
 

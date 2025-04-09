@@ -34,7 +34,7 @@ public class TestJarResourceSetMount extends AbstractTestResourceSetMount {
     }
 
     @Override
-    protected boolean isWritable() {
+    protected boolean isWriteable() {
         return false;
     }
 

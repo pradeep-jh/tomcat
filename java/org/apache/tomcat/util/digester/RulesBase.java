@@ -103,7 +103,12 @@ public class RulesBase implements Rules {
             pattern = pattern.substring(0, patternLength-1);
         }
 
-        cache.computeIfAbsent(pattern, k -> new ArrayList<>()).add(rule);
+        List<Rule> list = cache.get(pattern);
+        if (list == null) {
+            list = new ArrayList<>();
+            cache.put(pattern, list);
+        }
+        list.add(rule);
         rules.add(rule);
         if (this.digester != null) {
             rule.setDigester(this.digester);
@@ -137,7 +142,7 @@ public class RulesBase implements Rules {
 
         // List rulesList = (List) this.cache.get(pattern);
         List<Rule> rulesList = lookup(namespaceURI, pattern);
-        if ((rulesList == null) || (rulesList.isEmpty())) {
+        if ((rulesList == null) || (rulesList.size() < 1)) {
             // Find the longest key, ie more discriminant
             String longKey = "";
             for (String key : this.cache.keySet()) {
@@ -191,7 +196,7 @@ public class RulesBase implements Rules {
         if (list == null) {
             return null;
         }
-        if (namespaceURI == null || namespaceURI.isEmpty()) {
+        if ((namespaceURI == null) || (namespaceURI.length() == 0)) {
             return list;
         }
 

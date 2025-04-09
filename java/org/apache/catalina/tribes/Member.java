@@ -14,180 +14,147 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes;
 
 import java.io.Serializable;
 
 /**
- * The Member interface, defines a member in the group. Each member can carry a set of properties, defined by the actual
- * implementation.
- * <p>
- * A member is identified by the host/ip/uniqueId.
- * <ul>
- * <li>The host is what interface the member is listening to, to receive data</li>
- * <li>The port is what port the member is listening to, to receive data</li>
- * <li>The uniqueId defines the session id for the member. This is an important feature since a member that has crashed
- * and the starts up again on the same port/host is not guaranteed to be the same member, so no state transfers will
- * ever be confused.</li>
- * </ul>
+ * The Member interface, defines a member in the group.
+ * Each member can carry a set of properties, defined by the actual implementation.<BR>
+ * A member is identified by the host/ip/uniqueId<br>
+ * The host is what interface the member is listening to, to receive data<br>
+ * The port is what port the member is listening to, to receive data<br>
+ * The uniqueId defines the session id for the member. This is an important feature
+ * since a member that has crashed and the starts up again on the same port/host is
+ * not guaranteed to be the same member, so no state transfers will ever be confused
  */
 public interface Member extends Serializable {
 
     /**
-     * When a member leaves the cluster, the payload of the memberDisappeared member will be the following bytes. This
-     * indicates a soft shutdown, and not a crash
+     * When a member leaves the cluster, the payload of the memberDisappeared member
+     * will be the following bytes. This indicates a soft shutdown, and not a crash
      */
-    byte[] SHUTDOWN_PAYLOAD = new byte[] { 66, 65, 66, 89, 45, 65, 76, 69, 88 };
+    public static final byte[] SHUTDOWN_PAYLOAD = new byte[] {66, 65, 66, 89, 45, 65, 76, 69, 88};
 
     /**
      * @return the name of this node, should be unique within the group.
      */
-    String getName();
+    public String getName();
 
     /**
      * Returns the listen host for the ChannelReceiver implementation
-     *
      * @return IPv4 or IPv6 representation of the host address this member listens to incoming data
-     *
      * @see ChannelReceiver
      */
-    byte[] getHost();
+    public byte[] getHost();
 
     /**
      * Returns the listen port for the ChannelReceiver implementation
-     *
-     * @return the listen port for this member, -1 if it's not listening on an insecure port
-     *
+     * @return the listen port for this member, -1 if its not listening on an insecure port
      * @see ChannelReceiver
      */
-    int getPort();
+    public int getPort();
 
     /**
-     * Returns the secure listen port for the ChannelReceiver implementation. Returns -1 if it's not listening to a
-     * secure port.
-     *
-     * @return the listen port for this member, -1 if it's not listening on a secure port
-     *
+     * Returns the secure listen port for the ChannelReceiver implementation.
+     * Returns -1 if its not listening to a secure port.
+     * @return the listen port for this member, -1 if its not listening on a secure port
      * @see ChannelReceiver
      */
-    int getSecurePort();
+    public int getSecurePort();
 
     /**
      * Returns the UDP port that this member is listening to for UDP messages.
-     *
-     * @return the listen UDP port for this member, -1 if it's not listening on a UDP port
+     * @return the listen UDP port for this member, -1 if its not listening on a UDP port
      */
-    int getUdpPort();
+    public int getUdpPort();
 
 
     /**
-     * Contains information on how long this member has been online. The result is the number of milliseconds this
-     * member has been broadcasting its membership to the group.
-     *
+     * Contains information on how long this member has been online.
+     * The result is the number of milli seconds this member has been
+     * broadcasting its membership to the group.
      * @return nr of milliseconds since this member started.
      */
-    long getMemberAliveTime();
+    public long getMemberAliveTime();
+
+    public void setMemberAliveTime(long memberAliveTime);
 
     /**
-     * Set the alive time in ms.
-     *
-     * @param memberAliveTime the value to set
+     * The current state of the member
+     * @return boolean - true if the member is functioning correctly
      */
-    void setMemberAliveTime(long memberAliveTime);
-
+    public boolean isReady();
     /**
-     * The current state of the member.
-     *
-     * @return {@code true} if the member is functioning correctly
+     * The current state of the member
+     * @return boolean - true if the member is suspect, but the crash has not been confirmed
      */
-    boolean isReady();
+    public boolean isSuspect();
 
     /**
-     * The current state of the member.
      *
-     * @return {@code true} if the member is suspect, but the crash has not been confirmed
+     * @return boolean - true if the member has been confirmed to malfunction
      */
-    boolean isSuspect();
+    public boolean isFailing();
 
     /**
-     * @return {@code true} if the member has been confirmed to malfunction
-     */
-    boolean isFailing();
-
-    /**
-     * returns a UUID unique for this member over all sessions. If the member crashes and restarts, the uniqueId will be
-     * different.
-     *
+     * returns a UUID unique for this member over all sessions.
+     * If the member crashes and restarts, the uniqueId will be different.
      * @return byte[]
      */
-    byte[] getUniqueId();
+    public byte[] getUniqueId();
 
     /**
-     * @return the payload associated with this member
+     * returns the payload associated with this member
+     * @return byte[]
      */
-    byte[] getPayload();
+    public byte[] getPayload();
+
+    public void setPayload(byte[] payload);
 
     /**
-     * Set the payload associated with this member.
-     *
-     * @param payload the payload
+     * returns the command associated with this member
+     * @return byte[]
      */
-    void setPayload(byte[] payload);
+    public byte[] getCommand();
+
+    public void setCommand(byte[] command);
 
     /**
-     * @return the command associated with this member
+     * Domain for this cluster
+     * @return byte[]
      */
-    byte[] getCommand();
+    public byte[] getDomain();
 
     /**
-     * Set the command associated with this member.
-     *
-     * @param command the command
-     */
-    void setCommand(byte[] command);
-
-    /**
-     * @return the domain for this cluster
-     */
-    byte[] getDomain();
-
-    /**
-     * Highly optimized version of serializing a member into a byte array Returns a cached byte[] reference, do not
-     * modify this data
-     *
-     * @param getalive calculate memberAlive time
-     *
+     * Highly optimized version of serializing a member into a byte array
+     * Returns a cached byte[] reference, do not modify this data
+     * @param getalive  calculate memberAlive time
      * @return the data as a byte array
      */
-    byte[] getData(boolean getalive);
+    public byte[] getData(boolean getalive);
 
     /**
-     * Highly optimized version of serializing a member into a byte array Returns a cached byte[] reference, do not
-     * modify this data
-     *
-     * @param getalive calculate memberAlive time
-     * @param reset    reset the cached data package, and create a new one
-     *
+     * Highly optimized version of serializing a member into a byte array
+     * Returns a cached byte[] reference, do not modify this data
+     * @param getalive  calculate memberAlive time
+     * @param reset     reset the cached data package, and create a new one
      * @return the data as a byte array
      */
-    byte[] getData(boolean getalive, boolean reset);
+    public byte[] getData(boolean getalive, boolean reset);
 
     /**
-     * Length of a message obtained by {@link #getData(boolean)} or {@link #getData(boolean, boolean)}.
-     *
+     * Length of a message obtained by {@link #getData(boolean)} or
+     * {@link #getData(boolean, boolean)}.
      * @return the data length
      */
-    int getDataLength();
+    public int getDataLength();
 
     /**
-     * @return {@code true} if the member is local member
+     * @return boolean - true if the member is local member
      */
-    boolean isLocal();
+    public boolean isLocal();
 
-    /**
-     * Set if the member is local.
-     *
-     * @param local set to {@code true} if this is the local member
-     */
-    void setLocal(boolean local);
+    public void setLocal(boolean local);
 }

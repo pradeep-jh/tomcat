@@ -32,9 +32,8 @@ import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * <p>
- * A <strong>ModelMBean</strong> implementation for the <code>org.apache.catalina.User</code> component.
- * </p>
+ * <p>A <strong>ModelMBean</strong> implementation for the
+ * <code>org.apache.catalina.User</code> component.</p>
  *
  * @author Craig R. McClanahan
  */
@@ -71,10 +70,13 @@ public class UserMBean extends BaseModelMBean {
             Group group = null;
             try {
                 group = groups.next();
-                ObjectName oname = MBeanUtils.createObjectName(managed.getDomain(), group);
+                ObjectName oname =
+                    MBeanUtils.createObjectName(managed.getDomain(), group);
                 results.add(oname.toString());
             } catch (MalformedObjectNameException e) {
-                throw new IllegalArgumentException(sm.getString("userMBean.createError.group", group), e);
+                IllegalArgumentException iae = new IllegalArgumentException(sm.getString("userMBean.createError.group", group));
+                iae.initCause(e);
+                throw iae;
             }
         }
         return results.toArray(new String[0]);
@@ -93,10 +95,13 @@ public class UserMBean extends BaseModelMBean {
             Role role = null;
             try {
                 role = roles.next();
-                ObjectName oname = MBeanUtils.createObjectName(managed.getDomain(), role);
+                ObjectName oname =
+                    MBeanUtils.createObjectName(managed.getDomain(), role);
                 results.add(oname.toString());
             } catch (MalformedObjectNameException e) {
-                throw new IllegalArgumentException(sm.getString("userMBean.createError.role", role), e);
+                IllegalArgumentException iae = new IllegalArgumentException(sm.getString("userMBean.createError.role", role));
+                iae.initCause(e);
+                throw iae;
             }
         }
         return results.toArray(new String[0]);

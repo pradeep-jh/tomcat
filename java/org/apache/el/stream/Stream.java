@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import jakarta.el.ELException;
-import jakarta.el.LambdaExpression;
+import javax.el.ELException;
+import javax.el.LambdaExpression;
 
 import org.apache.el.lang.ELArithmetic;
 import org.apache.el.lang.ELSupport;
@@ -48,7 +48,8 @@ public class Stream {
             protected void findNext() {
                 while (iterator.hasNext()) {
                     Object obj = iterator.next();
-                    if (ELSupport.coerceToBoolean(null, le.invoke(obj), true).booleanValue()) {
+                    if (ELSupport.coerceToBoolean(null, le.invoke(obj),
+                            true).booleanValue()) {
                         next = obj;
                         foundNext = true;
                         break;
@@ -82,7 +83,8 @@ public class Stream {
 
             @Override
             protected void findNext() {
-                while (iterator.hasNext() || (inner != null && inner.hasNext())) {
+                while (iterator.hasNext() ||
+                        (inner != null && inner.hasNext())) {
                     if (inner == null || !inner.hasNext()) {
                         inner = ((Stream) le.invoke(iterator.next())).iterator;
                     }
@@ -102,7 +104,7 @@ public class Stream {
     public Stream distinct() {
         Iterator<Object> downStream = new OpIterator() {
 
-            private final Set<Object> values = new HashSet<>();
+            private Set<Object> values = new HashSet<>();
 
             @Override
             protected void findNext() {
@@ -137,7 +139,7 @@ public class Stream {
             }
 
             @SuppressWarnings({ "rawtypes", "unchecked" })
-            private void sort() {
+            private final void sort() {
                 List list = new ArrayList<>();
                 while (iterator.hasNext()) {
                     list.add(iterator.next());
@@ -167,13 +169,13 @@ public class Stream {
             }
 
             @SuppressWarnings({ "rawtypes", "unchecked" })
-            private void sort(LambdaExpression le) {
+            private final void sort(LambdaExpression le) {
                 List list = new ArrayList<>();
                 Comparator<Object> c = new LambdaExpressionComparator(le);
                 while (iterator.hasNext()) {
                     list.add(iterator.next());
                 }
-                list.sort(c);
+                Collections.sort(list, c);
                 sorted = list.iterator();
             }
         };
@@ -341,7 +343,7 @@ public class Stream {
 
         while (iterator.hasNext()) {
             iterator.next();
-            count++;
+            count ++;
         }
 
         return Long.valueOf(count);
@@ -411,7 +413,8 @@ public class Stream {
             if ((obj instanceof Comparable)) {
                 result = (Comparable) obj;
             } else {
-                throw new ELException(MessageFactory.get("stream.compare.notComparable"));
+                throw new ELException(
+                        MessageFactory.get("stream.compare.notComparable"));
             }
         }
 
@@ -424,7 +427,8 @@ public class Stream {
                     result = (Comparable) obj;
                 }
             } else {
-                throw new ELException(MessageFactory.get("stream.compare.notComparable"));
+                throw new ELException(
+                        MessageFactory.get("stream.compare.notComparable"));
             }
         }
 
@@ -440,14 +444,17 @@ public class Stream {
         Object result = null;
 
         if (iterator.hasNext()) {
-            result = iterator.next();
+            Object obj = iterator.next();
+            result = obj;
         }
 
         while (iterator.hasNext()) {
             Object obj = iterator.next();
-            if (isMax && ELSupport.coerceToNumber(null, le.invoke(obj, result), Integer.class).intValue() > 0) {
+            if (isMax && ELSupport.coerceToNumber(null, le.invoke(obj, result),
+                    Integer.class).intValue() > 0) {
                 result = obj;
-            } else if (!isMax && ELSupport.coerceToNumber(null, le.invoke(obj, result), Integer.class).intValue() < 0) {
+            } else if (!isMax && ELSupport.coerceToNumber(null, le.invoke(obj, result),
+                    Integer.class).intValue() < 0) {
                 result = obj;
             }
         }
@@ -460,10 +467,19 @@ public class Stream {
     }
 
 
-    private record LambdaExpressionComparator(LambdaExpression le) implements Comparator<Object> {
+    private static class LambdaExpressionComparator
+            implements Comparator<Object> {
+
+        private final LambdaExpression le;
+
+        public LambdaExpressionComparator(LambdaExpression le) {
+            this.le = le;
+        }
+
         @Override
         public int compare(Object o1, Object o2) {
-            return ELSupport.coerceToNumber(null, le.invoke(o1, o2), Integer.class).intValue();
+            return ELSupport.coerceToNumber(
+                    null, le.invoke(o1, o2), Integer.class).intValue();
         }
     }
 

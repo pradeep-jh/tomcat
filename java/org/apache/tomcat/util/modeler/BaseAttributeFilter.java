@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
-import java.io.Serial;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,7 +37,6 @@ import javax.management.NotificationFilter;
  */
 public class BaseAttributeFilter implements NotificationFilter {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ----------------------------------------------------------- Constructors
@@ -51,9 +51,8 @@ public class BaseAttributeFilter implements NotificationFilter {
     public BaseAttributeFilter(String name) {
 
         super();
-        if (name != null) {
+        if (name != null)
             addAttribute(name);
-        }
 
     }
 
@@ -65,7 +64,7 @@ public class BaseAttributeFilter implements NotificationFilter {
      * The set of attribute names that are accepted by this filter.  If this
      * list is empty, all attribute names are accepted.
      */
-    private final Set<String> names = new HashSet<>();
+    private Set<String> names = new HashSet<>();
 
 
     // --------------------------------------------------------- Public Methods
@@ -126,21 +125,19 @@ public class BaseAttributeFilter implements NotificationFilter {
     @Override
     public boolean isNotificationEnabled(Notification notification) {
 
-        if (notification == null) {
+        if (notification == null)
             return false;
-        }
-        if (!(notification instanceof AttributeChangeNotification acn)) {
+        if (!(notification instanceof AttributeChangeNotification))
             return false;
-        }
-        if (!AttributeChangeNotification.ATTRIBUTE_CHANGE.equals(acn.getType())) {
+        AttributeChangeNotification acn =
+            (AttributeChangeNotification) notification;
+        if (!AttributeChangeNotification.ATTRIBUTE_CHANGE.equals(acn.getType()))
             return false;
-        }
         synchronized (names) {
-            if (names.isEmpty()) {
+            if (names.size() < 1)
                 return true;
-            } else {
+            else
                 return names.contains(acn.getAttributeName());
-            }
         }
 
     }

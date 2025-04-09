@@ -37,7 +37,7 @@ public interface JarScannerCallback {
      *
      * @throws IOException if an I/O error occurs while scanning the JAR
      */
-    void scan(Jar jar, String webappPath, boolean isWebapp)
+    public void scan(Jar jar, String webappPath, boolean isWebapp)
             throws IOException;
 
     /**
@@ -53,7 +53,7 @@ public interface JarScannerCallback {
      *
      * @throws IOException if an I/O error occurs while scanning the JAR
      */
-    void scan(File file, String webappPath, boolean isWebapp) throws IOException;
+    public void scan(File file, String webappPath, boolean isWebapp) throws IOException;
 
     /**
      * A directory structure was found within the web application at
@@ -63,5 +63,5 @@ public interface JarScannerCallback {
      *
      * @throws IOException if an I/O error occurs while scanning WEB-INF/classes
      */
-    void scanWebInfClasses() throws IOException;
+    public void scanWebInfClasses() throws IOException;
 }

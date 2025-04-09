@@ -18,15 +18,13 @@ package org.apache.tomcat.util.log;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.EmptyStackException;
+import java.util.Stack;
 
 /**
  * This helper class may be used to do sophisticated redirection of
  * System.out and System.err on a per Thread basis.
+ *
  * A stack is implemented per Thread so that nested startCapture
  * and stopCapture can be used.
  *
@@ -62,13 +60,13 @@ public class SystemLogHandler extends PrintStream {
     /**
      * Thread &lt;-&gt; CaptureLog associations.
      */
-    private static final ThreadLocal<Deque<CaptureLog>> logs = new ThreadLocal<>();
+    private static final ThreadLocal<Stack<CaptureLog>> logs = new ThreadLocal<>();
 
 
     /**
      * Spare CaptureLog ready for reuse.
      */
-    private static final Queue<CaptureLog> reuse = new ConcurrentLinkedQueue<>();
+    private static final Stack<CaptureLog> reuse = new Stack<>();
 
 
     // --------------------------------------------------------- Public Methods
@@ -78,22 +76,22 @@ public class SystemLogHandler extends PrintStream {
      * Start capturing thread's output.
      */
     public static void startCapture() {
-        CaptureLog log;
+        CaptureLog log = null;
         if (!reuse.isEmpty()) {
             try {
-                log = reuse.remove();
-            } catch (NoSuchElementException e) {
+                log = reuse.pop();
+            } catch (EmptyStackException e) {
                 log = new CaptureLog();
             }
         } else {
             log = new CaptureLog();
         }
-        Deque<CaptureLog> stack = logs.get();
+        Stack<CaptureLog> stack = logs.get();
         if (stack == null) {
-            stack = new ArrayDeque<>();
+            stack = new Stack<>();
             logs.set(stack);
         }
-        stack.addFirst(log);
+        stack.push(log);
     }
 
 
@@ -103,17 +101,17 @@ public class SystemLogHandler extends PrintStream {
      * @return The captured data
      */
     public static String stopCapture() {
-        Queue<CaptureLog> stack = logs.get();
+        Stack<CaptureLog> stack = logs.get();
         if (stack == null || stack.isEmpty()) {
             return null;
         }
-        CaptureLog log = stack.remove();
+        CaptureLog log = stack.pop();
         if (log == null) {
             return null;
         }
         String capture = log.getCapture();
         log.reset();
-        reuse.add(log);
+        reuse.push(log);
         return capture;
     }
 
@@ -126,7 +124,7 @@ public class SystemLogHandler extends PrintStream {
      * @return the print stream
      */
     protected PrintStream findStream() {
-        Queue<CaptureLog> stack = logs.get();
+        Stack<CaptureLog> stack = logs.get();
         if (stack != null && !stack.isEmpty()) {
             CaptureLog log = stack.peek();
             if (log != null) {

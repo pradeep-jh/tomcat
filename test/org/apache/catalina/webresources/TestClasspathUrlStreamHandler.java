@@ -18,7 +18,6 @@ package org.apache.catalina.webresources;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
 
@@ -35,7 +34,7 @@ public class TestClasspathUrlStreamHandler {
 
     @Test
     public void testClasspathURL01() throws IOException {
-        URL u = URI.create("classpath:/org/apache/catalina/webresources/LocalStrings.properties").toURL();
+        URL u = new URL("classpath:/org/apache/catalina/webresources/LocalStrings.properties");
         InputStream is = u.openStream();
         Properties p = new Properties();
         p.load(is);

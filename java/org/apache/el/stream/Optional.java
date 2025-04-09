@@ -16,8 +16,8 @@
  */
 package org.apache.el.stream;
 
-import jakarta.el.ELException;
-import jakarta.el.LambdaExpression;
+import javax.el.ELException;
+import javax.el.LambdaExpression;
 
 import org.apache.el.util.MessageFactory;
 

@@ -36,9 +36,9 @@ public class JmxRegistry {
 
     private static final Log log = LogFactory.getLog(JmxRegistry.class);
     protected static final StringManager sm = StringManager.getManager(JmxRegistry.class);
-    private static final ConcurrentHashMap<String,JmxRegistry> registryCache = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, JmxRegistry> registryCache = new ConcurrentHashMap<>();
 
-    private final MBeanServer mbserver = ManagementFactory.getPlatformMBeanServer();
+    private MBeanServer mbserver = ManagementFactory.getPlatformMBeanServer();
     private ObjectName baseOname = null;
 
     private JmxRegistry() {
@@ -49,21 +49,14 @@ public class JmxRegistry {
             return null;
         }
         JmxRegistry registry = registryCache.get(channel.getName());
-        if (registry != null) {
-            return registry;
-        }
+        if (registry != null) return registry;
 
-        if (!(channel instanceof JmxChannel jmxChannel)) {
-            return null;
-        }
-        if (!jmxChannel.isJmxEnabled()) {
-            return null;
-        }
-        ObjectName baseOn =
-                createBaseObjectName(jmxChannel.getJmxDomain(), jmxChannel.getJmxPrefix(), channel.getName());
-        if (baseOn == null) {
-            return null;
-        }
+        if (!(channel instanceof JmxChannel)) return null;
+        JmxChannel jmxChannel = (JmxChannel) channel;
+        if (!jmxChannel.isJmxEnabled()) return null;
+        ObjectName baseOn = createBaseObjectName(jmxChannel.getJmxDomain(),
+                jmxChannel.getJmxPrefix(), channel.getName());
+        if (baseOn == null) return null;
         // create registry
         registry = new JmxRegistry();
         registry.baseOname = baseOn;
@@ -76,9 +69,7 @@ public class JmxRegistry {
 
     public static void removeRegistry(Channel channel, boolean clear) {
         JmxRegistry registry = registryCache.get(channel.getName());
-        if (registry == null) {
-            return;
-        }
+        if (registry == null) return;
         if (clear) {
             registry.clearMBeans();
         }
@@ -109,7 +100,7 @@ public class JmxRegistry {
             return null;
         }
         String oNameStr = baseOname.toString() + keyprop;
-        ObjectName oName;
+        ObjectName oName = null;
         try {
             oName = new ObjectName(oNameStr);
             if (mbserver.isRegistered(oName)) {
@@ -130,9 +121,7 @@ public class JmxRegistry {
     }
 
     public void unregisterJmx(ObjectName oname) {
-        if (oname == null) {
-            return;
-        }
+        if (oname ==null) return;
         try {
             mbserver.unregisterMBean(oname);
         } catch (InstanceNotFoundException e) {

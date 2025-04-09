@@ -22,14 +22,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.catalina.LifecycleException;
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.compat.JrePlatform;
 import org.apache.tomcat.util.http.RequestUtil;
 
 public abstract class AbstractFileResourceSet extends AbstractResourceSet {
-
-    private static final Log log = LogFactory.getLog(AbstractFileResourceSet.class);
 
     protected static final String[] EMPTY_STRING_ARRAY = new String[0];
 
@@ -99,14 +95,15 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
             return null;
         }
 
-        /*
-         * Ensure that the file is not outside the fileBase. This should not be possible for standard requests (the
-         * request is normalized early in the request processing) but might be possible for some access via the Servlet
-         * API (e.g. RequestDispatcher) therefore these checks are retained as an additional safety measure.
-         * absoluteBase has been normalized so absPath needs to be normalized as well.
-         */
+        // Ensure that the file is not outside the fileBase. This should not be
+        // possible for standard requests (the request is normalized early in
+        // the request processing) but might be possible for some access via the
+        // Servlet API (RequestDispatcher, HTTP/2 push etc.) therefore these
+        // checks are retained as an additional safety measure
+        // absoluteBase has been normalized so absPath needs to be normalized as
+        // well.
         String absPath = normalize(file.getAbsolutePath());
-        if (absPath == null || absoluteBase.length() > absPath.length()) {
+        if (absoluteBase.length() > absPath.length()) {
             return null;
         }
 
@@ -116,48 +113,27 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
         absPath = absPath.substring(absoluteBase.length());
         canPath = canPath.substring(canonicalBase.length());
 
-        // The remaining request path must start with '/' if it has non-zero length
-        if (!canPath.isEmpty() && canPath.charAt(0) != File.separatorChar) {
-            return null;
-        }
-
         // Case sensitivity check
         // The normalized requested path should be an exact match the equivalent
         // canonical path. If it is not, possible reasons include:
-        // - case differences on case-insensitive file systems
+        // - case differences on case insensitive file systems
         // - Windows removing a trailing ' ' or '.' from the file name
         //
-        // In all cases, a mismatch here results in the resource not being
+        // In all cases, a mis-match here results in the resource not being
         // found
         //
         // absPath is normalized so canPath needs to be normalized as well
         // Can't normalize canPath earlier as canonicalBase is not normalized
-        if (!canPath.isEmpty()) {
+        if (canPath.length() > 0) {
             canPath = normalize(canPath);
         }
         if (!canPath.equals(absPath)) {
-            if (!canPath.equalsIgnoreCase(absPath)) {
-                // Typically means symlinks are in use but being ignored. Given
-                // the symlink was likely created for a reason, log a warning
-                // that it was ignored.
-                logIgnoredSymlink(getRoot().getContext().getName(), absPath, canPath);
-            }
             return null;
         }
 
         return file;
     }
 
-
-    protected void logIgnoredSymlink(String contextPath, String absPath, String canPath) {
-        String msg = sm.getString("abstractFileResourceSet.canonicalfileCheckFailed", contextPath, absPath, canPath);
-        // Log issues with configuration files at a higher level
-        if (absPath.startsWith("/META-INF/") || absPath.startsWith("/WEB-INF/")) {
-            log.error(msg);
-        } else {
-            log.warn(msg);
-        }
-    }
 
     private boolean isInvalidWindowsFilename(String name) {
         final int len = name.length();
@@ -168,13 +144,13 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
         // expression irrespective of input length.
         for (int i = 0; i < len; i++) {
             char c = name.charAt(i);
-            if (c == '\"' || c == '<' || c == '>' || c == ':') {
+            if (c == '\"' || c == '<' || c == '>') {
                 // These characters are disallowed in Windows file names and
                 // there are known problems for file names with these characters
                 // when using File#getCanonicalPath().
                 // Note: There are additional characters that are disallowed in
-                // Windows file names but these are not known to cause
-                // problems when using File#getCanonicalPath().
+                //       Windows file names but these are not known to cause
+                //       problems when using File#getCanonicalPath().
                 return true;
             }
         }
@@ -182,14 +158,19 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
         // level APIs are used to create the files that bypass various checks.
         // File names that end in ' ' are known to cause problems when using
         // File#getCanonicalPath().
-        return name.charAt(len - 1) == ' ';
+        if (name.charAt(len -1) == ' ') {
+            return true;
+        }
+        return false;
     }
 
 
     /**
-     * Return a context-relative path, beginning with a "/", that represents the canonical version of the specified path
-     * after ".." and "." elements are resolved out. If the specified path attempts to go outside the boundaries of the
-     * current context (i.e. too many ".." path elements are present), return <code>null</code> instead.
+     * Return a context-relative path, beginning with a "/", that represents
+     * the canonical version of the specified path after ".." and "." elements
+     * are resolved out.  If the specified path attempts to go outside the
+     * boundaries of the current context (i.e. too many ".." path elements
+     * are present), return <code>null</code> instead.
      *
      * @param path Path to be normalized
      */
@@ -217,7 +198,7 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
     }
 
 
-    // -------------------------------------------------------- Lifecycle methods
+    //-------------------------------------------------------- Lifecycle methods
 
     @Override
     protected void initInternal() throws LifecycleException {
@@ -230,14 +211,6 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
             this.canonicalBase = fileBase.getCanonicalPath();
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
-        }
-
-        // Need to handle mapping of the file system root as a special case
-        if ("/".equals(this.absoluteBase)) {
-            this.absoluteBase = "";
-        }
-        if ("/".equals(this.canonicalBase)) {
-            this.canonicalBase = "";
         }
     }
 

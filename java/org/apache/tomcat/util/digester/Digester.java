@@ -24,13 +24,15 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EmptyStackException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.PropertyPermission;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -44,8 +46,8 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.IntrospectionUtils;
 import org.apache.tomcat.util.IntrospectionUtils.PropertySource;
 import org.apache.tomcat.util.buf.B2CConverter;
-import org.apache.tomcat.util.buf.ToStringUtil;
 import org.apache.tomcat.util.res.StringManager;
+import org.apache.tomcat.util.security.PermissionCheck;
 import org.xml.sax.Attributes;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
@@ -136,43 +138,44 @@ public class Digester extends DefaultHandler2 {
         }
     }
 
-    private static final HashSet<String> generatedClasses = new HashSet<>();
-
-    public static void addGeneratedClass(String className) {
-        generatedClasses.add(className);
-    }
-
-    public static String[] getGeneratedClasses() {
-        return generatedClasses.toArray(new String[0]);
-    }
-
-    public interface GeneratedCodeLoader {
-        Object loadGeneratedCode(String className);
-    }
-
-    private static GeneratedCodeLoader generatedCodeLoader;
-
-    public static boolean isGeneratedCodeLoaderSet() {
-        return generatedCodeLoader != null;
-    }
-
-    public static void setGeneratedCodeLoader(GeneratedCodeLoader generatedCodeLoader) {
-        if (Digester.generatedCodeLoader == null) {
-            Digester.generatedCodeLoader = generatedCodeLoader;
-        }
-    }
-
-    public static Object loadGeneratedClass(String className) {
-        if (generatedCodeLoader != null) {
-            return generatedCodeLoader.loadGeneratedCode(className);
-        }
-        return null;
-    }
-
     // --------------------------------------------------- Instance Variables
 
 
-    protected IntrospectionUtils.PropertySource[] source;
+    private static class SystemPropertySource implements IntrospectionUtils.SecurePropertySource {
+
+        @Override
+        public String getProperty(String key) {
+            // For backward compatibility
+            return getProperty(key, null);
+        }
+
+        @Override
+        public String getProperty(String key, ClassLoader classLoader) {
+            if (classLoader instanceof PermissionCheck) {
+                Permission p = new PropertyPermission(key, "read");
+                if (!((PermissionCheck) classLoader).check(p)) {
+                    return null;
+                }
+            }
+            return System.getProperty(key);
+        }
+    }
+
+    /**
+     * A {@link org.apache.tomcat.util.IntrospectionUtils.SecurePropertySource}
+     * that uses environment variables to resolve expressions. Still available
+     * for backwards compatibility.
+     *
+     * @deprecated Use {@link org.apache.tomcat.util.digester.EnvironmentPropertySource}
+     *             This will be removed in Tomcat 10 onwards.
+     */
+    @Deprecated
+    public static class EnvironmentPropertySource extends org.apache.tomcat.util.digester.EnvironmentPropertySource {
+    }
+
+
+    protected IntrospectionUtils.PropertySource[] source = new IntrospectionUtils.PropertySource[] {
+            new SystemPropertySource() };
 
 
     /**
@@ -215,7 +218,7 @@ public class Digester extends DefaultHandler2 {
 
 
     /**
-     * The EntityResolver used by the SAX parser. By default, it uses this class
+     * The EntityResolver used by the SAX parser. By default it use this class
      */
     protected EntityResolver entityResolver;
 
@@ -295,7 +298,7 @@ public class Digester extends DefaultHandler2 {
 
     /**
      * The "root" element of the stack (in other words, the last object
-     * that was popped).
+     * that was popped.
      */
     protected Object root = null;
 
@@ -349,27 +352,15 @@ public class Digester extends DefaultHandler2 {
      */
     protected Log saxLog = LogFactory.getLog("org.apache.tomcat.util.digester.Digester.sax");
 
-    /**
-     * Generated code.
-     */
-    protected StringBuilder code = null;
 
     public Digester() {
         propertySourcesSet = true;
-        ArrayList<IntrospectionUtils.PropertySource> sourcesList = new ArrayList<>();
-        boolean systemPropertySourceFound = false;
         if (propertySources != null) {
-            for (IntrospectionUtils.PropertySource source : propertySources) {
-                if (source instanceof SystemPropertySource) {
-                    systemPropertySourceFound = true;
-                }
-                sourcesList.add(source);
-            }
+            ArrayList<IntrospectionUtils.PropertySource> sourcesList = new ArrayList<>();
+            sourcesList.addAll(Arrays.asList(propertySources));
+            sourcesList.add(source[0]);
+            source = sourcesList.toArray(new IntrospectionUtils.PropertySource[0]);
         }
-        if (!systemPropertySourceFound) {
-            sourcesList.add(new SystemPropertySource());
-        }
-        source = sourcesList.toArray(new IntrospectionUtils.PropertySource[0]);
     }
 
 
@@ -394,42 +385,6 @@ public class Digester extends DefaultHandler2 {
         }
     }
 
-
-    public void startGeneratingCode() {
-        code = new StringBuilder();
-    }
-
-    public void endGeneratingCode() {
-        code = null;
-        known.clear();
-    }
-
-    public StringBuilder getGeneratedCode() {
-        return code;
-    }
-
-    protected ArrayList<Object> known = new ArrayList<>();
-    public void setKnown(Object object) {
-        known.add(object);
-    }
-    public String toVariableName(Object object) {
-        boolean found = false;
-        int pos = 0;
-        if (!known.isEmpty()) {
-            for (int i = known.size() - 1; i >= 0; i--) {
-                if (known.get(i) == object) {
-                    pos = i;
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (!found) {
-            pos = known.size();
-            known.add(object);
-        }
-        return "tc_" + object.getClass().getSimpleName() + "_" + String.valueOf(pos);
-    }
 
     // ------------------------------------------------------------- Properties
 
@@ -663,7 +618,7 @@ public class Digester extends DefaultHandler2 {
 
 
     /**
-     * Set the public id of the current file being parsed.
+     * Set the public id of the current file being parse.
      * @param publicId the DTD/Schema public's id.
      */
     public void setPublicId(String publicId) {
@@ -752,7 +707,7 @@ public class Digester extends DefaultHandler2 {
 
 
     /**
-     * @return a boolean to indicate if the context classloader should be used.
+     * @return the boolean as to whether the context classloader should be used.
      */
     public boolean getUseContextClassLoader() {
         return useContextClassLoader;
@@ -764,7 +719,7 @@ public class Digester extends DefaultHandler2 {
      * calling <code>Thread.currentThread().getContextClassLoader()</code>)
      * to resolve/load classes that are defined in various rules.  If not
      * using Context ClassLoader, then the class-loading defaults to
-     * using the calling class' ClassLoader.
+     * using the calling-class' ClassLoader.
      *
      * @param use determines whether to use Context ClassLoader.
      */
@@ -857,6 +812,7 @@ public class Digester extends DefaultHandler2 {
 
     /**
      * Return the XMLReader to be used for parsing the input document.
+     *
      * FIX ME: there is a bug in JAXP/XERCES that prevent the use of a
      * parser that contains a schema with a DTD.
      * @return the XML reader
@@ -904,10 +860,10 @@ public class Digester extends DefaultHandler2 {
      * @exception SAXException if a parsing error is to be reported
      */
     @Override
-    public void characters(char[] buffer, int start, int length) throws SAXException {
+    public void characters(char buffer[], int start, int length) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("characters(" + new String(buffer, start, length) + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("characters(" + new String(buffer, start, length) + ")");
         }
 
         bodyText.append(buffer, start, length);
@@ -923,11 +879,11 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void endDocument() throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
+        if (saxLog.isDebugEnabled()) {
             if (getCount() > 1) {
-                saxLog.trace("endDocument():  " + getCount() + " elements left");
+                saxLog.debug("endDocument():  " + getCount() + " elements left");
             } else {
-                saxLog.trace("endDocument()");
+                saxLog.debug("endDocument()");
             }
         }
 
@@ -970,14 +926,14 @@ public class Digester extends DefaultHandler2 {
     public void endElement(String namespaceURI, String localName, String qName)
             throws SAXException {
 
-        boolean debug = log.isTraceEnabled();
+        boolean debug = log.isDebugEnabled();
 
         if (debug) {
             if (saxLog.isDebugEnabled()) {
-                saxLog.trace("endElement(" + namespaceURI + "," + localName + "," + qName + ")");
+                saxLog.debug("endElement(" + namespaceURI + "," + localName + "," + qName + ")");
             }
-            log.trace("  match='" + match + "'");
-            log.trace("  bodyText='" + bodyText + "'");
+            log.debug("  match='" + match + "'");
+            log.debug("  bodyText='" + bodyText + "'");
         }
 
         // Parse system properties
@@ -986,18 +942,19 @@ public class Digester extends DefaultHandler2 {
         // the actual element name is either in localName or qName, depending
         // on whether the parser is namespace aware
         String name = localName;
-        if ((name == null) || (name.isEmpty())) {
+        if ((name == null) || (name.length() < 1)) {
             name = qName;
         }
 
         // Fire "body" events for all relevant rules
         List<Rule> rules = matches.pop();
-        if ((rules != null) && (!rules.isEmpty())) {
+        if ((rules != null) && (rules.size() > 0)) {
             String bodyText = this.bodyText.toString().intern();
-            for (Rule rule : rules) {
+            for (Rule value : rules) {
                 try {
+                    Rule rule = value;
                     if (debug) {
-                        log.trace("  Fire body() for " + rule);
+                        log.debug("  Fire body() for " + rule);
                     }
                     rule.body(namespaceURI, name, bodyText);
                 } catch (Exception e) {
@@ -1010,7 +967,7 @@ public class Digester extends DefaultHandler2 {
             }
         } else {
             if (debug) {
-                log.trace(sm.getString("digester.noRulesFound", match));
+                log.debug(sm.getString("digester.noRulesFound", match));
             }
             if (rulesValidation) {
                 log.warn(sm.getString("digester.noRulesFound", match));
@@ -1027,7 +984,7 @@ public class Digester extends DefaultHandler2 {
                 try {
                     Rule rule = rules.get(j);
                     if (debug) {
-                        log.trace("  Fire end() for " + rule);
+                        log.debug("  Fire end() for " + rule);
                     }
                     rule.end(namespaceURI, name);
                 } catch (Exception e) {
@@ -1061,8 +1018,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void endPrefixMapping(String prefix) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("endPrefixMapping(" + prefix + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("endPrefixMapping(" + prefix + ")");
         }
 
         // Deregister this prefix mapping
@@ -1072,9 +1029,8 @@ public class Digester extends DefaultHandler2 {
         }
         try {
             stack.pop();
-            if (stack.empty()) {
+            if (stack.empty())
                 namespaces.remove(prefix);
-            }
         } catch (EmptyStackException e) {
             throw createSAXException(sm.getString("digester.emptyStackError"));
         }
@@ -1093,10 +1049,10 @@ public class Digester extends DefaultHandler2 {
      * @exception SAXException if a parsing error is to be reported
      */
     @Override
-    public void ignorableWhitespace(char[] buffer, int start, int len) throws SAXException {
+    public void ignorableWhitespace(char buffer[], int start, int len) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("ignorableWhitespace(" + new String(buffer, start, len) + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("ignorableWhitespace(" + new String(buffer, start, len) + ")");
         }
 
         // No processing required
@@ -1115,8 +1071,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void processingInstruction(String target, String data) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("processingInstruction('" + target + "','" + data + "')");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("processingInstruction('" + target + "','" + data + "')");
         }
 
         // No processing is required
@@ -1143,8 +1099,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void setDocumentLocator(Locator locator) {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("setDocumentLocator(" + locator + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("setDocumentLocator(" + locator + ")");
         }
 
         this.locator = locator;
@@ -1162,8 +1118,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void skippedEntity(String name) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("skippedEntity(" + name + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("skippedEntity(" + name + ")");
         }
 
         // No processing required
@@ -1179,8 +1135,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void startDocument() throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("startDocument()");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("startDocument()");
         }
 
         if (locator instanceof Locator2) {
@@ -1219,10 +1175,10 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void startElement(String namespaceURI, String localName, String qName, Attributes list)
             throws SAXException {
-        boolean debug = log.isTraceEnabled();
+        boolean debug = log.isDebugEnabled();
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("startElement(" + namespaceURI + "," + localName + "," + qName + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("startElement(" + namespaceURI + "," + localName + "," + qName + ")");
         }
 
         // Parse system properties
@@ -1235,37 +1191,32 @@ public class Digester extends DefaultHandler2 {
         // the actual element name is either in localName or qName, depending
         // on whether the parser is namespace aware
         String name = localName;
-        if ((name == null) || (name.isEmpty())) {
+        if ((name == null) || (name.length() < 1)) {
             name = qName;
         }
 
         // Compute the current matching rule
         StringBuilder sb = new StringBuilder(match);
-        if (!match.isEmpty()) {
+        if (match.length() > 0) {
             sb.append('/');
         }
         sb.append(name);
         match = sb.toString();
         if (debug) {
-            log.trace("  New match='" + match + "'");
+            log.debug("  New match='" + match + "'");
         }
 
         // Fire "begin" events for all relevant rules
         List<Rule> rules = getRules().match(namespaceURI, match);
         matches.push(rules);
-        if ((rules != null) && (!rules.isEmpty())) {
-            for (Rule rule : rules) {
+        if ((rules != null) && (rules.size() > 0)) {
+            for (Rule value : rules) {
                 try {
+                    Rule rule = value;
                     if (debug) {
-                        log.trace("  Fire begin() for " + rule);
+                        log.debug("  Fire begin() for " + rule);
                     }
                     rule.begin(namespaceURI, name, list);
-                } catch (ClassNotFoundException cnfe) {
-                    log.error(sm.getString("digester.error.begin"), cnfe);
-                    if (log.isDebugEnabled()) {
-                        log.debug(ToStringUtil.classPathForCNFE(getClassLoader()));
-                    }
-                    throw createSAXException(cnfe);
                 } catch (Exception e) {
                     log.error(sm.getString("digester.error.begin"), e);
                     throw createSAXException(e);
@@ -1276,7 +1227,7 @@ public class Digester extends DefaultHandler2 {
             }
         } else {
             if (debug) {
-                log.trace(sm.getString("digester.noRulesFound", match));
+                log.debug(sm.getString("digester.noRulesFound", match));
             }
         }
 
@@ -1294,8 +1245,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void startPrefixMapping(String prefix, String namespaceURI) throws SAXException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("startPrefixMapping(" + prefix + "," + namespaceURI + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("startPrefixMapping(" + prefix + "," + namespaceURI + ")");
         }
 
         // Register this prefix mapping
@@ -1322,8 +1273,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void notationDecl(String name, String publicId, String systemId) {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("notationDecl(" + name + "," + publicId + "," + systemId + ")");
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("notationDecl(" + name + "," + publicId + "," + systemId + ")");
         }
 
     }
@@ -1340,8 +1291,8 @@ public class Digester extends DefaultHandler2 {
     @Override
     public void unparsedEntityDecl(String name, String publicId, String systemId, String notation) {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace("unparsedEntityDecl(" + name + "," + publicId + "," + systemId + ","
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug("unparsedEntityDecl(" + name + "," + publicId + "," + systemId + ","
                     + notation + ")");
         }
 
@@ -1373,8 +1324,8 @@ public class Digester extends DefaultHandler2 {
     public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
             throws SAXException, IOException {
 
-        if (saxLog.isTraceEnabled()) {
-            saxLog.trace(
+        if (saxLog.isDebugEnabled()) {
+            saxLog.debug(
                     "resolveEntity('" + publicId + "', '" + systemId + "', '" + baseURI + "')");
         }
 
@@ -1387,15 +1338,15 @@ public class Digester extends DefaultHandler2 {
         if (entityURL == null) {
             if (systemId == null) {
                 // cannot resolve
-                if (log.isTraceEnabled()) {
-                    log.trace(" Cannot resolve entity: '" + publicId + "'");
+                if (log.isDebugEnabled()) {
+                    log.debug(" Cannot resolve entity: '" + publicId + "'");
                 }
                 return null;
 
             } else {
                 // try to resolve using system ID
-                if (log.isTraceEnabled()) {
-                    log.trace(" Trying to resolve using system ID '" + systemId + "'");
+                if (log.isDebugEnabled()) {
+                    log.debug(" Trying to resolve using system ID '" + systemId + "'");
                 }
                 entityURL = systemId;
                 // resolve systemId against baseURI if it is not absolute
@@ -1407,7 +1358,7 @@ public class Digester extends DefaultHandler2 {
                         }
                     } catch (URISyntaxException e) {
                         if (log.isDebugEnabled()) {
-                            log.debug(sm.getString("digester.invalidURI", baseURI, systemId));
+                            log.debug("Invalid URI '" + baseURI + "' or '" + systemId + "'");
                         }
                     }
                 }
@@ -1415,8 +1366,8 @@ public class Digester extends DefaultHandler2 {
         }
 
         // Return an input source to our alternative URL
-        if (log.isTraceEnabled()) {
-            log.trace(" Resolving to alternate DTD '" + entityURL + "'");
+        if (log.isDebugEnabled()) {
+            log.debug(" Resolving to alternate DTD '" + entityURL + "'");
         }
 
         try {
@@ -1568,8 +1519,8 @@ public class Digester extends DefaultHandler2 {
      */
     public void register(String publicId, String entityURL) {
 
-        if (log.isTraceEnabled()) {
-            log.trace("register('" + publicId + "', '" + entityURL + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("register('" + publicId + "', '" + entityURL + "'");
         }
         entityValidator.put(publicId, entityURL);
 
@@ -1605,7 +1556,7 @@ public class Digester extends DefaultHandler2 {
 
 
     /**
-     * Add a "call method" rule for a method which accepts no arguments.
+     * Add an "call method" rule for a method which accepts no arguments.
      *
      * @param pattern Element matching pattern
      * @param methodName Method name to be called
@@ -1618,7 +1569,7 @@ public class Digester extends DefaultHandler2 {
     }
 
     /**
-     * Add a "call method" rule for the specified parameters.
+     * Add an "call method" rule for the specified parameters.
      *
      * @param pattern Element matching pattern
      * @param methodName Method name to be called
@@ -1727,13 +1678,6 @@ public class Digester extends DefaultHandler2 {
     }
 
 
-    public void addSetProperties(String pattern, String[] excludes) {
-
-        addRule(pattern, new SetPropertiesRule(excludes));
-
-    }
-
-
     // --------------------------------------------------- Object Stack Methods
 
 
@@ -1741,7 +1685,7 @@ public class Digester extends DefaultHandler2 {
      * Clear the current contents of the object stack.
      * <p>
      * Calling this method <i>might</i> allow another document of the same type
-     * to be correctly parsed. However, this method was not intended for this
+     * to be correctly parsed. However this method was not intended for this
      * purpose. In general, a separate Digester object should be created for
      * each document to be parsed.
      */
@@ -1822,7 +1766,7 @@ public class Digester extends DefaultHandler2 {
      */
     public void push(Object object) {
 
-        if (stack.isEmpty()) {
+        if (stack.size() == 0) {
             root = object;
         }
         stack.push(object);
@@ -1937,8 +1881,11 @@ public class Digester extends DefaultHandler2 {
      * @return the new exception
      */
     public SAXException createSAXException(String message, Exception e) {
-        if ((e instanceof InvocationTargetException)) {
+        if ((e != null) && (e instanceof InvocationTargetException)) {
             Throwable t = e.getCause();
+            if (t instanceof ThreadDeath) {
+                throw (ThreadDeath) t;
+            }
             if (t instanceof VirtualMachineError) {
                 throw (VirtualMachineError) t;
             }
@@ -1973,6 +1920,9 @@ public class Digester extends DefaultHandler2 {
     public SAXException createSAXException(Exception e) {
         if (e instanceof InvocationTargetException) {
             Throwable t = e.getCause();
+            if (t instanceof ThreadDeath) {
+                throw (ThreadDeath) t;
+            }
             if (t instanceof VirtualMachineError) {
                 throw (VirtualMachineError) t;
             }
@@ -2053,7 +2003,7 @@ public class Digester extends DefaultHandler2 {
         private final PropertySource[] source;
         private final ClassLoader classLoader;
 
-        EntityResolverWrapper(EntityResolver entityResolver, PropertySource[] source, ClassLoader classLoader) {
+        public EntityResolverWrapper(EntityResolver entityResolver, PropertySource[] source, ClassLoader classLoader) {
             this.entityResolver = entityResolver;
             this.source = source;
             this.classLoader = classLoader;
@@ -2081,7 +2031,7 @@ public class Digester extends DefaultHandler2 {
 
         private final EntityResolver2 entityResolver2;
 
-        EntityResolver2Wrapper(EntityResolver2 entityResolver, PropertySource[] source,
+        public EntityResolver2Wrapper(EntityResolver2 entityResolver, PropertySource[] source,
                 ClassLoader classLoader) {
             super(entityResolver, source, classLoader);
             this.entityResolver2 = entityResolver;

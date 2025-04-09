@@ -20,15 +20,15 @@ import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.EndpointConfig;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-import jakarta.websocket.server.ServerEndpoint;
+import javax.websocket.ClientEndpoint;
+import javax.websocket.ContainerProvider;
+import javax.websocket.EndpointConfig;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
+import javax.websocket.server.ServerEndpoint;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,12 +53,13 @@ public class TestPojoEndpointBase extends TomcatBaseTest {
 
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addApplicationListener(ServerConfigListener.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMappingDecoded("/", "default");
 
-        WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
+        WebSocketContainer wsContainer =
+                ContainerProvider.getWebSocketContainer();
 
 
         tomcat.start();
@@ -83,12 +84,13 @@ public class TestPojoEndpointBase extends TomcatBaseTest {
 
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addApplicationListener(ServerConfigListener.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMappingDecoded("/", "default");
 
-        WebSocketContainer wsContainer = ContainerProvider.getWebSocketContainer();
+        WebSocketContainer wsContainer =
+                ContainerProvider.getWebSocketContainer();
 
 
         tomcat.start();
@@ -107,14 +109,15 @@ public class TestPojoEndpointBase extends TomcatBaseTest {
     public static class OnOpenServerEndpoint {
 
         @OnOpen
-        public void onOpen(@SuppressWarnings("unused") Session session, EndpointConfig config) {
+        public void onOpen(@SuppressWarnings("unused") Session session,
+                EndpointConfig config) {
             if (config == null) {
                 throw new RuntimeException();
             }
         }
 
         @OnError
-        public void onError(@SuppressWarnings("unused") Throwable t) {
+        public void onError(@SuppressWarnings("unused") Throwable t){
             throw new RuntimeException();
         }
     }

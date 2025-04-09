@@ -18,11 +18,11 @@ package org.apache.catalina.startup;
 
 import java.util.Set;
 
-import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletContainerInitializer;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRegistration;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
 
 public class TesterServletContainerInitializer2 implements
         ServletContainerInitializer {

@@ -21,10 +21,10 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class TestTomcatClassLoader extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "ClassLoaderReport", new ClassLoaderReport(null));
         ctx.addServletMappingDecoded("/", "ClassLoaderReport");
@@ -54,15 +54,16 @@ public class TestTomcatClassLoader extends TomcatBaseTest {
     @Test
     public void testNonDefaultClassLoader() throws Exception {
 
-        Thread currentThread = Thread.currentThread();
-        ClassLoader cl = new URLClassLoader(new URL[0], currentThread.getContextClassLoader());
-        currentThread.setContextClassLoader(cl);
+        ClassLoader cl = new URLClassLoader(new URL[0],
+                Thread.currentThread().getContextClassLoader());
+
+        Thread.currentThread().setContextClassLoader(cl);
 
         Tomcat tomcat = getTomcatInstance();
         tomcat.getServer().setParentClassLoader(cl);
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         Tomcat.addServlet(ctx, "ClassLoaderReport", new ClassLoaderReport(cl));
         ctx.addServletMappingDecoded("/", "ClassLoaderReport");
@@ -78,7 +79,7 @@ public class TestTomcatClassLoader extends TomcatBaseTest {
 
         private transient ClassLoader custom;
 
-        ClassLoaderReport(ClassLoader custom) {
+        public ClassLoaderReport(ClassLoader custom) {
             this.custom = custom;
         }
 

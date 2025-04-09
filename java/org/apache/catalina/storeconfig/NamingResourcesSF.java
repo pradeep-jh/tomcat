@@ -32,15 +32,22 @@ import org.apache.tomcat.util.descriptor.web.ContextResourceLink;
  * Store server.xml elements Resources at context and GlobalNamingResources
  */
 public class NamingResourcesSF extends StoreFactoryBase {
-    private static final Log log = LogFactory.getLog(NamingResourcesSF.class);
+    private static Log log = LogFactory.getLog(NamingResourcesSF.class);
 
+    /**
+     * Store the only the NamingResources elements
+     *
+     * @see NamingResourcesSF#storeChildren(PrintWriter, int, Object, StoreDescription)
+     */
     @Override
-    public void store(PrintWriter aWriter, int indent, Object aElement) throws Exception {
-        StoreDescription elementDesc = getRegistry().findDescription(aElement.getClass());
+    public void store(PrintWriter aWriter, int indent, Object aElement)
+            throws Exception {
+        StoreDescription elementDesc = getRegistry().findDescription(
+                aElement.getClass());
         if (elementDesc != null) {
-            if (log.isTraceEnabled()) {
-                log.trace("store " + elementDesc.getTag() + "( " + aElement + " )");
-            }
+            if (log.isDebugEnabled())
+                log.debug("store " + elementDesc.getTag() + "( " + aElement
+                        + " )");
             storeChildren(aWriter, indent, aElement, elementDesc);
         } else {
             log.warn(sm.getString("storeFactory.noDescriptor", aElement.getClass(), "NamingResources"));
@@ -49,14 +56,28 @@ public class NamingResourcesSF extends StoreFactoryBase {
 
     /**
      * Store the specified NamingResources properties.
-     * <p>
-     * {@inheritDoc}
+     *
+     * @param aWriter
+     *            PrintWriter to which we are storing
+     * @param indent
+     *            Number of spaces to indent this element
+     * @param aElement
+     *            Object whose properties are being stored
+     * @param elementDesc
+     *            element descriptor
+     *
+     * @exception Exception
+     *                if an exception occurs while storing
+     *
+     * @see org.apache.catalina.storeconfig.StoreFactoryBase#storeChildren(java.io.PrintWriter,
+     *      int, java.lang.Object, StoreDescription)
      */
     @Override
-    public void storeChildren(PrintWriter aWriter, int indent, Object aElement, StoreDescription elementDesc)
-            throws Exception {
+    public void storeChildren(PrintWriter aWriter, int indent, Object aElement,
+            StoreDescription elementDesc) throws Exception {
 
-        if (aElement instanceof NamingResourcesImpl resources) {
+        if (aElement instanceof NamingResourcesImpl) {
+            NamingResourcesImpl resources = (NamingResourcesImpl) aElement;
             // Store nested <Ejb> elements
             ContextEjb[] ejbs = resources.findEjbs();
             storeElementArray(aWriter, indent, ejbs);

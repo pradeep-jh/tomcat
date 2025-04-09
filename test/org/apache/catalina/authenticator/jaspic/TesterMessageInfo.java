@@ -19,13 +19,13 @@ package org.apache.catalina.authenticator.jaspic;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.security.auth.message.MessageInfo;
+import javax.security.auth.message.MessageInfo;
 
 public class TesterMessageInfo implements MessageInfo {
 
     private Object requestMessage;
     private Object responseMessage;
-    private final Map<String,Object> map = new HashMap<>();
+    private final Map<String,String> map = new HashMap<>();
 
     @Override
     public Object getRequestMessage() {
@@ -47,8 +47,9 @@ public class TesterMessageInfo implements MessageInfo {
         responseMessage = response;
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    public Map<String,Object> getMap() {
+    public Map getMap() {
         return map;
     }
 }

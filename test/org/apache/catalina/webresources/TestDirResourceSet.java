@@ -60,7 +60,7 @@ public class TestDirResourceSet extends AbstractTestResourceSet {
     }
 
     @Override
-    protected boolean isWritable() {
+    protected boolean isWriteable() {
         return true;
     }
 

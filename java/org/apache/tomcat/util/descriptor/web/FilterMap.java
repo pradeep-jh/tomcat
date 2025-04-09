@@ -16,13 +16,12 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import jakarta.servlet.DispatcherType;
+import javax.servlet.DispatcherType;
 
 import org.apache.tomcat.util.buf.UDecoder;
 
@@ -40,7 +39,6 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
     // ------------------------------------------------------------- Properties
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -173,9 +171,7 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
     public int getDispatcherMapping() {
         // per the SRV.6.2.5 absence of any dispatcher elements is
         // equivalent to a REQUEST value
-        if (dispatcherMapping == NOT_SET) {
-            return REQUEST;
-        }
+        if (dispatcherMapping == NOT_SET) return REQUEST;
 
         return dispatcherMapping;
     }
@@ -219,7 +215,7 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
             sb.append(", urlPattern=");
             sb.append(urlPattern);
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 

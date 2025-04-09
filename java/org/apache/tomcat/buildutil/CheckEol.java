@@ -1,19 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed to the Apache Software Foundation (ASF) under one or more
+* contributor license agreements.  See the NOTICE file distributed with
+* this work for additional information regarding copyright ownership.
+* The ASF licenses this file to You under the Apache License, Version 2.0
+* (the "License"); you may not use this file except in compliance with
+* the License.  You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 package org.apache.tomcat.buildutil;
 
 import java.io.BufferedInputStream;
@@ -21,8 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
@@ -42,7 +43,7 @@ import org.apache.tools.ant.types.FileSet;
 public class CheckEol extends Task {
 
     /** The files to be checked */
-    private final List<FileSet> filesets = new ArrayList<>();
+    private final List<FileSet> filesets = new LinkedList<>();
 
     /** The line ending mode (either LF, CRLF, or null for OS specific) */
     private Mode mode;
@@ -62,7 +63,7 @@ public class CheckEol extends Task {
      * @param mode The line ending mode (either LF or CRLF)
      */
     public void setMode( String mode ) {
-        this.mode = Mode.valueOf( mode.toUpperCase(Locale.ENGLISH) );
+        this.mode = Mode.valueOf( mode.toUpperCase() );
     }
 
     private Mode getMode() {
@@ -123,7 +124,7 @@ public class CheckEol extends Task {
             log("Done line ends check in " + count + " file(s), "
                     + errors.size() + " error(s) found.");
         }
-        if (!errors.isEmpty()) {
+        if (errors.size() > 0) {
             String message = "The following files have wrong line ends: "
                     + errors;
             // We need to explicitly write the message to the log, because
@@ -138,7 +139,17 @@ public class CheckEol extends Task {
         LF, CRLF
     }
 
-    private record CheckFailure(File file, int line, String value) {
+    private static class CheckFailure {
+        private final File file;
+        private final int line;
+        private final String value;
+
+        public CheckFailure(File file, int line, String value) {
+            this.file = file;
+            this.line = line;
+            this.value = value;
+        }
+
         @Override
         public String toString() {
             return System.lineSeparator() + file + ": uses " + value + " on line " + line;

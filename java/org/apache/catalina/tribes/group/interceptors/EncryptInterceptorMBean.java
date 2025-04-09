@@ -19,19 +19,13 @@ package org.apache.catalina.tribes.group.interceptors;
 public interface EncryptInterceptorMBean {
 
     // Config
-    int getOptionFlag();
+    public int getOptionFlag();
+    public void setOptionFlag(int optionFlag);
 
-    void setOptionFlag(int optionFlag);
-
-    void setEncryptionAlgorithm(String algorithm);
-
-    String getEncryptionAlgorithm();
-
-    void setEncryptionKey(byte[] key);
-
-    byte[] getEncryptionKey();
-
-    void setProviderName(String provider);
-
-    String getProviderName();
+    public void setEncryptionAlgorithm(String algorithm);
+    public String getEncryptionAlgorithm();
+    public void setEncryptionKey(byte[] key);
+    public byte[] getEncryptionKey();
+    public void setProviderName(String provider);
+    public String getProviderName();
 }

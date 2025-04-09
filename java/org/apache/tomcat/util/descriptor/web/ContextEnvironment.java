@@ -17,7 +17,6 @@
 package org.apache.tomcat.util.descriptor.web;
 
 
-import java.io.Serial;
 
 /**
  * Representation of an application environment entry, as represented in
@@ -27,9 +26,7 @@ import java.io.Serial;
  */
 public class ContextEnvironment extends ResourceBase {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-
 
     // ------------------------------------------------------------- Properties
 
@@ -89,7 +86,7 @@ public class ContextEnvironment extends ResourceBase {
         }
         sb.append(", override=");
         sb.append(override);
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
 
     }
@@ -121,9 +118,12 @@ public class ContextEnvironment extends ResourceBase {
             return false;
         }
         if (value == null) {
-            return other.value == null;
-        } else {
-            return value.equals(other.value);
+            if (other.value != null) {
+                return false;
+            }
+        } else if (!value.equals(other.value)) {
+            return false;
         }
+        return true;
     }
 }

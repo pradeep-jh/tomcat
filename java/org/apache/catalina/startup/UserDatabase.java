@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.startup;
 
 
@@ -21,7 +23,8 @@ import java.util.Enumeration;
 
 
 /**
- * Abstraction of the set of users defined by the operating system on the current server platform.
+ * Abstraction of the set of users defined by the operating system on the
+ * current server platform.
  *
  * @author Craig R. McClanahan
  */
@@ -34,7 +37,7 @@ public interface UserDatabase {
     /**
      * @return the UserConfig listener with which we are associated.
      */
-    UserConfig getUserConfig();
+    public UserConfig getUserConfig();
 
 
     /**
@@ -42,7 +45,7 @@ public interface UserDatabase {
      *
      * @param userConfig The new UserConfig listener
      */
-    void setUserConfig(UserConfig userConfig);
+    public void setUserConfig(UserConfig userConfig);
 
 
     // ------------------------------------------------------- Public Methods
@@ -53,13 +56,13 @@ public interface UserDatabase {
      *
      * @param user User for which a home directory should be retrieved
      */
-    String getHome(String user);
+    public String getHome(String user);
 
 
     /**
      * @return an enumeration of the usernames defined on this server.
      */
-    Enumeration<String> getUsers();
+    public Enumeration<String> getUsers();
 
 
 }

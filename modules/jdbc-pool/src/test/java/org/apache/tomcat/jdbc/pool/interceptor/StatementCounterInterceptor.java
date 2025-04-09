@@ -52,7 +52,7 @@ public class StatementCounterInterceptor extends StatementDecoratorInterceptor {
 
     private class StatementProxy extends
             StatementDecoratorInterceptor.StatementProxy<Statement> {
-        StatementProxy(Statement delegate, String sql) {
+        public StatementProxy(Statement delegate, String sql) {
             super(delegate, sql);
         }
 

@@ -16,8 +16,8 @@
  */
 package websocket.drawboard;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 public final class DrawboardContextListener implements ServletContextListener {
 

@@ -19,23 +19,25 @@ package org.apache.catalina.authenticator;
 import java.io.File;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Base64;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.LinkedHashMap;
-import java.util.concurrent.CompletionException;
 import java.util.regex.Pattern;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Realm;
 import org.apache.catalina.connector.Request;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.apache.tomcat.util.compat.JreVendor;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
@@ -44,9 +46,11 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
 
 /**
- * A SPNEGO authenticator that uses the SPNEGO/Kerberos support built in to Java 6. Successful Kerberos authentication
- * depends on the correct configuration of multiple components. If the configuration is invalid, the error messages are
- * often cryptic although a Google search will usually point you in the right direction.
+ * A SPNEGO authenticator that uses the SPNEGO/Kerberos support built in to Java
+ * 6. Successful Kerberos authentication depends on the correct configuration of
+ * multiple components. If the configuration is invalid, the error messages are
+ * often cryptic although a Google search will usually point you in the right
+ * direction.
  */
 public class SpnegoAuthenticator extends AuthenticatorBase {
 
@@ -54,27 +58,23 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
     private static final String AUTH_HEADER_VALUE_NEGOTIATE = "Negotiate";
 
     private String loginConfigName = Constants.DEFAULT_LOGIN_MODULE_NAME;
-
     public String getLoginConfigName() {
         return loginConfigName;
     }
-
     public void setLoginConfigName(String loginConfigName) {
         this.loginConfigName = loginConfigName;
     }
 
     private boolean storeDelegatedCredential = true;
-
     public boolean isStoreDelegatedCredential() {
         return storeDelegatedCredential;
     }
-
-    public void setStoreDelegatedCredential(boolean storeDelegatedCredential) {
+    public void setStoreDelegatedCredential(
+            boolean storeDelegatedCredential) {
         this.storeDelegatedCredential = storeDelegatedCredential;
     }
 
     private Pattern noKeepAliveUserAgents = null;
-
     public String getNoKeepAliveUserAgents() {
         Pattern p = noKeepAliveUserAgents;
         if (p == null) {
@@ -83,9 +83,9 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
             return p.pattern();
         }
     }
-
     public void setNoKeepAliveUserAgents(String noKeepAliveUserAgents) {
-        if (noKeepAliveUserAgents == null || noKeepAliveUserAgents.isEmpty()) {
+        if (noKeepAliveUserAgents == null ||
+                noKeepAliveUserAgents.length() == 0) {
             this.noKeepAliveUserAgents = null;
         } else {
             this.noKeepAliveUserAgents = Pattern.compile(noKeepAliveUserAgents);
@@ -93,11 +93,9 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
     }
 
     private boolean applyJava8u40Fix = true;
-
     public boolean getApplyJava8u40Fix() {
         return applyJava8u40Fix;
     }
-
     public void setApplyJava8u40Fix(boolean applyJava8u40Fix) {
         this.applyJava8u40Fix = applyJava8u40Fix;
     }
@@ -117,28 +115,35 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
         String krb5Conf = System.getProperty(Constants.KRB5_CONF_PROPERTY);
         if (krb5Conf == null) {
             // System property not set, use the Tomcat default
-            File krb5ConfFile = new File(container.getCatalinaBase(), Constants.DEFAULT_KRB5_CONF);
-            System.setProperty(Constants.KRB5_CONF_PROPERTY, krb5ConfFile.getAbsolutePath());
+            File krb5ConfFile = new File(container.getCatalinaBase(),
+                    Constants.DEFAULT_KRB5_CONF);
+            System.setProperty(Constants.KRB5_CONF_PROPERTY,
+                    krb5ConfFile.getAbsolutePath());
         }
 
         // JAAS configuration file location
         String jaasConf = System.getProperty(Constants.JAAS_CONF_PROPERTY);
         if (jaasConf == null) {
             // System property not set, use the Tomcat default
-            File jaasConfFile = new File(container.getCatalinaBase(), Constants.DEFAULT_JAAS_CONF);
-            System.setProperty(Constants.JAAS_CONF_PROPERTY, jaasConfFile.getAbsolutePath());
+            File jaasConfFile = new File(container.getCatalinaBase(),
+                    Constants.DEFAULT_JAAS_CONF);
+            System.setProperty(Constants.JAAS_CONF_PROPERTY,
+                    jaasConfFile.getAbsolutePath());
         }
     }
 
 
     @Override
-    protected boolean doAuthenticate(Request request, HttpServletResponse response) throws IOException {
+    protected boolean doAuthenticate(Request request, HttpServletResponse response)
+            throws IOException {
 
         if (checkForCachedAuthentication(request, response, true)) {
             return true;
         }
 
-        MessageBytes authorization = request.getCoyoteRequest().getMimeHeaders().getValue("authorization");
+        MessageBytes authorization =
+            request.getCoyoteRequest().getMimeHeaders()
+            .getValue("authorization");
 
         if (authorization == null) {
             if (log.isDebugEnabled()) {
@@ -154,19 +159,19 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
 
         if (!authorizationBC.startsWithIgnoreCase("negotiate ", 0)) {
             if (log.isDebugEnabled()) {
-                log.debug(sm.getString("spnegoAuthenticator.authHeaderNotNego"));
+                log.debug(sm.getString(
+                        "spnegoAuthenticator.authHeaderNotNego"));
             }
             response.setHeader(AUTH_HEADER_NAME, AUTH_HEADER_VALUE_NEGOTIATE);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
 
-        authorizationBC.setStart(authorizationBC.getStart() + 10);
+        authorizationBC.setOffset(authorizationBC.getOffset() + 10);
 
-        byte[] encoded = new byte[authorizationBC.getLength()];
-        System.arraycopy(authorizationBC.getBuffer(), authorizationBC.getStart(), encoded, 0,
+        byte[] decoded = Base64.decodeBase64(authorizationBC.getBuffer(),
+                authorizationBC.getOffset(),
                 authorizationBC.getLength());
-        byte[] decoded = Base64.getDecoder().decode(encoded);
 
         if (getApplyJava8u40Fix()) {
             SpnegoTokenFixer.fix(decoded);
@@ -174,7 +179,8 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
 
         if (decoded.length == 0) {
             if (log.isDebugEnabled()) {
-                log.debug(sm.getString("spnegoAuthenticator.authHeaderNoToken"));
+                log.debug(sm.getString(
+                        "spnegoAuthenticator.authHeaderNoToken"));
             }
             response.setHeader(AUTH_HEADER_NAME, AUTH_HEADER_VALUE_NEGOTIATE);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
@@ -183,15 +189,17 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
 
         LoginContext lc = null;
         GSSContext gssContext = null;
-        byte[] outToken;
-        Principal principal;
+        byte[] outToken = null;
+        Principal principal = null;
         try {
             try {
                 lc = new LoginContext(getLoginConfigName());
                 lc.login();
             } catch (LoginException e) {
-                log.error(sm.getString("spnegoAuthenticator.serviceLoginFail"), e);
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                log.error(sm.getString("spnegoAuthenticator.serviceLoginFail"),
+                        e);
+                response.sendError(
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return false;
             }
 
@@ -207,17 +215,24 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
             } else {
                 credentialLifetime = GSSCredential.DEFAULT_LIFETIME;
             }
-            gssContext = manager.createContext(Subject.callAs(subject, () ->
-                manager.createCredential(null, credentialLifetime, new Oid("1.3.6.1.5.5.2"),
-                    GSSCredential.ACCEPT_ONLY)));
+            final PrivilegedExceptionAction<GSSCredential> action =
+                new PrivilegedExceptionAction<GSSCredential>() {
+                    @Override
+                    public GSSCredential run() throws GSSException {
+                        return manager.createCredential(null,
+                                credentialLifetime,
+                                new Oid("1.3.6.1.5.5.2"),
+                                GSSCredential.ACCEPT_ONLY);
+                    }
+                };
+            gssContext = manager.createContext(Subject.doAs(subject, action));
 
-            final GSSContext gssContextFinal = gssContext;
-            outToken = Subject.callAs(subject,
-                () -> gssContextFinal.acceptSecContext(decoded, 0, decoded.length));
+            outToken = Subject.doAs(lc.getSubject(), new AcceptAction(gssContext, decoded));
 
             if (outToken == null) {
                 if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("spnegoAuthenticator.ticketValidateFail"));
+                    log.debug(sm.getString(
+                            "spnegoAuthenticator.ticketValidateFail"));
                 }
                 // Start again
                 response.setHeader(AUTH_HEADER_NAME, AUTH_HEADER_VALUE_NEGOTIATE);
@@ -225,8 +240,9 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
                 return false;
             }
 
-            principal = Subject.callAs(subject,
-                () -> context.getRealm().authenticate(gssContextFinal, storeDelegatedCredential));
+            principal = Subject.doAs(subject, new AuthenticateAction(
+                    context.getRealm(), gssContext, storeDelegatedCredential));
+
         } catch (GSSException e) {
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("spnegoAuthenticator.ticketValidateFail"), e);
@@ -234,7 +250,7 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
             response.setHeader(AUTH_HEADER_NAME, AUTH_HEADER_VALUE_NEGOTIATE);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
-        } catch (CompletionException e) {
+        } catch (PrivilegedActionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof GSSException) {
                 if (log.isDebugEnabled()) {
@@ -264,15 +280,18 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
         }
 
         // Send response token on success and failure
-        response.setHeader(AUTH_HEADER_NAME,
-                AUTH_HEADER_VALUE_NEGOTIATE + " " + Base64.getEncoder().encodeToString(outToken));
+        response.setHeader(AUTH_HEADER_NAME, AUTH_HEADER_VALUE_NEGOTIATE + " "
+                + Base64.encodeBase64String(outToken));
 
         if (principal != null) {
-            register(request, response, principal, Constants.SPNEGO_METHOD, principal.getName(), null);
+            register(request, response, principal, Constants.SPNEGO_METHOD,
+                    principal.getName(), null);
 
             Pattern p = noKeepAliveUserAgents;
             if (p != null) {
-                MessageBytes ua = request.getCoyoteRequest().getMimeHeaders().getValue("user-agent");
+                MessageBytes ua =
+                        request.getCoyoteRequest().getMimeHeaders().getValue(
+                                "user-agent");
                 if (ua != null && p.matcher(ua.toString()).matches()) {
                     response.setHeader("Connection", "close");
                 }
@@ -285,22 +304,60 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
     }
 
 
-    @Override
-    protected boolean isPreemptiveAuthPossible(Request request) {
-        MessageBytes authorizationHeader = request.getCoyoteRequest().getMimeHeaders().getValue("authorization");
-        return authorizationHeader != null && authorizationHeader.startsWithIgnoreCase("negotiate ", 0);
+    /**
+     * This class gets a gss credential via a privileged action.
+     */
+    public static class AcceptAction implements PrivilegedExceptionAction<byte[]> {
+
+        GSSContext gssContext;
+
+        byte[] decoded;
+
+        public AcceptAction(GSSContext context, byte[] decodedToken) {
+            this.gssContext = context;
+            this.decoded = decodedToken;
+        }
+
+        @Override
+        public byte[] run() throws GSSException {
+            return gssContext.acceptSecContext(decoded,
+                    0, decoded.length);
+        }
+    }
+
+
+    public static class AuthenticateAction implements PrivilegedAction<Principal> {
+
+        private final Realm realm;
+        private final GSSContext gssContext;
+        private final boolean storeDelegatedCredential;
+
+        public AuthenticateAction(Realm realm, GSSContext gssContext,
+                boolean storeDelegatedCredential) {
+            this.realm = realm;
+            this.gssContext = gssContext;
+            this.storeDelegatedCredential = storeDelegatedCredential;
+        }
+
+        @Override
+        public Principal run() {
+            return realm.authenticate(gssContext, storeDelegatedCredential);
+        }
     }
 
 
     /**
-     * This class implements a hack around an incompatibility between the SPNEGO implementation in Windows and the
-     * SPNEGO implementation in Java 8 update 40 onwards. It was introduced by the change to fix this bug:
-     * <a href="https://bugs.openjdk.java.net/browse/JDK-8048194">JDK-8048194</a> (note: the change applied is not the
-     * one suggested in the bug report)
+     * This class implements a hack around an incompatibility between the
+     * SPNEGO implementation in Windows and the SPNEGO implementation in Java 8
+     * update 40 onwards. It was introduced by the change to fix this bug:
+     * https://bugs.openjdk.java.net/browse/JDK-8048194
+     * (note: the change applied is not the one suggested in the bug report)
      * <p>
-     * It is not clear to me if Windows, Java or Tomcat is at fault here. I think it is Java, but I could be wrong.
+     * It is not clear to me if Windows, Java or Tomcat is at fault here. I
+     * think it is Java but I could be wrong.
      * <p>
-     * This hack works by re-ordering the list of mechTypes in the NegTokenInit token.
+     * This hack works by re-ordering the list of mechTypes in the NegTokenInit
+     * token.
      */
     public static class SpnegoTokenFixer {
 
@@ -322,45 +379,29 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
         // Fixes the token in-place
         private void fix() {
             /*
-             * Useful references: http://tools.ietf.org/html/rfc4121#page-5 http://tools.ietf.org/html/rfc2743#page-81
+             * Useful references:
+             * http://tools.ietf.org/html/rfc4121#page-5
+             * http://tools.ietf.org/html/rfc2743#page-81
              * https://msdn.microsoft.com/en-us/library/ms995330.aspx
              */
 
             // Scan until we find the mech types list. If we find anything
             // unexpected, abort the fix process.
-            if (!tag(0x60)) {
-                return;
-            }
-            if (!length()) {
-                return;
-            }
-            if (!oid("1.3.6.1.5.5.2")) {
-                return;
-            }
-            if (!tag(0xa0)) {
-                return;
-            }
-            if (!length()) {
-                return;
-            }
-            if (!tag(0x30)) {
-                return;
-            }
-            if (!length()) {
-                return;
-            }
-            if (!tag(0xa0)) {
-                return;
-            }
+            if (!tag(0x60)) return;
+            if (!length()) return;
+            if (!oid("1.3.6.1.5.5.2")) return;
+            if (!tag(0xa0)) return;
+            if (!length()) return;
+            if (!tag(0x30)) return;
+            if (!length()) return;
+            if (!tag(0xa0)) return;
             lengthAsInt();
-            if (!tag(0x30)) {
-                return;
-            }
+            if (!tag(0x30)) return;
             // Now at the start of the mechType list.
             // Read the mechTypes into an ordered set
             int mechTypesLen = lengthAsInt();
             int mechTypesStart = pos;
-            LinkedHashMap<String,int[]> mechTypeEntries = new LinkedHashMap<>();
+            LinkedHashMap<String, int[]> mechTypeEntries = new LinkedHashMap<>();
             while (pos < mechTypesStart + mechTypesLen) {
                 int[] value = new int[2];
                 value[0] = pos;
@@ -421,9 +462,7 @@ public class SpnegoAuthenticator extends AuthenticatorBase {
 
 
         private String oidAsString() {
-            if (!tag(0x06)) {
-                return null;
-            }
+            if (!tag(0x06)) return null;
             StringBuilder result = new StringBuilder();
             int len = lengthAsInt();
             // First byte is special case

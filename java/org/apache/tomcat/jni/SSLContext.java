@@ -14,12 +14,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.jni;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/** SSL Context
+ *
+ * @author Mladen Turk
+ */
 public final class SSLContext {
 
     public static final byte[] DEFAULT_SESSION_ID_CONTEXT =
@@ -62,6 +66,34 @@ public final class SSLContext {
     public static native int free(long ctx);
 
     /**
+     * Set Session context id. Usually host:port combination.
+     * @param ctx Context to use.
+     * @param id  String that uniquely identifies this context.
+     */
+    public static native void setContextId(long ctx, String id);
+
+    /**
+     * Associate BIOCallback for input or output data capture.
+     * <br>
+     * First word in the output string will contain error
+     * level in the form:
+     * <PRE>
+     * [ERROR]  -- Critical error messages
+     * [WARN]   -- Warning messages
+     * [INFO]   -- Informational messages
+     * [DEBUG]  -- Debugging messaged
+     * </PRE>
+     * Callback can use that word to determine application logging level
+     * by intercepting <b>write</b> call.
+     * If the <b>bio</b> is set to 0 no error messages will be displayed.
+     * Default is to use the stderr output stream.
+     * @param ctx Server or Client context to use.
+     * @param bio BIO handle to use, created with SSL.newBIO
+     * @param dir BIO direction (1 for input 0 for output).
+     */
+    public static native void setBIO(long ctx, long bio, int dir);
+
+    /**
      * Set OpenSSL Option.
      * @param ctx Server or Client context to use.
      * @param options  See SSL.SSL_OP_* for option flags.
@@ -88,6 +120,27 @@ public final class SSLContext {
      * @return ciphers
      */
     public static native String[] getCiphers(long ctx);
+
+    /**
+     * Sets the "quiet shutdown" flag for <b>ctx</b> to be
+     * <b>mode</b>. SSL objects created from <b>ctx</b> inherit the
+     * <b>mode</b> valid at the time and may be 0 or 1.
+     * <br>
+     * Normally when an SSL connection is finished, the parties must send out
+     * "close notify" alert messages using L&lt;SSL_shutdown(3)|SSL_shutdown(3)&gt;
+     * for a clean shutdown.
+     * <br>
+     * When setting the "quiet shutdown" flag to 1, <b>SSL.shutdown</b>
+     * will set the internal flags to SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN.
+     * (<b>SSL_shutdown</b> then behaves like called with
+     * SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN.)
+     * The session is thus considered to be shutdown, but no "close notify" alert
+     * is sent to the peer. This behaviour violates the TLS standard.
+     * The default is normal shutdown behaviour as described by the TLS standard.
+     * @param ctx Server or Client context to use.
+     * @param mode True to set the quiet shutdown.
+     */
+    public static native void setQuietShutdown(long ctx, boolean mode);
 
     /**
      * Cipher Suite available for negotiation in SSL handshake.
@@ -139,7 +192,7 @@ public final class SSLContext {
      * This directive sets the optional all-in-one file where you can assemble the
      * certificates of Certification Authorities (CA) which form the certificate
      * chain of the server certificate. This starts with the issuing CA certificate
-     * of the server certificate and can range up to the root CA certificate.
+     * of of the server certificate and can range up to the root CA certificate.
      * Such a file is simply the concatenation of the various PEM-encoded CA
      * Certificate files, usually in certificate chain order.
      * <br>
@@ -163,7 +216,7 @@ public final class SSLContext {
      * Point setCertificateFile at a PEM encoded certificate.  If
      * the certificate is encrypted, then you will be prompted for a
      * pass phrase.  Note that a kill -HUP will prompt again. A test
-     * certificate can be generated with 'make certificate' under
+     * certificate can be generated with `make certificate' under
      * built time. Keep in mind that if you've both a RSA and a DSA
      * certificate you can configure both in parallel (to also allow
      * the use of DSA ciphers, etc.)
@@ -287,6 +340,27 @@ public final class SSLContext {
         throws Exception;
 
     /**
+     * Set file for randomness
+     * @param ctx Server or Client context to use.
+     * @param file random file.
+     */
+    public static native void setRandom(long ctx, String file);
+
+    /**
+     * Set SSL connection shutdown type
+     * <br>
+     * The following levels are available for level:
+     * <PRE>
+     * SSL_SHUTDOWN_TYPE_STANDARD
+     * SSL_SHUTDOWN_TYPE_UNCLEAN
+     * SSL_SHUTDOWN_TYPE_ACCURATE
+     * </PRE>
+     * @param ctx Server or Client context to use.
+     * @param type Shutdown type to use.
+     */
+    public static native void setShutdownType(long ctx, int type);
+
+    /**
      * Set Type of Client Certificate verification and Maximum depth of CA Certificates
      * in Client Certificate verification.
      * <br>
@@ -321,6 +395,8 @@ public final class SSLContext {
      */
     public static native void setVerify(long ctx, int level, int depth);
 
+    public static native int setALPN(long ctx, byte[] proto, int len);
+
     /**
      * When tc-native encounters a SNI extension in the TLS handshake it will
      * call this method to determine which OpenSSL SSLContext to use for the
@@ -340,10 +416,7 @@ public final class SSLContext {
         if (sniCallBack == null) {
             return 0;
         }
-        // Can't be sure OpenSSL is going to provide the SNI value in lower case
-        // so convert it before looking up the SSLContext
-        String hostName = (sniHostName == null) ? null : sniHostName.toLowerCase(Locale.ENGLISH);
-        return sniCallBack.getSslContext(hostName);
+        return sniCallBack.getSslContext(sniHostName);
     }
 
     /**
@@ -356,24 +429,54 @@ public final class SSLContext {
     private static final Map<Long,SNICallBack> sniCallBacks = new ConcurrentHashMap<>();
 
     /**
+     * Register an OpenSSL SSLContext that will be used to initiate TLS
+     * connections that may use the SNI extension with the component that will
+     * be used to map the requested hostname to the correct OpenSSL SSLContext
+     * for the remainder of the connection.
+     *
+     * @param defaultSSLContext The Java representation of a pointer to the
+     *                          OpenSSL SSLContext that will be used to
+     *                          initiate TLS connections
+     * @param sniCallBack The component that will map SNI hosts names received
+     *                    via connections initiated using
+     *                    <code>defaultSSLContext</code> to the correct  OpenSSL
+     *                    SSLContext
+     */
+    public static void registerDefault(Long defaultSSLContext,
+            SNICallBack sniCallBack) {
+        sniCallBacks.put(defaultSSLContext, sniCallBack);
+    }
+
+    /**
+     * Unregister an OpenSSL SSLContext that will no longer be used to initiate
+     * TLS connections that may use the SNI extension.
+     *
+     * @param defaultSSLContext The Java representation of a pointer to the
+     *                          OpenSSL SSLContext that will no longer be used
+     */
+    public static void unregisterDefault(Long defaultSSLContext) {
+        sniCallBacks.remove(defaultSSLContext);
+    }
+
+
+    /**
      * Interface implemented by components that will receive the call back to
      * select an OpenSSL SSLContext based on the host name requested by the
      * client.
      */
-    public interface SNICallBack {
+    public static interface SNICallBack {
 
         /**
          * This callback is made during the TLS handshake when the client uses
          * the SNI extension to request a specific TLS host.
          *
-         * @param sniHostName The host name requested by the client - must be in
-         *                    lower case
+         * @param sniHostName The host name requested by the client
          *
          * @return The Java representation of the pointer to the OpenSSL
          *         SSLContext to use for the given host or zero if no SSLContext
          *         could be identified
          */
-        long getSslContext(String sniHostName);
+        public long getSslContext(String sniHostName);
     }
 
     /**
@@ -386,6 +489,27 @@ public final class SSLContext {
     public static native void setCertVerifyCallback(long ctx, CertificateVerifier verifier);
 
     /**
+     * Set next protocol for next protocol negotiation extension
+     * @param ctx Server context to use.
+     * @param nextProtos comma delimited list of protocols in priority order
+     *
+     * @deprecated use {@link #setNpnProtos(long, String[], int)}
+     */
+    @Deprecated
+    public static void setNextProtos(long ctx, String nextProtos) {
+        setNpnProtos(ctx, nextProtos.split(","), SSL.SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL);
+    }
+
+    /**
+     * Set next protocol for next protocol negotiation extension
+     * @param ctx Server context to use.
+     * @param nextProtos protocols in priority order
+     * @param selectorFailureBehavior see {@link SSL#SSL_SELECTOR_FAILURE_NO_ADVERTISE}
+     *                                and {@link SSL#SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL}
+     */
+    public static native void setNpnProtos(long ctx, String[] nextProtos, int selectorFailureBehavior);
+
+    /**
      * Set application layer protocol for application layer protocol negotiation extension
      * @param ctx Server context to use.
      * @param alpnProtos protocols in priority order
@@ -393,6 +517,26 @@ public final class SSLContext {
      *                                and {@link SSL#SSL_SELECTOR_FAILURE_CHOOSE_MY_LAST_PROTOCOL}
      */
     public static native void setAlpnProtos(long ctx, String[] alpnProtos, int selectorFailureBehavior);
+
+    /**
+     * Set DH parameters
+     * @param ctx Server context to use.
+     * @param cert DH param file (can be generated from e.g. {@code openssl dhparam -rand - 2048 > dhparam.pem} -
+     *             see the <a href="https://www.openssl.org/docs/apps/dhparam.html">OpenSSL documentation</a>).
+     * @throws Exception An error occurred
+     */
+    public static native void setTmpDH(long ctx, String cert)
+            throws Exception;
+
+    /**
+     * Set ECDH elliptic curve by name
+     * @param ctx Server context to use.
+     * @param curveName the name of the elliptic curve to use
+     *             (available names can be obtained from {@code openssl ecparam -list_curves}).
+     * @throws Exception An error occurred
+     */
+    public static native void setTmpECDHByCurveName(long ctx, String curveName)
+            throws Exception;
 
     /**
      * Set the context within which session be reused (server side only)

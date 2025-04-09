@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.digester;
 
 import org.xml.sax.Attributes;
@@ -35,7 +37,7 @@ public class FactoryCreateRule extends Rule {
     // ----------------------------------------------------------- Fields
 
     /** Should exceptions thrown by the factory be ignored? */
-    private final boolean ignoreCreateExceptions;
+    private boolean ignoreCreateExceptions;
     /** Stock to manage */
     private ArrayStack<Boolean> exceptionIgnoredStack;
 
@@ -66,7 +68,7 @@ public class FactoryCreateRule extends Rule {
      * as required based on the attributes specified in the matched XML
      * element.
      */
-    protected ObjectCreationFactory creationFactory;
+    protected ObjectCreationFactory creationFactory = null;
 
 
     // --------------------------------------------------------- Public Methods
@@ -89,8 +91,8 @@ public class FactoryCreateRule extends Rule {
             try {
                 Object instance = creationFactory.createObject(attributes);
 
-                if (digester.log.isTraceEnabled()) {
-                    digester.log.trace("[FactoryCreateRule]{" + digester.match +
+                if (digester.log.isDebugEnabled()) {
+                    digester.log.debug("[FactoryCreateRule]{" + digester.match +
                             "} New " + instance.getClass().getName());
                 }
                 digester.push(instance);
@@ -98,12 +100,12 @@ public class FactoryCreateRule extends Rule {
 
             } catch (Exception e) {
                 // log message and error
-                if (digester.log.isDebugEnabled()) {
-                    digester.log.debug(sm.getString("rule.createError",
-                            ((e.getMessage() == null) ? e.getClass().getName() : e.getMessage())), e);
-                } else if (digester.log.isInfoEnabled()) {
+                if (digester.log.isInfoEnabled()) {
                     digester.log.info(sm.getString("rule.createError",
                         ((e.getMessage() == null) ? e.getClass().getName() : e.getMessage())));
+                    if (digester.log.isDebugEnabled()) {
+                        digester.log.debug("[FactoryCreateRule] Ignored exception:", e);
+                    }
                 }
                 exceptionIgnoredStack.push(Boolean.TRUE);
             }
@@ -111,8 +113,8 @@ public class FactoryCreateRule extends Rule {
         } else {
             Object instance = creationFactory.createObject(attributes);
 
-            if (digester.log.isTraceEnabled()) {
-                digester.log.trace("[FactoryCreateRule]{" + digester.match +
+            if (digester.log.isDebugEnabled()) {
+                digester.log.debug("[FactoryCreateRule]{" + digester.match +
                         "} New " + instance.getClass().getName());
             }
             digester.push(instance);
@@ -127,7 +129,7 @@ public class FactoryCreateRule extends Rule {
     public void end(String namespace, String name) throws Exception {
 
         // check if object was created
-        // this only happens if an exception was thrown, and we're ignoring them
+        // this only happens if an exception was thrown and we're ignoring them
         if (
                 ignoreCreateExceptions &&
                 exceptionIgnoredStack != null &&
@@ -144,8 +146,8 @@ public class FactoryCreateRule extends Rule {
         }
 
         Object top = digester.pop();
-        if (digester.log.isTraceEnabled()) {
-            digester.log.trace("[FactoryCreateRule]{" + digester.match +
+        if (digester.log.isDebugEnabled()) {
+            digester.log.debug("[FactoryCreateRule]{" + digester.match +
                     "} Pop " + top.getClass().getName());
         }
 
@@ -171,7 +173,7 @@ public class FactoryCreateRule extends Rule {
             sb.append("creationFactory=");
             sb.append(creationFactory);
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 }

@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-import jakarta.websocket.server.ServerEndpoint;
+import javax.websocket.ClientEndpoint;
+import javax.websocket.ContainerProvider;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
+import javax.websocket.server.ServerEndpoint;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class TestClassLoader extends WebSocketBaseTest {
     public void testSimple() throws Exception {
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addApplicationListener(Config.class.getName());
 
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
@@ -65,7 +65,8 @@ public class TestClassLoader extends WebSocketBaseTest {
 
         Client client = new Client();
 
-        Session wsSession = wsContainer.connectToServer(client, new URI("ws://localhost:" + getPort() + "/test"));
+        Session wsSession = wsContainer.connectToServer(client,
+                new URI("ws://localhost:" + getPort() + "/test"));
 
         Assert.assertTrue(wsSession.isOpen());
 
@@ -76,7 +77,7 @@ public class TestClassLoader extends WebSocketBaseTest {
         }
 
         // Check it
-        Assert.assertEquals(1, client.getMsgCount());
+        Assert.assertEquals(1,  client.getMsgCount());
         Assert.assertFalse(client.hasFailed());
 
         wsSession.getBasicRemote().sendText("Testing");
@@ -87,7 +88,7 @@ public class TestClassLoader extends WebSocketBaseTest {
             Thread.sleep(100);
         }
 
-        Assert.assertEquals(2, client.getMsgCount());
+        Assert.assertEquals(2,  client.getMsgCount());
         Assert.assertFalse(client.hasFailed());
 
         wsSession.close();

@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.el.lang;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import jakarta.el.ELContext;
-import jakarta.el.ELResolver;
-import jakarta.el.EvaluationListener;
-import jakarta.el.FunctionMapper;
-import jakarta.el.ImportHandler;
-import jakarta.el.VariableMapper;
-
-import org.apache.el.util.MessageFactory;
+import javax.el.ELContext;
+import javax.el.ELResolver;
+import javax.el.EvaluationListener;
+import javax.el.FunctionMapper;
+import javax.el.ImportHandler;
+import javax.el.VariableMapper;
 
 public final class EvaluationContext extends ELContext {
 
@@ -37,9 +36,8 @@ public final class EvaluationContext extends ELContext {
 
     private final VariableMapper varMapper;
 
-    private LambdaExpressionNestedState lambdaExpressionNestedState;
-
-    public EvaluationContext(ELContext elContext, FunctionMapper fnMapper, VariableMapper varMapper) {
+    public EvaluationContext(ELContext elContext, FunctionMapper fnMapper,
+            VariableMapper varMapper) {
         this.elContext = elContext;
         this.fnMapper = fnMapper;
         this.varMapper = varMapper;
@@ -60,7 +58,8 @@ public final class EvaluationContext extends ELContext {
     }
 
     @Override
-    public Object getContext(Class<?> key) {
+    // Can't use Class<?> because API needs to match specification in superclass
+    public Object getContext(@SuppressWarnings("rawtypes") Class key) {
         return elContext.getContext(key);
     }
 
@@ -75,7 +74,9 @@ public final class EvaluationContext extends ELContext {
     }
 
     @Override
-    public void putContext(Class<?> key, Object contextObject) {
+    // Can't use Class<?> because API needs to match specification in superclass
+    public void putContext(@SuppressWarnings("rawtypes") Class key,
+            Object contextObject) {
         elContext.putContext(key, contextObject);
     }
 
@@ -87,7 +88,7 @@ public final class EvaluationContext extends ELContext {
     @Override
     public Locale getLocale() {
         return elContext.getLocale();
-    }
+        }
 
     @Override
     public void setLocale(Locale locale) {
@@ -140,7 +141,7 @@ public final class EvaluationContext extends ELContext {
     }
 
     @Override
-    public void enterLambdaScope(Map<String,Object> arguments) {
+    public void enterLambdaScope(Map<String, Object> arguments) {
         elContext.enterLambdaScope(arguments);
     }
 
@@ -150,38 +151,7 @@ public final class EvaluationContext extends ELContext {
     }
 
     @Override
-    public <T> T convertToType(Object obj, Class<T> type) {
+    public Object convertToType(Object obj, Class<?> type) {
         return elContext.convertToType(obj, type);
-    }
-
-
-    public LambdaExpressionNestedState getLambdaExpressionNestedState() {
-        // State is stored in the EvaluationContext instance associated with the
-        // outermost lambda expression of a set of nested expressions.
-
-        if (lambdaExpressionNestedState != null) {
-            // This instance is storing state so it must be associated with the
-            // outermost lambda expression.
-            return lambdaExpressionNestedState;
-        }
-
-        // Check to see if the associated lambda expression is nested as state
-        // will be stored in the EvaluationContext associated with the outermost
-        // lambda expression.
-        if (elContext instanceof EvaluationContext) {
-            return ((EvaluationContext) elContext).getLambdaExpressionNestedState();
-        }
-
-        return null;
-    }
-
-
-    public void setLambdaExpressionNestedState(LambdaExpressionNestedState lambdaExpressionNestedState) {
-        if (this.lambdaExpressionNestedState != null) {
-            // Should never happen
-            throw new IllegalStateException(MessageFactory.get("error.lambda.wrongNestedState"));
-        }
-
-        this.lambdaExpressionNestedState = lambdaExpressionNestedState;
     }
 }

@@ -14,9 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.ant.jmx;
 
 
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.management.MBeanAttributeInfo;
@@ -38,7 +41,6 @@ import org.apache.tools.ant.BuildException;
  * </ul>
  * <br>
  * Query a list of Mbeans.
- *
  * <pre>
  *   &lt;jmxQuery
  *           host="127.0.0.1"
@@ -46,13 +48,14 @@ import org.apache.tools.ant.BuildException;
  *           name="Catalina:type=Manager,*
  *           resultproperty="manager" /&gt;
  * </pre>
- *
- * with attribute <em>attributebinding="true"</em> you can get all attributes also from result objects.<br>
- * The property manager.length show the size of the result and with manager.[0..length].name the resulted ObjectNames
- * are saved. These tasks require Ant 1.6 or later interface.
+ * with attribute <em>attributebinding="true"</em> you can get
+ * all attributes also from result objects.<br>
+ * The property manager.length show the size of the result
+ * and with manager.[0..length].name the
+ * resulted ObjectNames are saved.
+ * These tasks require Ant 1.6 or later interface.
  *
  * @author Peter Rossbach
- *
  * @since 5.5.10
  */
 public class JMXAccessorQueryTask extends JMXAccessorTask {
@@ -69,7 +72,6 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
     public boolean isAttributebinding() {
         return attributebinding;
     }
-
     /**
      * @param attributeBinding The attributebinding to set.
      */
@@ -81,7 +83,8 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
 
 
     @Override
-    public String jmxExecute(MBeanServerConnection jmxServerConnection) throws Exception {
+    public String jmxExecute(MBeanServerConnection jmxServerConnection)
+        throws Exception {
 
         if (getName() == null) {
             throw new BuildException("Must specify a 'name'");
@@ -92,33 +95,35 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
 
 
     /**
-     * Call Mbean server for some mbeans with same domain, attributes. with <em>attributebinding=true</em> you can save
-     * all attributes from all found objects
+     * Call Mbean server for some mbeans with same domain, attributes.
+     *  with <em>attributebinding=true</em> you can save all attributes from all found objects
      *
      * @param jmxServerConnection Connection to the JMX server
-     * @param qry                 The query
-     *
+     * @param qry The query
      * @return null (no error message to report other than exception)
      */
-    protected String jmxQuery(MBeanServerConnection jmxServerConnection, String qry) {
-        Set<ObjectName> names;
+    protected String jmxQuery(MBeanServerConnection jmxServerConnection,
+            String qry) {
+        String isError = null;
+        Set<ObjectName> names = null;
         String resultproperty = getResultproperty();
         try {
             names = jmxServerConnection.queryNames(new ObjectName(qry), null);
             if (resultproperty != null) {
-                setProperty(resultproperty + ".Length", Integer.toString(names.size()));
+                setProperty(resultproperty + ".Length",Integer.toString(names.size()));
             }
         } catch (Exception e) {
-            if (isEcho()) {
+            if (isEcho())
                 handleErrorOutput(e.getMessage());
-            }
             return "Can't query mbeans " + qry;
         }
 
         if (resultproperty != null) {
+            Iterator<ObjectName> it = names.iterator();
             int oindex = 0;
-            String pname;
-            for (ObjectName oname : names) {
+            String pname = null;
+            while (it.hasNext()) {
+                ObjectName oname = it.next();
                 pname = resultproperty + "." + Integer.toString(oindex) + ".";
                 oindex++;
                 setProperty(pname + "Name", oname.toString());
@@ -127,36 +132,38 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
                 }
             }
         }
-        return null;
+        return isError;
     }
 
     protected void bindAttributes(MBeanServerConnection jmxServerConnection, String pname, ObjectName oname) {
         try {
             MBeanInfo minfo = jmxServerConnection.getMBeanInfo(oname);
-            MBeanAttributeInfo[] attrs = minfo.getAttributes();
-            Object value;
+            MBeanAttributeInfo attrs[] = minfo.getAttributes();
+            Object value = null;
 
             for (MBeanAttributeInfo attr : attrs) {
-                if (!attr.isReadable()) {
+                if (!attr.isReadable())
                     continue;
-                }
                 String attName = attr.getName();
-                if (attName.indexOf('=') >= 0 || attName.indexOf(':') >= 0 || attName.indexOf(' ') >= 0) {
+                if (attName.indexOf('=') >= 0 || attName.indexOf(':') >= 0
+                        || attName.indexOf(' ') >= 0) {
                     continue;
                 }
 
                 try {
-                    value = jmxServerConnection.getAttribute(oname, attName);
+                    value = jmxServerConnection
+                            .getAttribute(oname, attName);
                 } catch (Exception e) {
-                    if (isEcho()) {
-                        handleErrorOutput(
-                                "Error getting attribute " + oname + " " + pname + attName + " " + e.toString());
-                    }
+                    if (isEcho())
+                        handleErrorOutput("Error getting attribute "
+                                + oname + " " + pname + attName + " "
+                                + e.toString());
                     continue;
                 }
-                if (value == null || "modelerType".equals(attName)) {
+                if (value == null)
                     continue;
-                }
+                if ("modelerType".equals(attName))
+                    continue;
                 createProperty(pname + attName, value);
             }
         } catch (Exception e) {

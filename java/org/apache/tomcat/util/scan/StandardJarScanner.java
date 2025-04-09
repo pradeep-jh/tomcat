@@ -18,22 +18,20 @@ package org.apache.tomcat.util.scan;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.ResolvedModule;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import jakarta.servlet.ServletContext;
+import javax.servlet.ServletContext;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -44,6 +42,7 @@ import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.JarScannerCallback;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.UriUtil;
+import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -192,12 +191,8 @@ public class StandardJarScanner implements JarScanner {
                     URL url = null;
                     try {
                         url = context.getResource(path);
-                        if (url != null) {
-                            processedURLs.add(url);
-                            process(scanType, callback, url, path, true, null);
-                        } else {
-                            log.warn(sm.getString("jarScan.webinflibFail", path));
-                        }
+                        processedURLs.add(url);
+                        process(scanType, callback, url, path, true, null);
                     } catch (IOException e) {
                         log.warn(sm.getString("jarScan.webinflibFail", url), e);
                     }
@@ -261,7 +256,7 @@ public class StandardJarScanner implements JarScanner {
         // Use a Deque so URLs can be removed as they are processed
         // and new URLs can be added as they are discovered during
         // processing.
-        Deque<URL> classPathUrlsToProcess = new ArrayDeque<>();
+        Deque<URL> classPathUrlsToProcess = new LinkedList<>();
 
         while (classLoader != null && classLoader != stopLoader) {
             if (classLoader instanceof URLClassLoader) {
@@ -277,24 +272,15 @@ public class StandardJarScanner implements JarScanner {
             classLoader = classLoader.getParent();
         }
 
-        // The application and platform class loaders are not
-        // instances of URLClassLoader. Use the class path in this
-        // case.
-        addClassPath(classPathUrlsToProcess);
-
-        // Also add any modules
-        for (ResolvedModule module : ModuleLayer.boot().configuration().modules()) {
-            Optional<URI> uri = module.reference().location();
-            if (uri.isPresent()) {
-                try {
-                    classPathUrlsToProcess.add(uri.get().toURL());
-                } catch (MalformedURLException e) {
-                    log.warn(sm.getString("jarScan.invalidModuleUri", uri), e);
-                }
-            }
+        if (JreCompat.isJre9Available()) {
+            // The application and platform class loaders are not
+            // instances of URLClassLoader. Use the class path in this
+            // case.
+            addClassPath(classPathUrlsToProcess);
+            // Also add any modules
+            JreCompat.getInstance().addBootModulePath(classPathUrlsToProcess);
+            processURLs(scanType, callback, processedURLs, false, classPathUrlsToProcess);
         }
-
-        processURLs(scanType, callback, processedURLs, false, classPathUrlsToProcess);
     }
 
 
@@ -346,7 +332,7 @@ public class StandardJarScanner implements JarScanner {
     protected void addClassPath(Deque<URL> classPathUrlsToProcess) {
         String classPath = System.getProperty("java.class.path");
 
-        if (classPath == null || classPath.isEmpty()) {
+        if (classPath == null || classPath.length() == 0) {
             return;
         }
 
@@ -426,7 +412,9 @@ public class StandardJarScanner implements JarScanner {
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
                 // Wrap the exception and re-throw
-                throw new IOException(t);
+                IOException ioe = new IOException();
+                ioe.initCause(t);
+                throw ioe;
             }
         }
     }
@@ -451,7 +439,7 @@ public class StandardJarScanner implements JarScanner {
             String[] classPathEntries = classPathAttribute.split(" ");
             for (String classPathEntry : classPathEntries) {
                 classPathEntry = classPathEntry.trim();
-                if (classPathEntry.isEmpty()) {
+                if (classPathEntry.length() == 0) {
                     continue;
                 }
                 URL jarURL = jar.getJarFileURL();
@@ -487,7 +475,7 @@ public class StandardJarScanner implements JarScanner {
         private final boolean jar;
         private final String name;
 
-        ClassPathEntry(URL url) {
+        public ClassPathEntry(URL url) {
             String path = url.getPath();
             int end = path.lastIndexOf(Constants.JAR_EXT);
             if (end != -1) {

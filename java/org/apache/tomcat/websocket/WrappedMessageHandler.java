@@ -16,7 +16,7 @@
  */
 package org.apache.tomcat.websocket;
 
-import jakarta.websocket.MessageHandler;
+import javax.websocket.MessageHandler;
 
 public interface WrappedMessageHandler {
     long getMaxMessageSize();

@@ -1,4 +1,5 @@
-/*
+/**
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -6,13 +7,13 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 package org.apache.tomcat.dbcp.dbcp2.managed;
 
@@ -25,10 +26,9 @@ import javax.sql.ConnectionEventListener;
 import javax.sql.PooledConnection;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.xa.XAResource;
-
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.TransactionSynchronizationRegistry;
 
 import org.apache.tomcat.dbcp.dbcp2.Utils;
 
@@ -38,26 +38,6 @@ import org.apache.tomcat.dbcp.dbcp2.Utils;
  * @since 2.0
  */
 public class DataSourceXAConnectionFactory implements XAConnectionFactory {
-
-    private static final class XAConnectionEventListener implements ConnectionEventListener {
-        @Override
-        public void connectionClosed(final ConnectionEvent event) {
-            final PooledConnection pc = (PooledConnection) event.getSource();
-            pc.removeConnectionEventListener(this);
-            try {
-                pc.close();
-            } catch (final SQLException e) {
-                System.err.println("Failed to close XAConnection");
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void connectionErrorOccurred(final ConnectionEvent event) {
-            connectionClosed(event);
-        }
-    }
-
     private final TransactionRegistry transactionRegistry;
     private final XADataSource xaDataSource;
     private String userName;
@@ -113,13 +93,15 @@ public class DataSourceXAConnectionFactory implements XAConnectionFactory {
      */
     public DataSourceXAConnectionFactory(final TransactionManager transactionManager, final XADataSource xaDataSource,
             final String userName, final char[] userPassword, final TransactionSynchronizationRegistry transactionSynchronizationRegistry) {
-        Objects.requireNonNull(transactionManager, "transactionManager");
-        Objects.requireNonNull(xaDataSource, "xaDataSource");
+        Objects.requireNonNull(transactionManager, "transactionManager is null");
+        Objects.requireNonNull(xaDataSource, "xaDataSource is null");
+
         // We do allow the transactionSynchronizationRegistry to be null for non-app server environments
+
         this.transactionRegistry = new TransactionRegistry(transactionManager, transactionSynchronizationRegistry);
         this.xaDataSource = xaDataSource;
         this.userName = userName;
-        this.userPassword = Utils.clone(userPassword);
+        this.userPassword = userPassword;
     }
 
     /**
@@ -158,21 +140,42 @@ public class DataSourceXAConnectionFactory implements XAConnectionFactory {
     @Override
     public Connection createConnection() throws SQLException {
         // create a new XAConnection
-        final XAConnection xaConnection;
+        XAConnection xaConnection;
         if (userName == null) {
             xaConnection = xaDataSource.getXAConnection();
         } else {
             xaConnection = xaDataSource.getXAConnection(userName, Utils.toString(userPassword));
         }
+
         // get the real connection and XAResource from the connection
         final Connection connection = xaConnection.getConnection();
         final XAResource xaResource = xaConnection.getXAResource();
-        // register the XA resource for the connection
+
+        // register the xa resource for the connection
         transactionRegistry.registerConnection(connection, xaResource);
+
         // The Connection we're returning is a handle on the XAConnection.
         // When the pool calling us closes the Connection, we need to
         // also close the XAConnection that holds the physical connection.
-        xaConnection.addConnectionEventListener(new XAConnectionEventListener());
+        xaConnection.addConnectionEventListener(new ConnectionEventListener() {
+
+            @Override
+            public void connectionClosed(final ConnectionEvent event) {
+                final PooledConnection pc = (PooledConnection) event.getSource();
+                pc.removeConnectionEventListener(this);
+                try {
+                    pc.close();
+                } catch (final SQLException e) {
+                    System.err.println("Failed to close XAConnection");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void connectionErrorOccurred(final ConnectionEvent event) {
+                connectionClosed(event);
+            }
+        });
 
         return connection;
     }
@@ -203,20 +206,10 @@ public class DataSourceXAConnectionFactory implements XAConnectionFactory {
         return userName;
     }
 
-    /**
-     * Gets the user password.
-     *
-     * @return the user password.
-     */
     public char[] getUserPassword() {
-        return Utils.clone(userPassword);
+        return userPassword;
     }
 
-    /**
-     * Gets the XA data source.
-     *
-     * @return the XA data source.
-     */
     public XADataSource getXaDataSource() {
         return xaDataSource;
     }
@@ -229,7 +222,7 @@ public class DataSourceXAConnectionFactory implements XAConnectionFactory {
      * @since 2.4.0
      */
     public void setPassword(final char[] userPassword) {
-        this.userPassword = Utils.clone(userPassword);
+        this.userPassword = userPassword;
     }
 
     /**

@@ -74,7 +74,7 @@ public class OpenSSLUtil extends SSLUtilBase {
     }
 
 
-    public static X509KeyManager chooseKeyManager(KeyManager[] managers, boolean throwOnMissing) throws Exception {
+    public static X509KeyManager chooseKeyManager(KeyManager[] managers) throws Exception {
         if (managers == null) {
             return null;
         }
@@ -88,12 +88,7 @@ public class OpenSSLUtil extends SSLUtilBase {
                 return (X509KeyManager) manager;
             }
         }
-        if (throwOnMissing) {
-            throw new IllegalStateException(sm.getString("openssl.keyManagerMissing"));
-        }
-
-        log.warn(sm.getString("openssl.keyManagerMissing.warn"));
-        return null;
+        throw new IllegalStateException(sm.getString("openssl.keyManagerMissing"));
     }
 
 
@@ -115,7 +110,7 @@ public class OpenSSLUtil extends SSLUtilBase {
             // KeyStoreException or IOException if it doesn't understand the
             // provided file.
             if (certificate.getCertificateFile() != null) {
-                String msg = sm.getString("openssl.nonJsseCertificate",
+                String msg = sm.getString("openssl.nonJsseCertficate",
                         certificate.getCertificateFile(), certificate.getCertificateKeyFile());
                 if (log.isDebugEnabled()) {
                     log.info(msg, e);

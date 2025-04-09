@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 
@@ -31,7 +32,6 @@ import java.io.Serializable;
  */
 public class ApplicationParameter implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ------------------------------------------------------------- Properties
@@ -113,7 +113,7 @@ public class ApplicationParameter implements Serializable {
         sb.append(value);
         sb.append(", override=");
         sb.append(override);
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
 
     }

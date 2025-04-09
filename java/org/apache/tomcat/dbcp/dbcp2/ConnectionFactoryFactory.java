@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2;
 
 import java.sql.Driver;
@@ -25,7 +26,7 @@ import java.util.Properties;
  *
  * @since 2.7.0
  */
-final class ConnectionFactoryFactory {
+class ConnectionFactoryFactory {
 
     /**
      * Creates a new {@link DriverConnectionFactory} allowing for an override through
@@ -42,19 +43,18 @@ final class ConnectionFactoryFactory {
         final Properties connectionProperties = basicDataSource.getConnectionProperties();
         final String url = basicDataSource.getUrl();
         // Set up the driver connection factory we will use
-        final String user = basicDataSource.getUserName();
+        final String user = basicDataSource.getUsername();
         if (user != null) {
-            connectionProperties.put(Constants.KEY_USER, user);
+            connectionProperties.put("user", user);
         } else {
-            basicDataSource.log(String.format("DBCP DataSource configured without a '%s'", Constants.KEY_USER));
+            basicDataSource.log("DBCP DataSource configured without a 'username'");
         }
 
-        @SuppressWarnings("deprecation")
         final String pwd = basicDataSource.getPassword();
         if (pwd != null) {
-            connectionProperties.put(Constants.KEY_PASSWORD, pwd);
+            connectionProperties.put("password", pwd);
         } else {
-            basicDataSource.log(String.format("DBCP DataSource configured without a '%s'", Constants.KEY_PASSWORD));
+            basicDataSource.log("DBCP DataSource configured without a 'password'");
         }
         final String connectionFactoryClassName = basicDataSource.getConnectionFactoryClassName();
         if (connectionFactoryClassName != null) {

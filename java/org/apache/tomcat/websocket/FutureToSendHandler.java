@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.websocket;
 
-import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -24,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jakarta.websocket.SendHandler;
-import jakarta.websocket.SendResult;
+import javax.websocket.SendHandler;
+import javax.websocket.SendResult;
 
 import org.apache.tomcat.util.res.StringManager;
 
@@ -39,9 +38,9 @@ class FutureToSendHandler implements Future<Void>, SendHandler {
 
     private final CountDownLatch latch = new CountDownLatch(1);
     private final WsSession wsSession;
-    private final AtomicReference<SendResult> result = new AtomicReference<>(null);
+    private volatile AtomicReference<SendResult> result = new AtomicReference<>(null);
 
-    FutureToSendHandler(WsSession wsSession) {
+    public FutureToSendHandler(WsSession wsSession) {
         this.wsSession = wsSession;
     }
 
@@ -75,7 +74,8 @@ class FutureToSendHandler implements Future<Void>, SendHandler {
     }
 
     @Override
-    public Void get() throws InterruptedException, ExecutionException {
+    public Void get() throws InterruptedException,
+            ExecutionException {
         try {
             wsSession.registerFuture(this);
             latch.await();
@@ -89,8 +89,10 @@ class FutureToSendHandler implements Future<Void>, SendHandler {
     }
 
     @Override
-    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        boolean retval;
+    public Void get(long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException,
+            TimeoutException {
+        boolean retval = false;
         try {
             wsSession.registerFuture(this);
             retval = latch.await(timeout, unit);
@@ -98,9 +100,9 @@ class FutureToSendHandler implements Future<Void>, SendHandler {
             wsSession.unregisterFuture(this);
 
         }
-        if (!retval) {
-            throw new TimeoutException(sm.getString("futureToSendHandler.timeout", Long.valueOf(timeout),
-                    unit.toString().toLowerCase(Locale.ENGLISH)));
+        if (retval == false) {
+            throw new TimeoutException(sm.getString("futureToSendHandler.timeout",
+                    Long.valueOf(timeout), unit.toString().toLowerCase()));
         }
         if (result.get().getException() != null) {
             throw new ExecutionException(result.get().getException());

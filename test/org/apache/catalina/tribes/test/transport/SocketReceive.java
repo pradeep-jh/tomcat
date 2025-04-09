@@ -22,8 +22,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.DecimalFormat;
 
-import org.apache.catalina.tribes.transport.Constants;
-
 public class SocketReceive {
     static long start = 0;
     static double mb = 0;
@@ -40,14 +38,14 @@ public class SocketReceive {
         try (ServerSocket srvSocket = new ServerSocket(9999)) {
             System.out.println("Listening on 9999");
             Socket socket = srvSocket.accept();
-            socket.setReceiveBufferSize(Constants.DEFAULT_CLUSTER_MSG_BUFFER_SIZE);
+            socket.setReceiveBufferSize(43800);
             InputStream in = socket.getInputStream();
             Thread t = new Thread() {
                 @Override
                 public void run() {
                     while ( true ) {
                         try {
-                            sleep(1000);
+                            Thread.sleep(1000);
                             printStats(start, mb, count, df, total);
                         }catch ( Exception x ) {
                             // Ignore
@@ -84,7 +82,7 @@ public class SocketReceive {
         long time = System.currentTimeMillis();
         double seconds = ((double)(time-start))/1000;
         System.out.println("Throughput " + df.format(mb/seconds) +
-                " MiB/s messages " + count + ", total " + mb +
-                " MiB total " + total + " bytes.");
+                " MB/seconds messages " + count + ", total " + mb +
+                " MB, total " + total + " bytes.");
     }
 }

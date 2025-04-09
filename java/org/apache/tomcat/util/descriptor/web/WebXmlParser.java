@@ -89,8 +89,10 @@ public class WebXmlParser {
     public boolean parseWebXml(InputSource source, WebXml dest,
             boolean fragment) {
 
+        boolean ok = true;
+
         if (source == null) {
-            return true;
+            return ok;
         }
 
         XmlErrorHandler handler = new XmlErrorHandler();
@@ -108,18 +110,16 @@ public class WebXmlParser {
         digester.push(dest);
         digester.setErrorHandler(handler);
 
-        if (log.isDebugEnabled()) {
+        if(log.isDebugEnabled()) {
             log.debug(sm.getString("webXmlParser.applicationStart",
                     source.getSystemId()));
         }
 
-        boolean ok = true;
-
         try {
             digester.parse(source);
 
-            if (!handler.getWarnings().isEmpty() ||
-                !handler.getErrors().isEmpty()) {
+            if (handler.getWarnings().size() > 0 ||
+                    handler.getErrors().size() > 0) {
                 ok = false;
                 handler.logFindings(log, source.getSystemId());
             }

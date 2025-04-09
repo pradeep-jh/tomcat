@@ -48,8 +48,7 @@ public class MBeanDumper {
      * The following code to dump MBeans has been copied from JMXProxyServlet.
      *
      * @param mbeanServer the MBean server
-     * @param names       a set of object names for which to dump the info
-     *
+     * @param names a set of object names for which to dump the info
      * @return a string representation of the MBeans
      */
     public static String dumpBeans(MBeanServer mbeanServer, Set<ObjectName> names) {
@@ -70,21 +69,20 @@ public class MBeanDumper {
                 buf.append(code);
                 buf.append(CRLF);
 
-                MBeanAttributeInfo[] attrs = minfo.getAttributes();
+                MBeanAttributeInfo attrs[] = minfo.getAttributes();
+                Object value = null;
 
                 for (MBeanAttributeInfo attr : attrs) {
-                    if (!attr.isReadable()) {
+                    if (!attr.isReadable())
                         continue;
-                    }
                     String attName = attr.getName();
-                    if ("modelerType".equals(attName)) {
+                    if ("modelerType".equals(attName))
                         continue;
-                    }
-                    if (attName.indexOf('=') >= 0 || attName.indexOf(':') >= 0 || attName.indexOf(' ') >= 0) {
+                    if (attName.indexOf('=') >= 0 || attName.indexOf(':') >= 0
+                            || attName.indexOf(' ') >= 0) {
                         continue;
                     }
 
-                    Object value;
                     try {
                         value = mbeanServer.getAttribute(oname, attName);
                     } catch (JMRuntimeException rme) {
@@ -114,8 +112,8 @@ public class MBeanDumper {
                         Class<?> c = value.getClass();
                         if (c.isArray()) {
                             int len = Array.getLength(value);
-                            StringBuilder sb =
-                                    new StringBuilder("Array[" + c.getComponentType().getName() + "] of length " + len);
+                            StringBuilder sb = new StringBuilder("Array["
+                                    + c.getComponentType().getName() + "] of length " + len);
                             if (len > 0) {
                                 sb.append(CRLF);
                             }
@@ -127,10 +125,12 @@ public class MBeanDumper {
                                 }
                             }
                             valueString = sb.toString();
-                        } else if (value instanceof TabularData tab) {
+                        } else if (TabularData.class.isInstance(value)) {
+                            TabularData tab = TabularData.class.cast(value);
                             StringJoiner joiner = new StringJoiner(CRLF);
-                            joiner.add("TabularData[" + tab.getTabularType().getRowType().getTypeName() +
-                                    "] of length " + tab.size());
+                            joiner.add(
+                                    "TabularData[" + tab.getTabularType().getRowType().getTypeName()
+                                            + "] of length " + tab.size());
                             for (Object item : tab.values()) {
                                 joiner.add(tableItemToString(item));
                             }
@@ -159,7 +159,7 @@ public class MBeanDumper {
         // The only invalid char is \n
         // We also need to keep the string short and split it with \nSPACE
         // XXX TODO
-        int idx = value.indexOf('\n');
+        int idx = value.indexOf("\n");
         if (idx < 0) {
             return value;
         }
@@ -170,9 +170,8 @@ public class MBeanDumper {
             appendHead(sb, value, prev, idx);
             sb.append("\\n\n ");
             prev = idx + 1;
-            if (idx == value.length() - 1) {
+            if (idx == value.length() - 1)
                 break;
-            }
             idx = value.indexOf('\n', idx + 1);
         }
         if (prev < value.length()) {
@@ -189,11 +188,11 @@ public class MBeanDumper {
 
         int pos = start;
         while (end - pos > 78) {
-            sb.append(value, pos, pos + 78);
+            sb.append(value.substring(pos, pos + 78));
             sb.append("\n ");
             pos = pos + 78;
         }
-        sb.append(value, pos, end);
+        sb.append(value.substring(pos, end));
     }
 
 
@@ -213,15 +212,16 @@ public class MBeanDumper {
 
     private static String valueToString(Object value) {
         String valueString;
-        if (value instanceof CompositeData composite) {
+        if (CompositeData.class.isInstance(value)) {
             StringBuilder sb = new StringBuilder("{");
             String sep = "";
+            CompositeData composite = CompositeData.class.cast(value);
             Set<String> keys = composite.getCompositeType().keySet();
             for (String key : keys) {
-                sb.append(sep).append(key).append('=').append(composite.get(key));
+                sb.append(sep).append(key).append("=").append(composite.get(key));
                 sep = ", ";
             }
-            sb.append('}');
+            sb.append("}");
             valueString = sb.toString();
         } else {
             valueString = value.toString();

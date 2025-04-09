@@ -16,14 +16,11 @@
  */
 package org.apache.coyote.http2;
 
-import java.io.Serial;
-
 /**
  * Thrown when an HTTP/2 connection error occurs.
  */
 class ConnectionException extends Http2Exception {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     ConnectionException(String msg, Http2Error error) {

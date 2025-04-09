@@ -16,16 +16,14 @@
  */
 package org.apache.tomcat.jni;
 
-import java.io.Serial;
-
 public class LibraryNotFoundError extends UnsatisfiedLinkError {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String libraryNames;
 
     /**
+     *
      * @param libraryNames A list of the file names of the native libraries that
      *                     failed to load
      * @param errors A list of the error messages received when trying to load

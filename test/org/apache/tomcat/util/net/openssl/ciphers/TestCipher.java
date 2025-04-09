@@ -751,7 +751,7 @@ public class TestCipher {
         private final Set<String> standardNames;
         private final Set<String> openSslUnmapped;
 
-        JsseImpl(String vendor,  Set<String> standardNames,
+        public JsseImpl(String vendor,  Set<String> standardNames,
                 Set<String> openSslUnmapped) {
             this.vendor = vendor;
             this.standardNames = standardNames;

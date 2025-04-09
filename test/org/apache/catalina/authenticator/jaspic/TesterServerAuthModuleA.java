@@ -20,12 +20,11 @@ import java.util.Map;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
-
-import jakarta.security.auth.message.AuthException;
-import jakarta.security.auth.message.AuthStatus;
-import jakarta.security.auth.message.MessageInfo;
-import jakarta.security.auth.message.MessagePolicy;
-import jakarta.security.auth.message.module.ServerAuthModule;
+import javax.security.auth.message.AuthException;
+import javax.security.auth.message.AuthStatus;
+import javax.security.auth.message.MessageInfo;
+import javax.security.auth.message.MessagePolicy;
+import javax.security.auth.message.module.ServerAuthModule;
 
 public class TesterServerAuthModuleA implements ServerAuthModule {
 
@@ -43,6 +42,7 @@ public class TesterServerAuthModuleA implements ServerAuthModule {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void cleanSubject(MessageInfo messageInfo, Subject subject) throws AuthException {
         trace.append("cleanSubject()-");
@@ -56,8 +56,9 @@ public class TesterServerAuthModuleA implements ServerAuthModule {
         // NO-OP
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
-    public Class<?>[] getSupportedMessageTypes() {
+    public Class[] getSupportedMessageTypes() {
         return null;
     }
 }

@@ -16,14 +16,12 @@
  */
 package org.apache.tomcat.util.threads;
 
-import java.io.Serial;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Shared latch that allows the latch to be acquired a limited number of times
@@ -33,22 +31,17 @@ import org.apache.tomcat.util.res.StringManager;
 public class LimitLatch {
 
     private static final Log log = LogFactory.getLog(LimitLatch.class);
-    private static final StringManager sm = StringManager.getManager(LimitLatch.class);
 
     private class Sync extends AbstractQueuedSynchronizer {
-        @Serial
         private static final long serialVersionUID = 1L;
 
-        Sync() {
+        public Sync() {
         }
 
         @Override
         protected int tryAcquireShared(int ignored) {
             long newCount = count.incrementAndGet();
             if (!released && newCount > limit) {
-                if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("limitLatch.exceeded", Long.valueOf(limit)));
-                }
                 // Limit exceeded
                 count.decrementAndGet();
                 return -1;
@@ -118,8 +111,8 @@ public class LimitLatch {
      * @throws InterruptedException If the current thread is interrupted
      */
     public void countUpOrAwait() throws InterruptedException {
-        if (log.isTraceEnabled()) {
-            log.trace("Counting up["+Thread.currentThread().getName()+"] latch="+getCount());
+        if (log.isDebugEnabled()) {
+            log.debug("Counting up["+Thread.currentThread().getName()+"] latch="+getCount());
         }
         sync.acquireSharedInterruptibly(1);
     }
@@ -131,8 +124,8 @@ public class LimitLatch {
     public long countDown() {
         sync.releaseShared(0);
         long result = getCount();
-        if (log.isTraceEnabled()) {
-            log.trace("Counting down["+Thread.currentThread().getName()+"] latch="+result);
+        if (log.isDebugEnabled()) {
+            log.debug("Counting down["+Thread.currentThread().getName()+"] latch="+result);
         }
         return result;
     }

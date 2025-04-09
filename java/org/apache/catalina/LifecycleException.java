@@ -14,23 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina;
 
 
-import java.io.Serial;
-
 /**
- * General purpose exception that is thrown to indicate a lifecycle related problem. Such exceptions should generally be
- * considered fatal to the operation of the application containing this component.
+ * General purpose exception that is thrown to indicate a lifecycle related
+ * problem.  Such exceptions should generally be considered fatal to the
+ * operation of the application containing this component.
  *
  * @author Craig R. McClanahan
  */
 public final class LifecycleException extends Exception {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    // ------------------------------------------------------------ Constructors
+    //------------------------------------------------------------ Constructors
 
 
     /**
@@ -62,9 +62,10 @@ public final class LifecycleException extends Exception {
 
 
     /**
-     * Construct a new LifecycleException for the specified message and throwable.
+     * Construct a new LifecycleException for the specified message
+     * and throwable.
      *
-     * @param message   Message describing this exception
+     * @param message Message describing this exception
      * @param throwable Throwable that caused this exception
      */
     public LifecycleException(String message, Throwable throwable) {

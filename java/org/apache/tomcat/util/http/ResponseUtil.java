@@ -21,11 +21,11 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.tomcat.util.http.parser.TokenList;
 
@@ -60,7 +60,7 @@ public class ResponseUtil {
         }
 
         // Short-cut if no headers have been set
-        if (varyHeaders.isEmpty()) {
+        if (varyHeaders.size() == 0) {
             adapter.addHeader(VARY_HEADER, name);
             return;
         }
@@ -76,7 +76,7 @@ public class ResponseUtil {
         // the existing values, check if the new value is already present and
         // then add it if not. The good news is field names are tokens which
         // makes parsing simpler.
-        LinkedHashSet<String> fieldNames = new LinkedHashSet<>();
+        Set<String> fieldNames = new HashSet<>();
 
         for (String varyHeader : varyHeaders) {
             StringReader input = new StringReader(varyHeader);
@@ -97,18 +97,16 @@ public class ResponseUtil {
         // Replace existing header(s) to ensure any invalid values are removed
         fieldNames.add(name);
         StringBuilder varyHeader = new StringBuilder();
-        Iterator<String> iter = fieldNames.iterator();
-        // There must be at least one value as one is added just above
-        varyHeader.append(iter.next());
-        while (iter.hasNext()) {
+        varyHeader.append(name);
+        for (String fieldName : fieldNames) {
             varyHeader.append(',');
-            varyHeader.append(iter.next());
+            varyHeader.append(fieldName);
         }
         adapter.setHeader(VARY_HEADER, varyHeader.toString());
     }
 
 
-    private interface Adapter {
+    private static interface Adapter {
 
         Collection<String> getHeaders(String name);
 
@@ -121,7 +119,7 @@ public class ResponseUtil {
     private static final class HeaderAdapter implements Adapter {
         private final MimeHeaders headers;
 
-        HeaderAdapter(MimeHeaders headers) {
+        public HeaderAdapter(MimeHeaders headers) {
             this.headers = headers;
         }
 
@@ -150,7 +148,7 @@ public class ResponseUtil {
     private static final class ResponseAdapter implements Adapter {
         private final HttpServletResponse response;
 
-        ResponseAdapter(HttpServletResponse response) {
+        public ResponseAdapter(HttpServletResponse response) {
             this.response = response;
         }
 

@@ -18,14 +18,19 @@ package org.apache.tomcat.websocket;
 
 import java.nio.ByteBuffer;
 
-import jakarta.websocket.PongMessage;
+import javax.websocket.PongMessage;
 
-public record WsPongMessage(ByteBuffer applicationData) implements PongMessage {
+public class WsPongMessage implements PongMessage {
+
+    private final ByteBuffer applicationData;
+
+
     public WsPongMessage(ByteBuffer applicationData) {
         byte[] dst = new byte[applicationData.limit()];
         applicationData.get(dst);
         this.applicationData = ByteBuffer.wrap(dst);
     }
+
 
     @Override
     public ByteBuffer getApplicationData() {

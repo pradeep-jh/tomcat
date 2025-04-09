@@ -16,13 +16,14 @@
  */
 package org.apache.el.stream;
 
+import java.beans.FeatureDescriptor;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import jakarta.el.ELContext;
-import jakarta.el.ELResolver;
+import javax.el.ELContext;
+import javax.el.ELResolver;
 
 public class StreamELResolverImpl extends ELResolver {
 
@@ -37,7 +38,8 @@ public class StreamELResolverImpl extends ELResolver {
     }
 
     @Override
-    public void setValue(ELContext context, Object base, Object property, Object value) {
+    public void setValue(ELContext context, Object base, Object property,
+            Object value) {
         // NO-OP
     }
 
@@ -47,12 +49,19 @@ public class StreamELResolverImpl extends ELResolver {
     }
 
     @Override
+    public Iterator<FeatureDescriptor> getFeatureDescriptors(ELContext context,
+            Object base) {
+        return null;
+    }
+
+    @Override
     public Class<?> getCommonPropertyType(ELContext context, Object base) {
         return null;
     }
 
     @Override
-    public Object invoke(ELContext context, Object base, Object method, Class<?>[] paramTypes, Object[] params) {
+    public Object invoke(ELContext context, Object base, Object method,
+            Class<?>[] paramTypes, Object[] params) {
 
         if ("stream".equals(method) && params.length == 0) {
             if (base.getClass().isArray()) {
@@ -77,7 +86,7 @@ public class StreamELResolverImpl extends ELResolver {
         private final int size;
         private int index = 0;
 
-        ArrayIterator(Object base) {
+        public ArrayIterator(Object base) {
             this.base = base;
             size = Array.getLength(base);
         }

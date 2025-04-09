@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.manager.host;
 
 
@@ -23,7 +25,6 @@ public class Constants {
 
     public static final String REL_EXTERNAL = org.apache.catalina.manager.Constants.REL_EXTERNAL;
 
-    //@formatter:off
     public static final String MESSAGE_SECTION =
         "<table border=\"1\" cellspacing=\"0\" cellpadding=\"3\">\n" +
         " <tr>\n" +
@@ -80,13 +81,11 @@ public class Constants {
     public static final String HTML_TAIL_SECTION =
         "<hr size=\"1\" noshade=\"noshade\">\n" +
         "<center><font size=\"-1\" color=\"#525D76\">\n" +
-        " <em>" + org.apache.catalina.manager.Constants.HTML_COPYRIGHT_NOTICE + "</em>" +
+        " <em>Copyright &copy; 1999-2020, Apache Software Foundation</em>" +
         "</font></center>\n" +
         "\n" +
         "</body>\n" +
         "</html>";
-    //@formatter:on
-
-    public static final String CHARSET = "utf-8";
+    public static final String CHARSET="utf-8";
 }
 

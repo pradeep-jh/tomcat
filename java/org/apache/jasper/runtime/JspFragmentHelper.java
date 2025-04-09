@@ -14,19 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.jasper.runtime;
 
-import jakarta.servlet.jsp.JspContext;
-import jakarta.servlet.jsp.PageContext;
-import jakarta.servlet.jsp.tagext.JspFragment;
-import jakarta.servlet.jsp.tagext.JspTag;
+import javax.servlet.jsp.JspContext;
+import javax.servlet.jsp.PageContext;
+import javax.servlet.jsp.tagext.JspFragment;
+import javax.servlet.jsp.tagext.JspTag;
 
 /**
- * Helper class from which all Jsp Fragment helper classes extend. This class allows for the emulation of numerous
- * fragments within a single class, which in turn reduces the load on the class loader since there are potentially many
- * JspFragments in a single page.
+ * Helper class from which all Jsp Fragment helper classes extend.
+ * This class allows for the emulation of numerous fragments within
+ * a single class, which in turn reduces the load on the class loader
+ * since there are potentially many JspFragments in a single page.
  * <p>
- * The class also provides various utility methods for JspFragment implementations.
+ * The class also provides various utility methods for JspFragment
+ * implementations.
  *
  * @author Mark Roth
  */
@@ -37,11 +40,13 @@ public abstract class JspFragmentHelper extends JspFragment {
     protected final PageContext _jspx_page_context;
     protected final JspTag parentTag;
 
-    public JspFragmentHelper(int discriminator, JspContext jspContext, JspTag parentTag) {
+    public JspFragmentHelper( int discriminator, JspContext jspContext,
+        JspTag parentTag )
+    {
         this.discriminator = discriminator;
         this.jspContext = jspContext;
-        if (jspContext instanceof PageContext) {
-            _jspx_page_context = (PageContext) jspContext;
+        if(jspContext instanceof PageContext) {
+            _jspx_page_context = (PageContext)jspContext;
         } else {
             _jspx_page_context = null;
         }

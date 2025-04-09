@@ -18,9 +18,9 @@ package org.apache.catalina.tribes.group.interceptors;
 
 import org.apache.catalina.tribes.Member;
 
-public interface StaticMembershipInterceptorMBean {
+public interface StaticMembershipInterceptorMBean  {
 
-    int getOptionFlag();
+    public int getOptionFlag();
 
-    Member getLocalMember(boolean incAlive);
+    public Member getLocalMember(boolean incAlive);
 }

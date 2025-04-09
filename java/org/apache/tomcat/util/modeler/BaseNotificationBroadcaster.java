@@ -14,10 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
@@ -28,9 +31,10 @@ import javax.management.NotificationListener;
 
 
 /**
- * Implementation of <code>NotificationBroadcaster</code> for attribute
+ * <p>Implementation of <code>NotificationBroadcaster</code> for attribute
  * change notifications.  This class is used by <code>BaseModelMBean</code> to
  * handle notifications of attribute change events to interested listeners.
+ *</p>
  *
  * @author Craig R. McClanahan
  * @author Costin Manolache
@@ -49,7 +53,7 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
      * The set of registered <code>BaseNotificationBroadcasterEntry</code>
      * entries.
      */
-    final ArrayList<BaseNotificationBroadcasterEntry> entries =
+    protected ArrayList<BaseNotificationBroadcasterEntry> entries =
             new ArrayList<>();
 
 
@@ -62,7 +66,7 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
      * @param listener Listener that will receive event notifications
      * @param filter Filter object used to filter event notifications
      *  actually delivered, or <code>null</code> for no filtering
-     * @param handback object to be sent along with event
+     * @param handback Handback object to be sent along with event
      *  notifications
      *
      * @exception IllegalArgumentException if the listener parameter is null
@@ -76,20 +80,22 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
         synchronized (entries) {
 
             // Optimization to coalesce attribute name filters
-            if (filter instanceof BaseAttributeFilter newFilter) {
+            if (filter instanceof BaseAttributeFilter) {
+                BaseAttributeFilter newFilter = (BaseAttributeFilter) filter;
                 for (BaseNotificationBroadcasterEntry item : entries) {
                     if ((item.listener == listener) &&
-                        (item.filter instanceof BaseAttributeFilter oldFilter) &&
+                        (item.filter != null) &&
+                        (item.filter instanceof BaseAttributeFilter) &&
                         (item.handback == handback)) {
-                        String[] newNames = newFilter.getNames();
-                        String[] oldNames = oldFilter.getNames();
+                        BaseAttributeFilter oldFilter =
+                            (BaseAttributeFilter) item.filter;
+                        String newNames[] = newFilter.getNames();
+                        String oldNames[] = oldFilter.getNames();
                         if (newNames.length == 0) {
                             oldFilter.clear();
                         } else {
                             if (oldNames.length != 0) {
-                                for (String newName : newNames) {
-                                    oldFilter.addAttribute(newName);
-                                }
+                                for (String newName : newNames) oldFilter.addAttribute(newName);
                             }
                         }
                         return;
@@ -129,7 +135,13 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
         throws ListenerNotFoundException {
 
         synchronized (entries) {
-            entries.removeIf(item -> item.listener == listener);
+            Iterator<BaseNotificationBroadcasterEntry> items =
+                entries.iterator();
+            while (items.hasNext()) {
+                BaseNotificationBroadcasterEntry item = items.next();
+                if (item.listener == listener)
+                    items.remove();
+            }
         }
 
     }
@@ -145,9 +157,8 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
         synchronized (entries) {
             for (BaseNotificationBroadcasterEntry item : entries) {
                 if ((item.filter != null) &&
-                    (!item.filter.isNotificationEnabled(notification))) {
+                    (!item.filter.isNotificationEnabled(notification)))
                     continue;
-                }
                 item.listener.handleNotification(notification, item.handback);
             }
         }
@@ -163,7 +174,7 @@ public class BaseNotificationBroadcaster implements NotificationBroadcaster {
 
 class BaseNotificationBroadcasterEntry {
 
-    BaseNotificationBroadcasterEntry(NotificationListener listener,
+    public BaseNotificationBroadcasterEntry(NotificationListener listener,
                                             NotificationFilter filter,
                                             Object handback) {
         this.listener = listener;
@@ -171,10 +182,10 @@ class BaseNotificationBroadcasterEntry {
         this.handback = handback;
     }
 
-    public NotificationFilter filter;
+    public NotificationFilter filter = null;
 
-    public Object handback;
+    public Object handback = null;
 
-    public NotificationListener listener;
+    public NotificationListener listener = null;
 
 }

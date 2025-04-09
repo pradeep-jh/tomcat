@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.digester;
 
 
@@ -66,13 +68,13 @@ public class ObjectCreateRule extends Rule {
     /**
      * The attribute containing an override class name if it is present.
      */
-    protected String attributeName;
+    protected String attributeName = null;
 
 
     /**
      * The Java class name of the object to be created.
      */
-    protected String className;
+    protected String className = null;
 
 
     // --------------------------------------------------------- Public Methods
@@ -102,14 +104,6 @@ public class ObjectCreateRule extends Rule {
         Class<?> clazz = digester.getClassLoader().loadClass(realClassName);
         Object instance = clazz.getConstructor().newInstance();
         digester.push(instance);
-
-        StringBuilder code = digester.getGeneratedCode();
-        if (code != null) {
-            code.append(System.lineSeparator());
-            code.append(System.lineSeparator());
-            code.append(realClassName).append(' ').append(digester.toVariableName(instance)).append(" = new ");
-            code.append(realClassName).append("();").append(System.lineSeparator());
-        }
     }
 
 
@@ -144,8 +138,8 @@ public class ObjectCreateRule extends Rule {
     public void end(String namespace, String name) throws Exception {
 
         Object top = digester.pop();
-        if (digester.log.isTraceEnabled()) {
-            digester.log.trace("[ObjectCreateRule]{" + digester.match +
+        if (digester.log.isDebugEnabled()) {
+            digester.log.debug("[ObjectCreateRule]{" + digester.match +
                     "} Pop " + top.getClass().getName());
         }
 
@@ -157,7 +151,13 @@ public class ObjectCreateRule extends Rule {
      */
     @Override
     public String toString() {
-        return "ObjectCreateRule[" + "className=" + className + ", attributeName=" + attributeName + ']';
+        StringBuilder sb = new StringBuilder("ObjectCreateRule[");
+        sb.append("className=");
+        sb.append(className);
+        sb.append(", attributeName=");
+        sb.append(attributeName);
+        sb.append("]");
+        return sb.toString();
     }
 
 

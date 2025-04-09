@@ -40,7 +40,7 @@ public class TestParameters {
             new Parameter("\ufb6b\ufb6a\ufb72", "\uffee\uffeb\uffe2");
 
     @Test
-    public void testProcessParametersByteArrayIntIntValid() {
+    public void testProcessParametersByteArrayIntInt() {
         doTestProcessParametersByteArrayIntInt(-1, SIMPLE);
         doTestProcessParametersByteArrayIntInt(-1, SIMPLE_MULTIPLE);
         doTestProcessParametersByteArrayIntInt(-1, NO_VALUE);
@@ -60,25 +60,13 @@ public class TestParameters {
         doTestProcessParametersByteArrayIntInt(-1,
                 UTF8, SIMPLE, SIMPLE_MULTIPLE, NO_VALUE, EMPTY_VALUE, EMPTY);
 
-        doTestProcessParametersByteArrayIntInt(4,
-                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testProcessParametersByteArrayIntIntInvalid01() {
         doTestProcessParametersByteArrayIntInt(1,
                 SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testProcessParametersByteArrayIntIntInvalid02() {
         doTestProcessParametersByteArrayIntInt(2,
                 SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testProcessParametersByteArrayIntIntInvalid03() {
         doTestProcessParametersByteArrayIntInt(3,
+                SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
+        doTestProcessParametersByteArrayIntInt(4,
                 SIMPLE, NO_VALUE, EMPTY_VALUE, UTF8);
     }
 
@@ -286,7 +274,7 @@ public class TestParameters {
         private final String name;
         private final String[] values;
 
-        Parameter(String name, String... values) {
+        public Parameter(String name, String... values) {
             this.name = name;
             this.values = values;
         }

@@ -23,22 +23,22 @@ import org.apache.catalina.tribes.Member;
 public interface StaticMembershipServiceMBean {
 
     // Attributes
-    long getExpirationTime();
+    public long getExpirationTime();
 
-    int getConnectTimeout();
+    public int getConnectTimeout();
 
-    long getRpcTimeout();
+    public long getRpcTimeout();
 
-    boolean getUseThread();
+    public boolean getUseThread();
 
-    long getPingInterval();
+    public long getPingInterval();
 
     // Operation
-    Properties getProperties();
+    public Properties getProperties();
 
-    boolean hasMembers();
+    public boolean hasMembers();
 
-    String[] getMembersByName();
+    public String[] getMembersByName();
 
-    Member findMemberByName(String name);
+    public Member findMemberByName(String name);
 }

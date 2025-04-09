@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
+ *
  * For smarter replication, an object can implement this interface to replicate diffs<br>
  * The replication logic will call the methods in the following order:<br>
  * <code>
@@ -32,113 +33,111 @@ import java.io.Serializable;
  * 5.     entry.unlock();<br>
  *      }<br>
  *    }<br>
- * </code> <br>
+ * </code>
+ * <br>
  * <br>
  * When the data is deserialized the logic is called in the following order<br>
  * <code>
  * 1. ReplicatedMapEntry entry = (ReplicatedMapEntry)objectIn.readObject();<br>
  * 2. if ( isBackup(entry)||isPrimary(entry) ) entry.setOwner(owner); <br>
  * </code>
+ * <br>
+ *
+ *
+ * @version 1.0
  */
 public interface ReplicatedMapEntry extends Serializable {
 
     /**
-     * Has the object changed since last replication and is not in a locked state
-     *
+     * Has the object changed since last replication
+     * and is not in a locked state
      * @return boolean
      */
-    boolean isDirty();
+    public boolean isDirty();
 
     /**
-     * If this returns true, the map will extract the diff using getDiff() Otherwise it will serialize the entire
-     * object.
-     *
+     * If this returns true, the map will extract the diff using getDiff()
+     * Otherwise it will serialize the entire object.
      * @return boolean
      */
-    boolean isDiffable();
+    public boolean isDiffable();
 
     /**
      * Returns a diff and sets the dirty map to false
-     *
      * @return Serialized diff data
-     *
      * @throws IOException IO error serializing
      */
-    byte[] getDiff() throws IOException;
+    public byte[] getDiff() throws IOException;
 
 
     /**
      * Applies a diff to an existing object.
-     *
-     * @param diff   Serialized diff data
+     * @param diff Serialized diff data
      * @param offset Array offset
      * @param length Array length
-     *
-     * @throws IOException            IO error deserializing
+     * @throws IOException IO error deserializing
      * @throws ClassNotFoundException Serialization error
      */
-    void applyDiff(byte[] diff, int offset, int length) throws IOException, ClassNotFoundException;
+    public void applyDiff(byte[] diff, int offset, int length) throws IOException, ClassNotFoundException;
 
     /**
      * Resets the current diff state and resets the dirty flag
      */
-    void resetDiff();
+    public void resetDiff();
 
     /**
      * Lock during serialization
      */
-    void lock();
+    public void lock();
 
     /**
      * Unlock after serialization
      */
-    void unlock();
+    public void unlock();
 
     /**
-     * This method is called after the object has been created on a remote map. On this method, the object can
-     * initialize itself for any data that wasn't
+     * This method is called after the object has been
+     * created on a remote map. On this method,
+     * the object can initialize itself for any data that wasn't
      *
      * @param owner Object
      */
-    void setOwner(Object owner);
+    public void setOwner(Object owner);
 
     /**
-     * For accuracy checking, a serialized attribute can contain a version number This number increases as modifications
-     * are made to the data. The replicated map can use this to ensure accuracy on a periodic basis
-     *
+     * For accuracy checking, a serialized attribute can contain a version number
+     * This number increases as modifications are made to the data.
+     * The replicated map can use this to ensure accuracy on a periodic basis
      * @return long - the version number or -1 if the data is not versioned
      */
-    long getVersion();
+    public long getVersion();
 
     /**
      * Forces a certain version to a replicated map entry<br>
-     *
      * @param version long
      */
-    void setVersion(long version);
+    public void setVersion(long version);
 
     /**
      * @return the last replicate time.
      */
-    long getLastTimeReplicated();
+    public long getLastTimeReplicated();
 
     /**
      * Set the last replicate time.
-     *
      * @param lastTimeReplicated New timestamp
      */
-    void setLastTimeReplicated(long lastTimeReplicated);
+    public void setLastTimeReplicated(long lastTimeReplicated);
 
     /**
      * If this returns true, to replicate that an object has been accessed
-     *
      * @return boolean
      */
-    boolean isAccessReplicate();
+    public boolean isAccessReplicate();
 
     /**
      * Access to an existing object.
      */
-    void accessEntry();
+    public void accessEntry();
 
 }

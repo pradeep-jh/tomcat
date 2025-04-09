@@ -25,7 +25,8 @@ import org.apache.catalina.WebResourceSet;
 import org.apache.catalina.util.LifecycleBase;
 import org.apache.tomcat.util.res.StringManager;
 
-public abstract class AbstractResourceSet extends LifecycleBase implements WebResourceSet {
+public abstract class AbstractResourceSet extends LifecycleBase
+        implements WebResourceSet {
 
     private WebResourceRoot root;
     private String base;
@@ -40,8 +41,9 @@ public abstract class AbstractResourceSet extends LifecycleBase implements WebRe
 
 
     protected final void checkPath(String path) {
-        if (path == null || path.isEmpty() || path.charAt(0) != '/') {
-            throw new IllegalArgumentException(sm.getString("abstractResourceSet.checkPath", path));
+        if (path == null || path.length() == 0 || path.charAt(0) != '/') {
+            throw new IllegalArgumentException(
+                    sm.getString("abstractResourceSet.checkPath", path));
         }
     }
 
@@ -120,7 +122,7 @@ public abstract class AbstractResourceSet extends LifecycleBase implements WebRe
     }
 
 
-    // -------------------------------------------------------- Lifecycle methods
+    //-------------------------------------------------------- Lifecycle methods
     @Override
     protected final void startInternal() throws LifecycleException {
         setState(LifecycleState.STARTING);

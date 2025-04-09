@@ -23,18 +23,18 @@ import org.apache.catalina.tribes.Member;
 public interface CloudMembershipServiceMBean {
 
     // Attributes
-    int getConnectTimeout();
+    public int getConnectTimeout();
 
-    int getReadTimeout();
+    public int getReadTimeout();
 
-    long getExpirationTime();
+    public long getExpirationTime();
 
     // Operation
-    Properties getProperties();
+    public Properties getProperties();
 
-    boolean hasMembers();
+    public boolean hasMembers();
 
-    String[] getMembersByName();
+    public String[] getMembersByName();
 
-    Member findMemberByName(String name);
+    public Member findMemberByName(String name);
 }

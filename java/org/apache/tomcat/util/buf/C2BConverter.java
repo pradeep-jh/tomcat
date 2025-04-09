@@ -24,18 +24,10 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.res.StringManager;
-
 /**
  * NIO based character encoder.
  */
 public final class C2BConverter {
-
-    private static final Log log = LogFactory.getLog(C2BConverter.class);
-    private static final StringManager sm = StringManager.getManager(C2BConverter.class);
 
     private final CharsetEncoder encoder;
     private ByteBuffer bb = null;
@@ -48,7 +40,8 @@ public final class C2BConverter {
 
     public C2BConverter(Charset charset) {
         encoder = charset.newEncoder();
-        encoder.onUnmappableCharacter(CodingErrorAction.REPLACE).onMalformedInput(CodingErrorAction.REPLACE);
+        encoder.onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .onMalformedInput(CodingErrorAction.REPLACE);
         char[] left = new char[4];
         leftovers = CharBuffer.wrap(left);
     }
@@ -57,21 +50,12 @@ public final class C2BConverter {
      * Reset the encoder state.
      */
     public void recycle() {
-        try {
-            encoder.reset();
-        } catch (Throwable t) {
-            ExceptionUtils.handleThrowable(t);
-            log.warn(sm.getString("c2bConverter.decoderResetFail", encoder.charset()), t);
-        }
+        encoder.reset();
         leftovers.position(0);
     }
 
-    public boolean isUnderflow() {
-        return (leftovers.position() > 0);
-    }
-
     public boolean isUndeflow() {
-        return isUnderflow();
+        return (leftovers.position() > 0);
     }
 
     /**
@@ -79,7 +63,6 @@ public final class C2BConverter {
      *
      * @param cc char input
      * @param bc byte output
-     *
      * @throws IOException An encoding error occurred
      */
     public void convert(CharChunk cc, ByteChunk bc) throws IOException {
@@ -99,11 +82,11 @@ public final class C2BConverter {
             cb.limit(cc.getEnd());
             cb.position(cc.getStart());
         }
-        CoderResult result;
+        CoderResult result = null;
         // Parse leftover if any are present
         if (leftovers.position() > 0) {
             int pos = bb.position();
-            // Loop until one char is encoded or there is an encoder error
+            // Loop until one char is encoded or there is a encoder error
             do {
                 leftovers.put((char) cc.subtract());
                 leftovers.flip();
@@ -125,11 +108,11 @@ public final class C2BConverter {
         } else if (result.isOverflow()) {
             // Propagate current positions to the byte chunk and char chunk
             bc.setEnd(bb.position());
-            cc.setStart(cb.position());
+            cc.setOffset(cb.position());
         } else if (result.isUnderflow()) {
             // Propagate current positions to the byte chunk and char chunk
             bc.setEnd(bb.position());
-            cc.setStart(cb.position());
+            cc.setOffset(cb.position());
             // Put leftovers in the leftovers char buffer
             if (cc.getLength() > 0) {
                 leftovers.limit(leftovers.array().length);
@@ -144,7 +127,6 @@ public final class C2BConverter {
      *
      * @param cc char input
      * @param bc byte output
-     *
      * @throws IOException An encoding error occurred
      */
     public void convert(CharBuffer cc, ByteBuffer bc) throws IOException {
@@ -164,11 +146,11 @@ public final class C2BConverter {
             cb.limit(cc.limit());
             cb.position(cc.position());
         }
-        CoderResult result;
+        CoderResult result = null;
         // Parse leftover if any are present
         if (leftovers.position() > 0) {
             int pos = bb.position();
-            // Loop until one char is encoded or there is an encoder error
+            // Loop until one char is encoded or there is a encoder error
             do {
                 leftovers.put(cc.get());
                 leftovers.flip();

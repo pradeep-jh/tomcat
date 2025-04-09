@@ -27,7 +27,7 @@ package org.apache.tomcat.dbcp.pool2;
 public interface SwallowedExceptionListener {
 
     /**
-     * Notifies this instance every time the implementation unavoidably swallows
+     * This method is called every time the implementation unavoidably swallows
      * an exception.
      *
      * @param e The exception that was swallowed

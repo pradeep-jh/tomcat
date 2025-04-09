@@ -32,6 +32,7 @@ import org.apache.tomcat.jdbc.pool.jmx.JmxUtil;
  * A DataSource that can be instantiated through IoC and implements the DataSource interface
  * since the DataSourceProxy is used as a generic proxy.
  * The DataSource simply wraps a {@link ConnectionPool} in order to provide a standard interface to the user.
+ * @version 1.0
  */
 public class DataSource extends DataSourceProxy implements javax.sql.DataSource,MBeanRegistration, org.apache.tomcat.jdbc.pool.jmx.ConnectionPoolMBean, javax.sql.ConnectionPoolDataSource {
     private static final Log log = LogFactory.getLog(DataSource.class);
@@ -66,9 +67,7 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
      */
     @Override
     public void postDeregister() {
-        if (oname!=null) {
-          unregisterJmx();
-        }
+        if (oname!=null) unregisterJmx();
     }
 
     /**
@@ -99,9 +98,7 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
         try {
             if ( isJmxEnabled() ) {
                 this.oname = createObjectName(name);
-                if (oname!=null) {
-                  registerJmx();
-                }
+                if (oname!=null) registerJmx();
             }
         }catch (MalformedObjectNameException x) {
             log.error("Unable to create object name for JDBC pool.",x);

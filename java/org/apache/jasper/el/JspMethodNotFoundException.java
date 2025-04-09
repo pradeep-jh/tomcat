@@ -16,13 +16,10 @@
  */
 package org.apache.jasper.el;
 
-import java.io.Serial;
-
-import jakarta.el.MethodNotFoundException;
+import javax.el.MethodNotFoundException;
 
 public class JspMethodNotFoundException extends MethodNotFoundException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public JspMethodNotFoundException(String mark, MethodNotFoundException e) {

@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.net.openssl.ciphers;
 
 import java.util.ArrayList;
@@ -30,10 +31,7 @@ import java.util.Set;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.net.Constants;
-import org.apache.tomcat.util.net.openssl.OpenSSLStatus;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -90,7 +88,7 @@ public class OpenSSLCipherConfigurationParser {
      */
     private static final String HIGH = "HIGH";
     /**
-     * 'medium' encryption cipher suites, currently some of those using 128-bit encryption.
+     * 'medium' encryption cipher suites, currently some of those using 128 bit encryption.
      */
     private static final String MEDIUM = "MEDIUM";
     /**
@@ -173,7 +171,7 @@ public class OpenSSLCipherConfigurationParser {
      */
     private static final String EECDH = "EECDH";
     /**
-     * Cipher suites using ECDH key exchange, including anonymous, ephemeral and fixed ECDH.
+     * Cipher suitesusing ECDH key exchange, including anonymous, ephemeral and fixed ECDH.
      */
     private static final String ECDH = "ECDH";
     /**
@@ -184,6 +182,10 @@ public class OpenSSLCipherConfigurationParser {
      * Cipher suites using authenticated ephemeral ECDH key agreement
      */
     private static final String ECDHE = "ECDHE";
+    /**
+     * Cipher suites using authenticated ephemeral ECDH key agreement
+     */
+    private static final String EECDHE = "EECDHE";
     /**
      * Anonymous Elliptic Curve Diffie Hellman cipher suites.
      */
@@ -237,15 +239,15 @@ public class OpenSSLCipherConfigurationParser {
      */
     private static final String ADH = "ADH";
     /**
-     * Cipher suites using 128-bit AES.
+     * Cipher suites using 128 bit AES.
      */
     private static final String AES128 = "AES128";
     /**
-     * Cipher suites using 256-bit AES.
+     * Cipher suites using 256 bit AES.
      */
     private static final String AES256 = "AES256";
     /**
-     * Cipher suites using either 128 or 256-bit AES.
+     * Cipher suites using either 128 or 256 bit AES.
      */
     private static final String AES = "AES";
     /**
@@ -350,7 +352,7 @@ public class OpenSSLCipherConfigurationParser {
      */
     private static final String aGOST94 = "aGOST94";
     /**
-     * Cipher suites using VKO 34.10 key exchange, specified in the RFC 4357.
+     * Cipher suites using using VKO 34.10 key exchange, specified in the RFC 4357.
      */
     private static final String kGOST = "kGOST";
     /**
@@ -397,7 +399,7 @@ public class OpenSSLCipherConfigurationParser {
 
     private static final Map<String,String> jsseToOpenSSL = new HashMap<>();
 
-    private static void init() {
+    private static final void init() {
 
         for (Cipher cipher : Cipher.values()) {
             String alias = cipher.getOpenSSLAlias();
@@ -469,6 +471,7 @@ public class OpenSSLCipherConfigurationParser {
         addListAlias(ECDHE, ecdhe);
 
         addListAlias(kEECDH, filterByKeyExchange(allCiphers, Collections.singleton(KeyExchange.EECDH)));
+        aliases.put(EECDHE, aliases.get(kEECDH));
         Set<Cipher> eecdh = filterByKeyExchange(allCiphers, Collections.singleton(KeyExchange.EECDH));
         eecdh.removeAll(filterByAuthentication(allCiphers, Collections.singleton(Authentication.aNULL)));
         addListAlias(EECDH, eecdh);
@@ -539,7 +542,7 @@ public class OpenSSLCipherConfigurationParser {
         // COMPLEMENTOFDEFAULT is also not exactly as defined by the docs
         LinkedHashSet<Cipher> complementOfDefault = filterByKeyExchange(all, new HashSet<>(Arrays.asList(KeyExchange.EDH,KeyExchange.EECDH)));
         complementOfDefault = filterByAuthentication(complementOfDefault, Collections.singleton(Authentication.aNULL));
-        aliases.get(eNULL).forEach(complementOfDefault::remove);
+        complementOfDefault.removeAll(aliases.get(eNULL));
         complementOfDefault.addAll(aliases.get(Constants.SSL_PROTO_SSLv2));
         complementOfDefault.addAll(aliases.get(EXPORT));
         complementOfDefault.addAll(aliases.get(DES));
@@ -567,7 +570,7 @@ public class OpenSSLCipherConfigurationParser {
     static void moveToEnd(final LinkedHashSet<Cipher> ciphers, final Collection<Cipher> toBeMovedCiphers) {
         List<Cipher> movedCiphers = new ArrayList<>(toBeMovedCiphers);
         movedCiphers.retainAll(ciphers);
-        movedCiphers.forEach(ciphers::remove);
+        ciphers.removeAll(movedCiphers);
         ciphers.addAll(movedCiphers);
     }
 
@@ -585,7 +588,7 @@ public class OpenSSLCipherConfigurationParser {
     }
 
     static void remove(final Set<Cipher> ciphers, final String alias) {
-        aliases.get(alias).forEach(ciphers::remove);
+        ciphers.removeAll(aliases.get(alias));
     }
 
     static LinkedHashSet<Cipher> strengthSort(final LinkedHashSet<Cipher> ciphers) {
@@ -645,7 +648,7 @@ public class OpenSSLCipherConfigurationParser {
         moveToEnd(result, filterByKeyExchange(result, Collections.singleton(KeyExchange.RSA)));
         moveToEnd(result, filterByKeyExchange(result, Collections.singleton(KeyExchange.PSK)));
 
-        /* RC4 is sort-of broken -- move to the end */
+        /* RC4 is sort-of broken -- move the the end */
         moveToEnd(result, filterByEncryption(result, Collections.singleton(Encryption.RC4)));
         return strengthSort(result);
     }
@@ -715,32 +718,6 @@ public class OpenSSLCipherConfigurationParser {
             init();
         }
         String[] elements = expression.split(SEPARATOR);
-        // Handle PROFILE= using OpenSSL (if present, otherwise warn), then replace elements with that
-        if (elements.length == 1 && elements[0].startsWith("PROFILE=")) {
-            // Only use with Java 22 and if OpenSSL has been successfully loaded before
-            if (JreCompat.isJre22Available()) {
-                if (OpenSSLStatus.isLibraryInitialized()) {
-                    try {
-                        Class<?> openSSLLibraryClass = Class.forName("org.apache.tomcat.util.net.openssl.panama.OpenSSLLibrary");
-                        @SuppressWarnings("unchecked")
-                        List<String> cipherList = (List<String>) openSSLLibraryClass.getMethod("findCiphers", String.class).invoke(null, elements[0]);
-                        // Replace the original list with the profile contents
-                        elements = cipherList.toArray(new String[0]);
-                    } catch (Throwable t) {
-                        Throwable throwable = ExceptionUtils.unwrapInvocationTargetException(t);
-                        ExceptionUtils.handleThrowable(throwable);
-                        log.error(sm.getString("opensslCipherConfigurationParser.unknownProfile", elements[0]), throwable);
-                    }
-                } else {
-                    // OpenSSL is not available
-                    log.error(sm.getString("opensslCipherConfigurationParser.unknownProfile", elements[0]));
-                }
-            } else {
-                // No way to resolve using OpenSSL, log an info about this,
-                // but it might still work if using tomcat-native
-                log.info(sm.getString("opensslCipherConfigurationParser.unknownProfile", elements[0]));
-            }
-        }
         LinkedHashSet<Cipher> ciphers = new LinkedHashSet<>();
         Set<Cipher> removedCiphers = new HashSet<>();
         for (String element : elements) {
@@ -838,7 +815,7 @@ public class OpenSSLCipherConfigurationParser {
             // Not an OpenSSL cipher name
             return null;
         }
-        Cipher cipher = ciphers.getFirst();
+        Cipher cipher = ciphers.get(0);
         // Each Cipher always has at least one JSSE name
         return cipher.getJsseNames().iterator().next();
     }
@@ -860,13 +837,13 @@ public class OpenSSLCipherConfigurationParser {
             }
             builder.append(separator);
         }
-        return builder.substring(0, builder.length() - 1);
+        return builder.toString().substring(0, builder.length() - 1);
     }
 
     public static void usage() {
-        System.out.println("Usage: java " + OpenSSLCipherConfigurationParser.class.getName() + " [options] cipher spec");
+        System.out.println("Usage: java " + OpenSSLCipherConfigurationParser.class.getName() + " [options] cipherspec");
         System.out.println();
-        System.out.println("Displays the TLS cipher suites matching the cipher spec.");
+        System.out.println("Displays the TLS cipher suites matching the cipherspec.");
         System.out.println();
         System.out.println(" --help,");
         System.out.println(" -h          Print this help message");
@@ -883,11 +860,11 @@ public class OpenSSLCipherConfigurationParser {
         for(argindex = 0; argindex < args.length; ++argindex)
         {
             String arg = args[argindex];
-            if("--verbose".equals(arg) || "-v".equals(arg)) {
+            if("--verbose".equals(arg) || "-v".equals(arg))
                 verbose = true;
-            } else if("--openssl".equals(arg)) {
+            else if("--openssl".equals(arg))
                 useOpenSSLNames = true;
-            } else if("--help".equals(arg) || "-h".equals(arg)) {
+            else if("--help".equals(arg) || "-h".equals(arg)) {
                 usage();
                 System.exit(0);
             }
@@ -912,21 +889,19 @@ public class OpenSSLCipherConfigurationParser {
         }
         Set<Cipher> ciphers = parse(cipherSpec);
         boolean first = true;
-        if(!ciphers.isEmpty()) {
+        if(null != ciphers && 0 < ciphers.size()) {
             for(Cipher cipher : ciphers)
             {
                 if(first) {
                     first = false;
                 } else {
-                    if(!verbose) {
+                    if(!verbose)
                         System.out.print(',');
-                    }
                 }
-                if(useOpenSSLNames) {
+                if(useOpenSSLNames)
                     System.out.print(cipher.getOpenSSLAlias());
-                } else {
+                else
                     System.out.print(cipher.name());
-                }
                 if(verbose) {
                     System.out.println("\t" + cipher.getProtocol() + "\tKx=" + cipher.getKx() + "\tAu=" + cipher.getAu() + "\tEnc=" + cipher.getEnc() + "\tMac=" + cipher.getMac());
                 }

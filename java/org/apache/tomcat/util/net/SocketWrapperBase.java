@@ -29,11 +29,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
-
-import jakarta.servlet.ServletConnection;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -46,21 +41,8 @@ public abstract class SocketWrapperBase<E> {
 
     protected static final StringManager sm = StringManager.getManager(SocketWrapperBase.class);
 
-    /*
-     * At 100,000 connections a second there are enough IDs here for ~3,000,000
-     * years before it overflows (and then we have another 3,000,000 years
-     * before it gets back to zero).
-     *
-     * Local testing shows that 5 threads can obtain 60,000,000+ IDs a second
-     * from a single AtomicLong. That is about 17ns per request. It does
-     * not appear that the introduction of this counter will cause a bottleneck
-     * for connection processing.
-     */
-    private static final AtomicLong connectionIdGenerator = new AtomicLong(0);
-
     private E socket;
     private final AbstractEndpoint<E,?> endpoint;
-    private final ReentrantLock lock = new ReentrantLock();
 
     protected final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -69,12 +51,10 @@ public abstract class SocketWrapperBase<E> {
     private volatile long readTimeout = -1;
     private volatile long writeTimeout = -1;
 
-    protected volatile IOException previousIOException = null;
-
     private volatile int keepAliveLeft = 100;
+    private volatile boolean upgraded = false;
+    private boolean secure = false;
     private String negotiatedProtocol = null;
-
-    private final String connectionId;
 
     /*
      * Following cached for speed / reduced GC
@@ -85,7 +65,6 @@ public abstract class SocketWrapperBase<E> {
     protected String remoteAddr = null;
     protected String remoteHost = null;
     protected int remotePort = -1;
-    protected volatile ServletConnection servletConnection = null;
 
     /**
      * Used to record the first IOException that occurs during non-blocking
@@ -125,12 +104,10 @@ public abstract class SocketWrapperBase<E> {
     protected volatile OperationState<?> writeOperation = null;
 
     /**
-     * The org.apache.coyote.Processor instance currently associated with the
-     * wrapper. Only populated when required to maintain wrapper<->Processor
-     * mapping between calls to
-     * {@link AbstractEndpoint.Handler#process(SocketWrapperBase, SocketEvent)}.
+     * The org.apache.coyote.Processor instance currently associated
+     * with the wrapper.
      */
-    private final AtomicReference<Object> currentProcessor = new AtomicReference<>();
+    protected Object currentProcessor = null;
 
     public SocketWrapperBase(E socket, AbstractEndpoint<E,?> endpoint) {
         this.socket = socket;
@@ -142,7 +119,6 @@ public abstract class SocketWrapperBase<E> {
             readPending = null;
             writePending = null;
         }
-        connectionId = Long.toHexString(connectionIdGenerator.getAndIncrement());
     }
 
     public E getSocket() {
@@ -157,20 +133,12 @@ public abstract class SocketWrapperBase<E> {
         return endpoint;
     }
 
-    public ReentrantLock getLock() {
-        return lock;
-    }
-
     public Object getCurrentProcessor() {
-        return currentProcessor.get();
+        return currentProcessor;
     }
 
     public void setCurrentProcessor(Object currentProcessor) {
-        this.currentProcessor.set(currentProcessor);
-    }
-
-    public Object takeCurrentProcessor() {
-        return currentProcessor.getAndSet(null);
+        this.currentProcessor = currentProcessor;
     }
 
     /**
@@ -203,6 +171,10 @@ public abstract class SocketWrapperBase<E> {
         }
     }
 
+    public boolean isUpgraded() { return upgraded; }
+    public void setUpgraded(boolean upgraded) { this.upgraded = upgraded; }
+    public boolean isSecure() { return secure; }
+    public void setSecure(boolean secure) { this.secure = secure; }
     public String getNegotiatedProtocol() { return negotiatedProtocol; }
     public void setNegotiatedProtocol(String negotiatedProtocol) {
         this.negotiatedProtocol = negotiatedProtocol;
@@ -368,8 +340,8 @@ public abstract class SocketWrapperBase<E> {
             remaining = Math.min(remaining, len);
             readBuffer.get(b, off, remaining);
 
-            if (log.isTraceEnabled()) {
-                log.trace("Socket: [" + this + "], Read from buffer: [" + remaining + "]");
+            if (log.isDebugEnabled()) {
+                log.debug("Socket: [" + this + "], Read from buffer: [" + remaining + "]");
             }
         }
         return remaining;
@@ -382,8 +354,8 @@ public abstract class SocketWrapperBase<E> {
         socketBufferHandler.configureReadBufferForRead();
         int nRead = transfer(socketBufferHandler.getReadBuffer(), to);
 
-        if (log.isTraceEnabled()) {
-            log.trace("Socket: [" + this + "], Read from buffer: [" + nRead + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Socket: [" + this + "], Read from buffer: [" + nRead + "]");
         }
         return nRead;
     }
@@ -474,7 +446,7 @@ public abstract class SocketWrapperBase<E> {
         /*
          * While the implementations for blocking and non-blocking writes are
          * very similar they have been split into separate methods:
-         * - To allow subclasses to override them individually. NIO2, for
+         * - To allow sub-classes to override them individually. NIO2, for
          *   example, overrides the non-blocking write but not the blocking
          *   write.
          * - To enable a marginally more efficient implemented for blocking
@@ -521,7 +493,7 @@ public abstract class SocketWrapperBase<E> {
         /*
          * While the implementations for blocking and non-blocking writes are
          * very similar they have been split into separate methods:
-         * - To allow subclasses to override them individually. NIO2, for
+         * - To allow sub-classes to override them individually. NIO2, for
          *   example, overrides the non-blocking write but not the blocking
          *   write.
          * - To enable a marginally more efficient implemented for blocking
@@ -619,12 +591,12 @@ public abstract class SocketWrapperBase<E> {
             while (len > 0) {
                 off = off + thisTime;
                 doWrite(false);
-                if (socketBufferHandler.isWriteBufferWritable()) {
+                if (len > 0 && socketBufferHandler.isWriteBufferWritable()) {
                     socketBufferHandler.configureWriteBufferForWrite();
                     thisTime = transfer(buf, off, len, socketBufferHandler.getWriteBuffer());
                 } else {
                     // Didn't write any data in the last non-blocking write.
-                    // Therefore, the write buffer will still be full. Nothing
+                    // Therefore the write buffer will still be full. Nothing
                     // else to do here. Exit the loop.
                     break;
                 }
@@ -717,12 +689,6 @@ public abstract class SocketWrapperBase<E> {
     }
 
 
-    /**
-     * Writes all remaining data from the buffers and blocks until the write is
-     * complete.
-     *
-     * @throws IOException If an IO error occurs during the write
-     */
     protected void flushBlocking() throws IOException {
         doWrite(true);
 
@@ -737,15 +703,26 @@ public abstract class SocketWrapperBase<E> {
     }
 
 
-    /**
-     * Writes as much data as possible from any that remains in the buffers.
-     *
-     * @return <code>true</code> if data remains to be flushed after this method
-     *         completes, otherwise <code>false</code>.
-     *
-     * @throws IOException If an IO error occurs during the write
-     */
-    protected abstract boolean flushNonBlocking() throws IOException;
+    protected boolean flushNonBlocking() throws IOException {
+        boolean dataLeft = !socketBufferHandler.isWriteBufferEmpty();
+
+        // Write to the socket, if there is anything to write
+        if (dataLeft) {
+            doWrite(false);
+            dataLeft = !socketBufferHandler.isWriteBufferEmpty();
+        }
+
+        if (!dataLeft && !nonBlockingWriteBuffer.isEmpty()) {
+            dataLeft = nonBlockingWriteBuffer.write(this, false);
+
+            if (!dataLeft && !socketBufferHandler.isWriteBufferEmpty()) {
+                doWrite(false);
+                dataLeft = !socketBufferHandler.isWriteBufferEmpty();
+            }
+        }
+
+        return dataLeft;
+    }
 
 
     /**
@@ -815,12 +792,7 @@ public abstract class SocketWrapperBase<E> {
      */
     public abstract void doClientAuth(SSLSupport sslSupport) throws IOException;
 
-    /**
-     * Obtain an SSLSupport instance for this socket.
-     *
-     * @return An SSLSupport instance for this socket.
-     */
-    public abstract SSLSupport getSslSupport();
+    public abstract SSLSupport getSslSupport(String clientCertProvider);
 
 
     // ------------------------------------------------------- NIO 2 style APIs
@@ -854,7 +826,7 @@ public abstract class SocketWrapperBase<E> {
          */
         PENDING,
         /**
-         * Operation was pending and non-blocking.
+         * Operation was pending and non blocking.
          */
         NOT_DONE,
         /**
@@ -903,7 +875,7 @@ public abstract class SocketWrapperBase<E> {
          *
          * @return The call, if any, to make to the completion handler
          */
-        CompletionHandlerCall callHandler(CompletionState state, ByteBuffer[] buffers,
+        public CompletionHandlerCall callHandler(CompletionState state, ByteBuffer[] buffers,
                 int offset, int length);
     }
 
@@ -912,27 +884,35 @@ public abstract class SocketWrapperBase<E> {
      * all remaining data. If the operation completes inline, the
      * completion handler will not be called.
      */
-    public static final CompletionCheck COMPLETE_WRITE = (state, buffers, offset, length) -> {
-        for (int i = 0; i < length; i++) {
-            if (buffers[offset + i].hasRemaining()) {
-                return CompletionHandlerCall.CONTINUE;
+    public static final CompletionCheck COMPLETE_WRITE = new CompletionCheck() {
+        @Override
+        public CompletionHandlerCall callHandler(CompletionState state, ByteBuffer[] buffers,
+                int offset, int length) {
+            for (int i = 0; i < length; i++) {
+                if (buffers[offset + i].hasRemaining()) {
+                    return CompletionHandlerCall.CONTINUE;
+                }
             }
+            return (state == CompletionState.DONE) ? CompletionHandlerCall.DONE
+                    : CompletionHandlerCall.NONE;
         }
-        return (state == CompletionState.DONE) ? CompletionHandlerCall.DONE
-                : CompletionHandlerCall.NONE;
     };
 
     /**
      * This utility CompletionCheck will cause the write to fully write
      * all remaining data. The completion handler will then be called.
      */
-    public static final CompletionCheck COMPLETE_WRITE_WITH_COMPLETION = (state, buffers, offset, length) -> {
-        for (int i = 0; i < length; i++) {
-            if (buffers[offset + i].hasRemaining()) {
-                return CompletionHandlerCall.CONTINUE;
+    public static final CompletionCheck COMPLETE_WRITE_WITH_COMPLETION = new CompletionCheck() {
+        @Override
+        public CompletionHandlerCall callHandler(CompletionState state, ByteBuffer[] buffers,
+                int offset, int length) {
+            for (int i = 0; i < length; i++) {
+                if (buffers[offset + i].hasRemaining()) {
+                    return CompletionHandlerCall.CONTINUE;
+                }
             }
+            return CompletionHandlerCall.DONE;
         }
-        return CompletionHandlerCall.DONE;
     };
 
     /**
@@ -940,8 +920,14 @@ public abstract class SocketWrapperBase<E> {
      * to be called once some data has been read. If the operation
      * completes inline, the completion handler will not be called.
      */
-    public static final CompletionCheck READ_DATA = (state, buffers, offset, length) ->
-        (state == CompletionState.DONE) ? CompletionHandlerCall.DONE : CompletionHandlerCall.NONE;
+    public static final CompletionCheck READ_DATA = new CompletionCheck() {
+        @Override
+        public CompletionHandlerCall callHandler(CompletionState state, ByteBuffer[] buffers,
+                int offset, int length) {
+            return (state == CompletionState.DONE) ? CompletionHandlerCall.DONE
+                    : CompletionHandlerCall.NONE;
+        }
+    };
 
     /**
      * This utility CompletionCheck will cause the completion handler
@@ -1002,13 +988,6 @@ public abstract class SocketWrapperBase<E> {
          */
         protected abstract boolean isInline();
 
-        protected boolean hasOutboundRemaining() {
-            // NIO2 and APR never have remaining outbound data when the
-            // completion handler is called. NIO needs to override this.
-            return false;
-        }
-
-
         /**
          * Process the operation using the connector executor.
          * @return true if the operation was accepted, false if the executor
@@ -1060,7 +1039,7 @@ public abstract class SocketWrapperBase<E> {
                 boolean completion = true;
                 if (state.check != null) {
                     CompletionHandlerCall call = state.check.callHandler(currentState, state.buffers, state.offset, state.length);
-                    if (call == CompletionHandlerCall.CONTINUE || (!state.read && state.hasOutboundRemaining())) {
+                    if (call == CompletionHandlerCall.CONTINUE) {
                         complete = false;
                     } else if (call == CompletionHandlerCall.NONE) {
                         completion = false;
@@ -1068,16 +1047,12 @@ public abstract class SocketWrapperBase<E> {
                 }
                 if (complete) {
                     boolean notify = false;
+                    state.semaphore.release();
                     if (state.read) {
                         readOperation = null;
                     } else {
                         writeOperation = null;
                     }
-                    // Semaphore must be released after [read|write]Operation is cleared
-                    // to ensure that the next thread to hold the semaphore hasn't
-                    // written a new value to [read|write]Operation by the time it is
-                    // cleared.
-                    state.semaphore.release();
                     if (state.block == BlockingMode.BLOCK && currentState != CompletionState.INLINE) {
                         notify = true;
                     } else {
@@ -1113,16 +1088,12 @@ public abstract class SocketWrapperBase<E> {
             }
             setError(ioe);
             boolean notify = false;
+            state.semaphore.release();
             if (state.read) {
                 readOperation = null;
             } else {
                 writeOperation = null;
             }
-            // Semaphore must be released after [read|write]Operation is cleared
-            // to ensure that the next thread to hold the semaphore hasn't
-            // written a new value to [read|write]Operation by the time it is
-            // cleared.
-            state.semaphore.release();
             if (state.block == BlockingMode.BLOCK) {
                 notify = true;
             } else {
@@ -1186,6 +1157,36 @@ public abstract class SocketWrapperBase<E> {
      */
     public boolean isWritePending() {
         return false;
+    }
+
+    /**
+     * If an asynchronous read operation is pending, this method will block
+     * until the operation completes, or the specified amount of time
+     * has passed.
+     * @param timeout The maximum amount of time to wait
+     * @param unit The unit for the timeout
+     * @return <code>true</code> if the read operation is complete,
+     *  <code>false</code> if the operation is still pending and
+     *  the specified timeout has passed
+     */
+    @Deprecated
+    public boolean awaitReadComplete(long timeout, TimeUnit unit) {
+        return true;
+    }
+
+    /**
+     * If an asynchronous write operation is pending, this method will block
+     * until the operation completes, or the specified amount of time
+     * has passed.
+     * @param timeout The maximum amount of time to wait
+     * @param unit The unit for the timeout
+     * @return <code>true</code> if the read operation is complete,
+     *  <code>false</code> if the operation is still pending and
+     *  the specified timeout has passed
+     */
+    @Deprecated
+    public boolean awaitWriteComplete(long timeout, TimeUnit unit) {
+        return true;
     }
 
     /**
@@ -1430,13 +1431,13 @@ public abstract class SocketWrapperBase<E> {
                         state.wait(unit.toMillis(timeout));
                         if (state.state == CompletionState.PENDING) {
                             if (handler != null && state.callHandler.compareAndSet(true, false)) {
-                                handler.failed(new SocketTimeoutException(getTimeoutMsg(read)), attachment);
+                                handler.failed(new SocketTimeoutException(), attachment);
                             }
                             return CompletionState.ERROR;
                         }
                     } catch (InterruptedException e) {
                         if (handler != null && state.callHandler.compareAndSet(true, false)) {
-                            handler.failed(new SocketTimeoutException(getTimeoutMsg(read)), attachment);
+                            handler.failed(new SocketTimeoutException(), attachment);
                         }
                         return CompletionState.ERROR;
                     }
@@ -1446,22 +1447,11 @@ public abstract class SocketWrapperBase<E> {
         return state.state;
     }
 
-
-    private String getTimeoutMsg(boolean read) {
-        if (read) {
-            return sm.getString("socketWrapper.readTimeout");
-        } else {
-            return sm.getString("socketWrapper.writeTimeout");
-        }
-    }
-
-
     protected abstract <A> OperationState<A> newOperationState(boolean read,
             ByteBuffer[] buffers, int offset, int length,
             BlockingMode block, long timeout, TimeUnit unit, A attachment,
             CompletionCheck check, CompletionHandler<Long, ? super A> handler,
             Semaphore semaphore, VectoredIOCompletionHandler<A> completion);
-
 
     // --------------------------------------------------------- Utility methods
 
@@ -1491,16 +1481,5 @@ public abstract class SocketWrapperBase<E> {
             }
         }
         return false;
-    }
-
-
-    // -------------------------------------------------------------- ID methods
-
-    public ServletConnection getServletConnection(String protocol, String protocolConnectionId) {
-        if (servletConnection == null) {
-            servletConnection = new ServletConnectionImpl(
-                    connectionId, protocol, protocolConnectionId, endpoint.isSSLEnabled());
-        }
-        return servletConnection;
     }
 }

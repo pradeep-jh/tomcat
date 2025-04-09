@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.util.json;
 
 /**
@@ -82,7 +83,7 @@ public class ParseException extends Exception {
   /**
    * This is the last token that has been consumed successfully.  If
    * this object has been created due to a parse error, the token
-   * following this token will (therefore) be the first error token.
+   * followng this token will (therefore) be the first error token.
    */
   public Token currentToken;
 
@@ -128,9 +129,7 @@ public class ParseException extends Exception {
     String retval = "Encountered \"";
     Token tok = currentToken.next;
     for (int i = 0; i < maxSize; i++) {
-      if (i != 0) {
-        retval += " ";
-      }
+      if (i != 0) retval += " ";
       if (tok.kind == 0) {
         retval += tokenImage[0];
         break;

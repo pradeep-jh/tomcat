@@ -34,7 +34,6 @@ public class TestSmapStratum {
         s.addLineData(20, "/foo/foo/bar.jsp", 1, 30, 1);
         s.setOutputFileName("foo.java");
 
-        //@formatter:off
         Assert.assertEquals(
                 "SMAP\n" +
                 "foo.java\n" +
@@ -52,6 +51,5 @@ public class TestSmapStratum {
                 "20#1:30\n" +
                 "*E\n",
                 s.getSmapString());
-        //@formatter:on
     }
 }

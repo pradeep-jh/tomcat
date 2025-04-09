@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.naming;
 
 import java.util.Iterator;
@@ -51,6 +53,9 @@ public class NamingContextEnumeration
     // --------------------------------------------------------- Public Methods
 
 
+    /**
+     * Retrieves the next element in the enumeration.
+     */
     @Override
     public NameClassPair next()
         throws NamingException {
@@ -58,6 +63,9 @@ public class NamingContextEnumeration
     }
 
 
+    /**
+     * Determines whether there are any more elements in the enumeration.
+     */
     @Override
     public boolean hasMore()
         throws NamingException {
@@ -65,6 +73,9 @@ public class NamingContextEnumeration
     }
 
 
+    /**
+     * Closes this enumeration.
+     */
     @Override
     public void close()
         throws NamingException {

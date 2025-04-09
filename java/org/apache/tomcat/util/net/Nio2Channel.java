@@ -136,7 +136,7 @@ public class Nio2Channel implements AsynchronousByteChannel {
 
     @Override
     public String toString() {
-        return super.toString() + ":" + sc;
+        return super.toString() + ":" + sc.toString();
     }
 
     @Override
@@ -184,7 +184,7 @@ public class Nio2Channel implements AsynchronousByteChannel {
         sc.write(srcs, offset, length, timeout, unit, attachment, handler);
     }
 
-    private static final Future<Boolean> DONE = new Future<>() {
+    private static final Future<Boolean> DONE = new Future<Boolean>() {
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
             return false;
@@ -222,7 +222,7 @@ public class Nio2Channel implements AsynchronousByteChannel {
         return appReadBufHandler;
     }
 
-    private static final Future<Integer> DONE_INT = new Future<>() {
+    private static final Future<Integer> DONE_INT = new Future<Integer>() {
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
             return false;
@@ -261,10 +261,6 @@ public class Nio2Channel implements AsynchronousByteChannel {
         }
         @Override
         public void free() {
-        }
-        @Override
-        protected ApplicationBufferHandler getAppReadBufHandler() {
-            return ApplicationBufferHandler.EMPTY;
         }
         @Override
         public void setAppReadBufHandler(ApplicationBufferHandler handler) {

@@ -16,8 +16,6 @@
  */
 package org.apache.naming;
 
-import java.io.Serial;
-
 import javax.naming.StringRefAddr;
 
 /**
@@ -27,7 +25,6 @@ import javax.naming.StringRefAddr;
  */
 public class ResourceLinkRef extends AbstractRef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 
@@ -56,8 +53,10 @@ public class ResourceLinkRef extends AbstractRef {
     public ResourceLinkRef(String resourceClass, String globalName,
             String factory, String factoryLocation) {
         super(resourceClass, factory, factoryLocation);
+        StringRefAddr refAddr = null;
         if (globalName != null) {
-            add(new StringRefAddr(GLOBALNAME, globalName));
+            refAddr = new StringRefAddr(GLOBALNAME, globalName);
+            add(refAddr);
         }
     }
 

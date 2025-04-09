@@ -14,82 +14,82 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2.datasources;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Map;
 
 import javax.naming.RefAddr;
 import javax.naming.Reference;
 
 /**
- * A JNDI ObjectFactory which creates {@code SharedPoolDataSource}s
+ * A JNDI ObjectFactory which creates <code>SharedPoolDataSource</code>s
  *
  * @since 2.0
  */
 public class PerUserPoolDataSourceFactory extends InstanceKeyDataSourceFactory {
     private static final String PER_USER_POOL_CLASSNAME = PerUserPoolDataSource.class.getName();
 
+    @Override
+    protected boolean isCorrectClass(final String className) {
+        return PER_USER_POOL_CLASSNAME.equals(className);
+    }
+
     @SuppressWarnings("unchecked") // Avoid warnings on deserialization
     @Override
     protected InstanceKeyDataSource getNewInstance(final Reference ref) throws IOException, ClassNotFoundException {
         final PerUserPoolDataSource pupds = new PerUserPoolDataSource();
-        RefAddr refAddr = ref.get("defaultMaxTotal");
-        if (refAddr != null && refAddr.getContent() != null) {
-            pupds.setDefaultMaxTotal(parseInt(refAddr));
+        RefAddr ra = ref.get("defaultMaxTotal");
+        if (ra != null && ra.getContent() != null) {
+            pupds.setDefaultMaxTotal(Integer.parseInt(ra.getContent().toString()));
         }
 
-        refAddr = ref.get("defaultMaxIdle");
-        if (refAddr != null && refAddr.getContent() != null) {
-            pupds.setDefaultMaxIdle(parseInt(refAddr));
+        ra = ref.get("defaultMaxIdle");
+        if (ra != null && ra.getContent() != null) {
+            pupds.setDefaultMaxIdle(Integer.parseInt(ra.getContent().toString()));
         }
 
-        refAddr = ref.get("defaultMaxWaitMillis");
-        if (refAddr != null && refAddr.getContent() != null) {
-            pupds.setDefaultMaxWait(Duration.ofMillis(parseInt(refAddr)));
+        ra = ref.get("defaultMaxWaitMillis");
+        if (ra != null && ra.getContent() != null) {
+            pupds.setDefaultMaxWaitMillis(Integer.parseInt(ra.getContent().toString()));
         }
 
-        refAddr = ref.get("perUserDefaultAutoCommit");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserDefaultAutoCommit");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserDefaultAutoCommit((Map<String, Boolean>) deserialize(serialized));
         }
 
-        refAddr = ref.get("perUserDefaultTransactionIsolation");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserDefaultTransactionIsolation");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserDefaultTransactionIsolation((Map<String, Integer>) deserialize(serialized));
         }
 
-        refAddr = ref.get("perUserMaxTotal");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserMaxTotal");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserMaxTotal((Map<String, Integer>) deserialize(serialized));
         }
 
-        refAddr = ref.get("perUserMaxIdle");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserMaxIdle");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserMaxIdle((Map<String, Integer>) deserialize(serialized));
         }
 
-        refAddr = ref.get("perUserMaxWaitMillis");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserMaxWaitMillis");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserMaxWaitMillis((Map<String, Long>) deserialize(serialized));
         }
 
-        refAddr = ref.get("perUserDefaultReadOnly");
-        if (refAddr != null && refAddr.getContent() != null) {
-            final byte[] serialized = (byte[]) refAddr.getContent();
+        ra = ref.get("perUserDefaultReadOnly");
+        if (ra != null && ra.getContent() != null) {
+            final byte[] serialized = (byte[]) ra.getContent();
             pupds.setPerUserDefaultReadOnly((Map<String, Boolean>) deserialize(serialized));
         }
         return pupds;
-    }
-
-    @Override
-    protected boolean isCorrectClass(final String className) {
-        return PER_USER_POOL_CLASSNAME.equals(className);
     }
 }

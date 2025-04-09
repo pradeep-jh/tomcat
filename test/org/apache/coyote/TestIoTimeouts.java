@@ -18,15 +18,15 @@ package org.apache.coyote;
 
 import java.io.IOException;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.ReadListener;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.WriteListener;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.AsyncContext;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -81,7 +81,7 @@ public class TestIoTimeouts extends TomcatBaseTest {
         private final boolean sendEndChunk;
 
 
-        ChunkedClient(boolean sendEndChunk) {
+        public ChunkedClient(boolean sendEndChunk) {
             this.sendEndChunk = sendEndChunk;
         }
 
@@ -193,7 +193,7 @@ public class TestIoTimeouts extends TomcatBaseTest {
         private final ServletOutputStream sos;
         private final byte[] buffer = new byte[8192];
 
-        EchoListener(AsyncContext ac, ServletInputStream sis, ServletOutputStream sos) {
+        public EchoListener(AsyncContext ac, ServletInputStream sis, ServletOutputStream sos) {
             t = null;
             this.ac = ac;
             this.sis = sis;

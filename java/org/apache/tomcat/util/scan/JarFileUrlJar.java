@@ -29,13 +29,13 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.apache.tomcat.Jar;
+import org.apache.tomcat.util.compat.JreCompat;
 
 /**
  * Implementation of {@link Jar} that is optimised for file based JAR URLs that
- * refer directly to a JAR file (e.g. URLs of the form jar:file: ... .jar!/ or
+ * refer directly to a JAR file (e.g URLs of the form jar:file: ... .jar!/ or
  * file:... .jar).
  */
 public class JarFileUrlJar implements Jar {
@@ -62,19 +62,10 @@ public class JarFileUrlJar implements Jar {
             } catch (URISyntaxException e) {
                 throw new IOException(e);
             }
-            jarFile = new JarFile(f, true, ZipFile.OPEN_READ, Runtime.version());
+            jarFile = JreCompat.getInstance().jarFileNewInstance(f);
             jarFileURL = url;
         }
-        boolean multiReleaseValue = false;
-        try {
-            multiReleaseValue = jarFile.isMultiRelease();
-        } catch (IllegalStateException e) {
-            // ISE can be thrown if the JAR URL is bad, for example:
-            // https://github.com/spring-projects/spring-boot/issues/33633
-            // The Javadoc does not document that ISE and given what it does for a vanilla IOE,
-            // this looks like a Java bug, it should return false instead.
-        }
-        multiRelease = multiReleaseValue;
+        multiRelease = JreCompat.getInstance().jarFileIsMultiRelease(jarFile);
     }
 
 
@@ -115,7 +106,12 @@ public class JarFileUrlJar implements Jar {
 
     @Override
     public String getURL(String entry) {
-        return "jar:" + getJarFileURL().toExternalForm() + "!/" +  entry;
+        StringBuilder result = new StringBuilder("jar:");
+        result.append(getJarFileURL().toExternalForm());
+        result.append("!/");
+        result.append(entry);
+
+        return result.toString();
     }
 
     @Override
@@ -146,11 +142,11 @@ public class JarFileUrlJar implements Jar {
             // - that the order of entries in the JAR doesn't prevent the
             //   correct entries being returned
             // - the case where an entry appears in the versions location
-            //   but not in the base location is handled correctly
+            //   but not in the the base location is handled correctly
 
             // Enumerate the entries until one is reached that represents an
             // entry that has not been seen before.
-            String name;
+            String name = null;
             while (true) {
                 if (entries.hasMoreElements()) {
                     entry = entries.nextElement();
@@ -163,7 +159,7 @@ public class JarFileUrlJar implements Jar {
                         }
                         name = name.substring(i + 1);
                     }
-                    if (name.isEmpty() || entryNamesSeen.contains(name)) {
+                    if (name.length() == 0 || entryNamesSeen.contains(name)) {
                         continue;
                     }
 
@@ -171,10 +167,11 @@ public class JarFileUrlJar implements Jar {
 
                     // JarFile.getJarEntry is version aware so use it
                     entry = jarFile.getJarEntry(entry.getName());
+                    break;
                 } else {
                     entry = null;
+                    break;
                 }
-                break;
             }
         } else {
             if (entries.hasMoreElements()) {

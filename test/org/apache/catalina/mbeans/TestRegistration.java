@@ -147,7 +147,7 @@ public class TestRegistration extends TomcatBaseTest {
      */
     @Test
     public void testMBeanDeregistration() throws Exception {
-        final MBeanServer mbeanServer = Registry.getRegistry(null).getMBeanServer();
+        final MBeanServer mbeanServer = Registry.getRegistry(null, null).getMBeanServer();
         // Verify there are no Catalina or Tomcat MBeans
         Set<ObjectName> onames = mbeanServer.queryNames(new ObjectName("Catalina:*"), null);
         log.info(MBeanDumper.dumpBeans(mbeanServer, onames));
@@ -189,6 +189,8 @@ public class TestRegistration extends TomcatBaseTest {
         String protocol = tomcat.getConnector().getProtocolHandlerClassName();
         if (protocol.indexOf("Nio2") > 0) {
             protocol = "nio2";
+        } else if (protocol.indexOf("Apr") > 0) {
+            protocol = "apr";
         } else {
             protocol = "nio";
         }

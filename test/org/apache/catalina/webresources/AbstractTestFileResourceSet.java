@@ -64,7 +64,7 @@ public abstract class AbstractTestFileResourceSet extends AbstractTestResourceSe
     }
 
     @Override
-    protected boolean isWritable() {
+    protected boolean isWriteable() {
         return !readOnly;
     }
 

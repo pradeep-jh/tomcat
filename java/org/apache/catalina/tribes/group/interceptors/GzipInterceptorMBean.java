@@ -19,73 +19,61 @@ package org.apache.catalina.tribes.group.interceptors;
 public interface GzipInterceptorMBean {
 
     // Config
-    int getOptionFlag();
-
-    void setOptionFlag(int optionFlag);
+    public int getOptionFlag();
+    public void setOptionFlag(int optionFlag);
 
     /**
      * @return the minimum payload size for compression to be enabled.
      */
-    int getCompressionMinSize();
-
+    public int getCompressionMinSize();
     /**
-     * Set the minimum payload size for compression to be enabled. A value of zero or less means compression will always
-     * be used. If not explicitly configured, a default of zero will be used.
+     * Set the minimum payload size for compression to be enabled. A value of
+     * zero or less means compression will always be used. If not explicitly
+     * configured, a default of zero will be used.
      *
      * @param compressionMinSize The new minimum payload size
      */
-    void setCompressionMinSize(int compressionMinSize);
+    public void setCompressionMinSize(int compressionMinSize);
 
     /**
-     * @return {@code true} if the interceptor is configured to collect statistics, otherwise {@code false}
+     * @return {@code true} if the interceptor is configured to collect
+     *         statistics, otherwise {@code false}
      */
-    boolean getStatsEnabled();
-
+    public boolean getStatsEnabled();
     /**
      * Configure whether the interceptor collects statistics.
      *
-     * @param statsEnabled {@code true} to enable statistics collections, otherwise {@code false}
+     * @param statsEnabled {@code true} to enable statistics collections,
+     *        otherwise {@code false}
      */
-    void setStatsEnabled(boolean statsEnabled);
+    public void setStatsEnabled(boolean statsEnabled);
 
     /**
-     * @return If statistics collection is enabled, the number of messages between statistics reports being written to
-     *             the log.
+     * @return If statistics collection is enabled, the number of messages
+     *         between statistics reports being written to the log.
      */
-    int getInterval();
-
+    public int getInterval();
     /**
-     * If statistics collection is enabled, set the number of messages between statistics reports being written to the
-     * log. A value of zero or less means no statistics reports are written.
+     * If statistics collection is enabled, set the number of messages between
+     * statistics reports being written to the log. A value of zero or less
+     * means no statistics reports are written.
      *
      * @param interval The new interval between reports
      */
-    void setInterval(int interval);
+    public void setInterval(int interval);
 
     // Stats
-    int getCount();
-
-    int getCountCompressedTX();
-
-    int getCountUncompressedTX();
-
-    int getCountCompressedRX();
-
-    int getCountUncompressedRX();
-
-    long getSizeTX();
-
-    long getCompressedSizeTX();
-
-    long getUncompressedSizeTX();
-
-    long getSizeRX();
-
-    long getCompressedSizeRX();
-
-    long getUncompressedSizeRX();
-
-    void reset();
-
-    void report();
+    public int getCount();
+    public int getCountCompressedTX();
+    public int getCountUncompressedTX();
+    public int getCountCompressedRX();
+    public int getCountUncompressedRX();
+    public long getSizeTX();
+    public long getCompressedSizeTX();
+    public long getUncompressedSizeTX();
+    public long getSizeRX();
+    public long getCompressedSizeRX();
+    public long getUncompressedSizeRX();
+    public void reset();
+    public void report();
 }

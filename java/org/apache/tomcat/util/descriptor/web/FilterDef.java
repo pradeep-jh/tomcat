@@ -16,12 +16,11 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.servlet.Filter;
+import javax.servlet.Filter;
 
 import org.apache.tomcat.util.res.StringManager;
 
@@ -34,7 +33,6 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public class FilterDef implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final StringManager sm =
@@ -110,7 +108,7 @@ public class FilterDef implements Serializable {
     }
 
     public void setFilterName(String filterName) {
-        if (filterName == null || filterName.isEmpty()) {
+        if (filterName == null || filterName.equals("")) {
             throw new IllegalArgumentException(
                     sm.getString("filterDef.invalidFilterName", filterName));
         }
@@ -164,14 +162,8 @@ public class FilterDef implements Serializable {
 
     public void setAsyncSupported(String asyncSupported) {
         this.asyncSupported = asyncSupported;
-        asyncSupportedBoolean = !("false".equalsIgnoreCase(asyncSupported));
     }
 
-    private boolean asyncSupportedBoolean = true;
-
-    public boolean getAsyncSupportedBoolean() {
-        return asyncSupportedBoolean;
-    }
 
     // --------------------------------------------------------- Public Methods
 
@@ -200,7 +192,13 @@ public class FilterDef implements Serializable {
      */
     @Override
     public String toString() {
-        return "FilterDef[" + "filterName=" + this.filterName + ", filterClass=" + this.filterClass + ']';
+        StringBuilder sb = new StringBuilder("FilterDef[");
+        sb.append("filterName=");
+        sb.append(this.filterName);
+        sb.append(", filterClass=");
+        sb.append(this.filterClass);
+        sb.append("]");
+        return sb.toString();
     }
 
 

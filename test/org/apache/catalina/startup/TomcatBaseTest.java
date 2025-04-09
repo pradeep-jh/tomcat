@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -36,12 +35,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -57,6 +56,8 @@ import org.apache.catalina.Service;
 import org.apache.catalina.Session;
 import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.core.AprLifecycleListener;
+import org.apache.catalina.core.StandardServer;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.util.IOTools;
@@ -65,6 +66,7 @@ import org.apache.catalina.webresources.StandardRoot;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.collections.CaseInsensitiveKeyMap;
+import org.apache.tomcat.util.net.TesterSupport;
 import org.apache.tomcat.util.scan.StandardJarScanFilter;
 import org.apache.tomcat.util.scan.StandardJarScanner;
 
@@ -73,6 +75,13 @@ import org.apache.tomcat.util.scan.StandardJarScanner;
  * don't have to keep writing the cleanup code.
  */
 public abstract class TomcatBaseTest extends LoggingBaseTest {
+
+    /*
+     * Ensures APR Library.initialize() and Library.terminate() don't interfere
+     * with the calls from the Lifecycle listener and trigger a JVM crash
+     */
+    @SuppressWarnings("unused")
+    private static final boolean ignored = TesterSupport.OPENSSL_AVAILABLE;
 
     // Used by parameterized tests. Defined here to reduce duplication.
     protected static final Boolean[] booleans = new Boolean[] { Boolean.FALSE, Boolean.TRUE };
@@ -129,16 +138,6 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         return tomcat;
     }
 
-
-    public Context getProgrammaticRootContext() {
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-        // Disable class path scanning - it slows the tests down by almost an order of magnitude
-        ((StandardJarScanner) ctx.getJarScanner()).setScanClassPath(false);
-        return ctx;
-    }
-
-
     /*
      * Sub-classes need to know port so they can connect
      */
@@ -174,18 +173,25 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         Assert.assertTrue(connector.setProperty("address", InetAddress.getByName("localhost").getHostAddress()));
         // Use random free port
         connector.setPort(0);
-        // By default, a connector failure means a failed test
-        connector.setThrowOnFailure(true);
         // Mainly set to reduce timeouts during async tests
         Assert.assertTrue(connector.setProperty("connectionTimeout", "3000"));
         tomcat.getService().addConnector(connector);
         tomcat.setConnector(connector);
 
+        // Add AprLifecycleListener if we are using the Apr connector
+        if (protocol.contains("Apr")) {
+            StandardServer server = (StandardServer) tomcat.getServer();
+            AprLifecycleListener listener = new AprLifecycleListener();
+            listener.setSSLRandomSeed("/dev/urandom");
+            server.addLifecycleListener(listener);
+        }
+
         File catalinaBase = getTemporaryDirectory();
         tomcat.setBaseDir(catalinaBase.getAbsolutePath());
         tomcat.getHost().setAppBase(appBase.getAbsolutePath());
 
-        accessLogEnabled = Boolean.getBoolean("tomcat.test.accesslog");
+        accessLogEnabled = Boolean.parseBoolean(
+            System.getProperty("tomcat.test.accesslog", "false"));
         if (accessLogEnabled) {
             String accessLogDirectory = System
                     .getProperty("tomcat.test.reports");
@@ -446,6 +452,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
         private static final long serialVersionUID = 1L;
 
+        @SuppressWarnings("deprecation")
         @Override
         public void service(HttpServletRequest request,
                             HttpServletResponse response)
@@ -518,7 +525,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                      h.hasMoreElements();) {
                     value.append(h.nextElement());
                     if (h.hasMoreElements()) {
-                        value.append(';');
+                        value.append(";");
                     }
                 }
                 out.println("HEADER:" + name + ": " + value);
@@ -541,7 +548,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                 for (int j = 0; j < m; j++) {
                     value.append(values[j]);
                     if (j < m - 1) {
-                        value.append(';');
+                        value.append(";");
                     }
                 }
                 out.println("PARAM/" + name + ": " + value);
@@ -552,7 +559,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             out.println("SESSION-REQUESTED-ID-COOKIE: " +
                         request.isRequestedSessionIdFromCookie());
             out.println("SESSION-REQUESTED-ID-URL: " +
-                        request.isRequestedSessionIdFromURL());
+                        request.isRequestedSessionIdFromUrl());
             out.println("SESSION-REQUESTED-ID-VALID: " +
                         request.isRequestedSessionIdValid());
 
@@ -662,7 +669,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                 Map<String, List<String>> reqHead, Map<String, List<String>> resHead, String method,
                 boolean followRedirects) throws IOException {
 
-        URL url = URI.create(path).toURL();
+        URL url = new URL(path);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setUseCaches(false);
         connection.setReadTimeout(readTimeout);
@@ -741,11 +748,8 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
             @Override
             public int available() {
-                if (done) {
-                  return 0;
-                } else {
-                  return getLength();
-                }
+                if (done) return 0;
+                else return getLength();
             }
         };
         return postUrl(false,s,path,out,reqHead,resHead);
@@ -756,7 +760,7 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                 Map<String, List<String>> reqHead,
                 Map<String, List<String>> resHead) throws IOException {
 
-        URL url = URI.create(path).toURL();
+        URL url = new URL(path);
         HttpURLConnection connection =
             (HttpURLConnection) url.openConnection();
         connection.setDoOutput(true);

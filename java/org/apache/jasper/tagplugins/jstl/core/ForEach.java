@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.jasper.tagplugins.jstl.core;
 
 import org.apache.jasper.compiler.tagplugin.TagPlugin;
@@ -26,7 +28,7 @@ public final class ForEach implements TagPlugin {
     @Override
     public void doTag(TagPluginContext ctxt) {
 
-        String index;
+        String index = null;
 
         boolean hasVarStatus = ctxt.isAttributeSpecified("varStatus");
         if (hasVarStatus) {
@@ -59,7 +61,7 @@ public final class ForEach implements TagPlugin {
             ctxt.generateJavaSource("; " + index + "++) {");
         }
 
-        // If var is specified and the body contains an EL, then sync
+        // If var is specified and the body contains an EL, then sycn
         // the var attribute
         if (hasVar /* && ctxt.hasEL() */) {
             ctxt.generateJavaSource("_jspx_page_context.setAttribute(");
@@ -71,7 +73,8 @@ public final class ForEach implements TagPlugin {
     }
 
     /**
-     * Generate codes for Collections The pseudocode is:
+     * Generate codes for Collections
+     * The pseudo code is:
      */
     private void doCollection(TagPluginContext ctxt) {
 
@@ -83,7 +86,7 @@ public final class ForEach implements TagPlugin {
         ctxt.generateAttribute("items");
         ctxt.generateJavaSource(";");
 
-        String indexV = null, beginV = null, endV = null, stepV = null;
+        String indexV=null, beginV=null, endV=null, stepV=null;
         if (hasBegin) {
             beginV = ctxt.getTemporaryVariableName();
             ctxt.generateJavaSource("int " + beginV + " = ");
@@ -160,8 +163,9 @@ public final class ForEach implements TagPlugin {
 
         if (hasBegin) {
             String tV = ctxt.getTemporaryVariableName();
-            ctxt.generateJavaSource(
-                    "for (int " + tV + "=" + beginV + ";" + tV + ">0 && " + iterV + ".hasNext(); " + tV + "--)");
+            ctxt.generateJavaSource("for (int " + tV + "=" + beginV + ";" +
+                    tV + ">0 && " + iterV + ".hasNext(); " +
+                    tV + "--)");
             ctxt.generateJavaSource(iterV + ".next();");
         }
 
@@ -176,8 +180,9 @@ public final class ForEach implements TagPlugin {
 
         if (hasStep) {
             String tV = ctxt.getTemporaryVariableName();
-            ctxt.generateJavaSource(
-                    "for (int " + tV + "=" + stepV + "-1;" + tV + ">0 && " + iterV + ".hasNext(); " + tV + "--)");
+            ctxt.generateJavaSource("for (int " + tV + "=" + stepV + "-1;" +
+                    tV + ">0 && " + iterV + ".hasNext(); " +
+                    tV + "--)");
             ctxt.generateJavaSource(iterV + ".next();");
         }
         if (hasEnd) {
@@ -187,7 +192,8 @@ public final class ForEach implements TagPlugin {
                 ctxt.generateJavaSource(indexV + "++;");
             }
             if (hasBegin) {
-                ctxt.generateJavaSource("if(" + beginV + "+" + indexV + ">" + endV + ")");
+                ctxt.generateJavaSource("if(" + beginV + "+" + indexV +
+                        ">"+ endV + ")");
             } else {
                 ctxt.generateJavaSource("if(" + indexV + ">" + endV + ")");
             }
@@ -201,7 +207,7 @@ public final class ForEach implements TagPlugin {
      * Generate iterators for data types supported in items
      */
     private void generateIterators(TagPluginContext ctxt) {
-        //@formatter:off
+
         // Object[]
         ctxt.generateDeclaration("ObjectArrayIterator",
                 "private Iterator toIterator(final Object[] a){\n" +
@@ -224,7 +230,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Boolean.valueOf(a[index++]);}\n" +
+                "      return new Boolean(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -238,7 +244,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Byte.valueOf(a[index++]);}\n" +
+                "      return new Byte(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -252,7 +258,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Character.valueOf(a[index++]);}\n" +
+                "      return new Character(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -266,7 +272,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Short.valueOf(a[index++]);}\n" +
+                "      return new Short(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -280,7 +286,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Integer.valueOf(a[index++]);}\n" +
+                "      return new Integer(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -294,7 +300,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Long.valueOf(a[index++]);}\n" +
+                "      return new Long(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -308,7 +314,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Float.valueOf(a[index++]);}\n" +
+                "      return new Float(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -322,7 +328,7 @@ public final class ForEach implements TagPlugin {
                 "    public boolean hasNext() {\n" +
                 "      return index < a.length;}\n" +
                 "    public Object next() {\n" +
-                "      return Double.valueOf(a[index++]);}\n" +
+                "      return new Double(a[index++]);}\n" +
                 "    public void remove() {}\n" +
                 "  });\n" +
                 "}"
@@ -340,6 +346,6 @@ public final class ForEach implements TagPlugin {
                 "  });\n" +
                 "}"
         );
-        //@formatter:on
+
     }
 }

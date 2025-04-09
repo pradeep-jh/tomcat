@@ -19,32 +19,31 @@ package org.apache.catalina.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.GenericFilter;
-import jakarta.servlet.HttpConstraintElement;
-import jakarta.servlet.HttpMethodConstraintElement;
-import jakarta.servlet.MultipartConfigElement;
-import jakarta.servlet.Servlet;
-import jakarta.servlet.ServletContainerInitializer;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRegistration;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.ServletSecurityElement;
-import jakarta.servlet.annotation.HttpConstraint;
-import jakarta.servlet.annotation.HttpMethodConstraint;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.ServletSecurity;
-import jakarta.servlet.annotation.ServletSecurity.TransportGuarantee;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.FilterChain;
+import javax.servlet.GenericFilter;
+import javax.servlet.HttpConstraintElement;
+import javax.servlet.HttpMethodConstraintElement;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.ServletSecurityElement;
+import javax.servlet.annotation.HttpConstraint;
+import javax.servlet.annotation.HttpMethodConstraint;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.ServletSecurity;
+import javax.servlet.annotation.ServletSecurity.TransportGuarantee;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -52,10 +51,7 @@ import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
-import org.apache.catalina.ContainerEvent;
-import org.apache.catalina.ContainerListener;
 import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
 import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
@@ -151,7 +147,7 @@ public class TestStandardContext extends TomcatBaseTest {
 
     private static final class Bug46243Client extends SimpleHttpClient {
 
-        Bug46243Client(int port) {
+        public Bug46243Client(int port) {
             setPort(port);
         }
 
@@ -406,7 +402,7 @@ public class TestStandardContext extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         // Setup realm
         TesterMapRealm realm = new TesterMapRealm();
@@ -475,7 +471,7 @@ public class TestStandardContext extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         ctx.setDenyUncoveredHttpMethods(enableDeny);
 
@@ -556,7 +552,7 @@ public class TestStandardContext extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
 
         // Add ServletContainerInitializer
         Bug51376SCI sci = new Bug51376SCI(loadOnStartUp);
@@ -706,7 +702,7 @@ public class TestStandardContext extends TomcatBaseTest {
 
             PrintWriter out = resp.getWriter();
 
-            out.print("parts=" + (null == req.getParts()
+            out.println("parts=" + (null == req.getParts()
                                     ? "null"
                                     : Integer.valueOf(req.getParts().size())));
         }
@@ -726,9 +722,7 @@ public class TestStandardContext extends TomcatBaseTest {
         private Context context;
 
         private synchronized void init() throws Exception {
-            if (init) {
-              return;
-            }
+            if (init) return;
 
             Tomcat tomcat = getTomcatInstance();
             context = tomcat.addContext("", TEMP_DIR);
@@ -1045,71 +1039,6 @@ public class TestStandardContext extends TomcatBaseTest {
         protected void doGet(HttpServletRequest req, HttpServletResponse resp)
                 throws ServletException, IOException {
             resp.getWriter().print("OK");
-        }
-    }
-
-
-    @Test
-    public void testNamingContextName() throws Exception {
-        Engine engine = new StandardEngine();
-        engine.setName("engine");
-
-        Host host = new StandardHost();
-        host.setName("host");
-        host.setParent(engine);
-
-        Context context = new StandardContext();
-        context.setName("context");
-        context.setParent(host);
-
-        Method m = StandardContext.class.getDeclaredMethod("getNamingContextName");
-        m.setAccessible(true);
-        String result = (String) m.invoke(context);
-
-        Assert.assertEquals("/engine/hostcontext", result);
-    }
-
-    @Test
-    public void testWrapperListeners() throws Exception {
-        // Setup Tomcat instance
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("/test", null);
-        ctx.setWrapperClass("org.apache.catalina.core.TestStandardContext$MyWrapperClass");
-        ctx.addWrapperLifecycle("org.apache.catalina.core.TestStandardContext$MyWrapperLifecycleListener");
-        ctx.addWrapperListener("org.apache.catalina.core.TestStandardContext$MyWrapperContainerListener");
-        Wrapper w = Tomcat.addServlet(ctx, "something", "org.apache.catalina.core.TestStandardContext$Bug51376Servlet");
-
-        tomcat.start();
-
-        w.addInitParameter("foo", "bar");
-
-        Assert.assertTrue(customWrapperClassOk);
-        Assert.assertTrue(containerListenerOk);
-        Assert.assertTrue(lifecycleListenerOk);
-    }
-
-    private static boolean customWrapperClassOk = false;
-    public static class MyWrapperClass extends StandardWrapper {
-        @Override
-        protected void startInternal() throws LifecycleException {
-            super.startInternal();
-            customWrapperClassOk = true;
-        }
-    }
-    private static boolean containerListenerOk = false;
-    public static class MyWrapperContainerListener implements ContainerListener {
-        @Override
-        public void containerEvent(ContainerEvent event) {
-            containerListenerOk = true;
-        }
-    }
-    private static boolean lifecycleListenerOk = false;
-    public static class MyWrapperLifecycleListener implements LifecycleListener {
-        @Override
-        public void lifecycleEvent(LifecycleEvent event) {
-            lifecycleListenerOk = true;
         }
     }
 }

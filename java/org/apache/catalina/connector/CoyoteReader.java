@@ -25,7 +25,8 @@ import java.io.IOException;
  *
  * @author Remy Maucherat
  */
-public class CoyoteReader extends BufferedReader {
+public class CoyoteReader
+    extends BufferedReader {
 
 
     // -------------------------------------------------------------- Constants
@@ -60,7 +61,8 @@ public class CoyoteReader extends BufferedReader {
      * Prevent cloning the facade.
      */
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    protected Object clone()
+        throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 
@@ -80,59 +82,76 @@ public class CoyoteReader extends BufferedReader {
 
 
     @Override
-    public void close() throws IOException {
+    public void close()
+        throws IOException {
         ib.close();
     }
 
 
     @Override
-    public int read() throws IOException {
+    public int read()
+        throws IOException {
         return ib.read();
     }
 
 
     @Override
-    public int read(char[] cbuf) throws IOException {
+    public int read(char[] cbuf)
+        throws IOException {
         return ib.read(cbuf, 0, cbuf.length);
     }
 
 
     @Override
-    public int read(char[] cbuf, int off, int len) throws IOException {
+    public int read(char[] cbuf, int off, int len)
+        throws IOException {
         return ib.read(cbuf, off, len);
     }
 
 
     @Override
-    public long skip(long n) throws IOException {
+    public long skip(long n)
+        throws IOException {
         return ib.skip(n);
     }
 
 
     @Override
-    public boolean ready() throws IOException {
+    public boolean ready()
+        throws IOException {
         return ib.ready();
     }
 
 
     @Override
-    public void mark(int readAheadLimit) throws IOException {
+    public boolean markSupported() {
+        return true;
+    }
+
+
+    @Override
+    public void mark(int readAheadLimit)
+        throws IOException {
         ib.mark(readAheadLimit);
     }
 
 
     @Override
-    public void reset() throws IOException {
+    public void reset()
+        throws IOException {
         ib.reset();
     }
 
 
     @Override
-    public String readLine() throws IOException {
+    public String readLine()
+        throws IOException {
 
         if (lineBuffer == null) {
             lineBuffer = new char[MAX_LINE_LENGTH];
-        }
+       }
+
+        String result = null;
 
         int pos = 0;
         int end = -1;
@@ -157,7 +176,7 @@ public class CoyoteReader extends BufferedReader {
                         if (i == (pos + nRead - 1)) {
                             nextchar = (char) read();
                         } else {
-                            nextchar = lineBuffer[i + 1];
+                            nextchar = lineBuffer[i+1];
                         }
                         if (nextchar == LINE_SEP[1]) {
                             skip++;
@@ -179,12 +198,10 @@ public class CoyoteReader extends BufferedReader {
                 pos = 0;
             } else {
                 reset();
-                // No need to check return value. We know there are at least skip characters available.
                 skip(skip);
             }
         }
 
-        String result;
         if (aggregator == null) {
             result = new String(lineBuffer, 0, end);
         } else {

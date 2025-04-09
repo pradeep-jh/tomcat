@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina;
 
 import java.io.File;
@@ -23,17 +25,21 @@ import org.apache.catalina.deploy.NamingResourcesImpl;
 import org.apache.catalina.startup.Catalina;
 
 /**
- * A <code>Server</code> element represents the entire Catalina servlet container. Its attributes represent the
- * characteristics of the servlet container as a whole. A <code>Server</code> may contain one or more
- * <code>Services</code>, and the top level set of naming resources.
+ * A <code>Server</code> element represents the entire Catalina
+ * servlet container.  Its attributes represent the characteristics of
+ * the servlet container as a whole.  A <code>Server</code> may contain
+ * one or more <code>Services</code>, and the top level set of naming
+ * resources.
  * <p>
- * Normally, an implementation of this interface will also implement <code>Lifecycle</code>, such that when the
- * <code>start()</code> and <code>stop()</code> methods are called, all of the defined <code>Services</code> are also
- * started or stopped.
+ * Normally, an implementation of this interface will also implement
+ * <code>Lifecycle</code>, such that when the <code>start()</code> and
+ * <code>stop()</code> methods are called, all of the defined
+ * <code>Services</code> are also started or stopped.
  * <p>
- * In between, the implementation must open a server socket on the port number specified by the <code>port</code>
- * property. When a connection is accepted, the first line is read and compared with the specified shutdown command. If
- * the command matches, shutdown of the server is initiated.
+ * In between, the implementation must open a server socket on the port number
+ * specified by the <code>port</code> property.  When a connection is accepted,
+ * the first line is read and compared with the specified shutdown command.
+ * If the command matches, shutdown of the server is initiated.
  *
  * @author Craig R. McClanahan
  */
@@ -44,7 +50,7 @@ public interface Server extends Lifecycle {
     /**
      * @return the global naming resources.
      */
-    NamingResourcesImpl getGlobalNamingResources();
+    public NamingResourcesImpl getGlobalNamingResources();
 
 
     /**
@@ -52,13 +58,14 @@ public interface Server extends Lifecycle {
      *
      * @param globalNamingResources The new global naming resources
      */
-    void setGlobalNamingResources(NamingResourcesImpl globalNamingResources);
+    public void setGlobalNamingResources
+        (NamingResourcesImpl globalNamingResources);
 
 
     /**
      * @return the global naming resources context.
      */
-    javax.naming.Context getGlobalNamingContext();
+    public javax.naming.Context getGlobalNamingContext();
 
 
     /**
@@ -67,7 +74,7 @@ public interface Server extends Lifecycle {
      * @see #getPortOffset()
      * @see #getPortWithOffset()
      */
-    int getPort();
+    public int getPort();
 
 
     /**
@@ -77,36 +84,39 @@ public interface Server extends Lifecycle {
      *
      * @see #setPortOffset(int)
      */
-    void setPort(int port);
+    public void setPort(int port);
 
     /**
-     * Get the number that offsets the port used for shutdown commands. For example, if port is 8005, and portOffset is
-     * 1000, the server listens at 9005.
+     * Get the number that offsets the port used for shutdown commands.
+     * For example, if port is 8005, and portOffset is 1000,
+     * the server listens at 9005.
      *
      * @return the port offset
      */
-    int getPortOffset();
+    public int getPortOffset();
 
     /**
-     * Set the number that offsets the server port used for shutdown commands. For example, if port is 8005, and you set
-     * portOffset to 1000, connector listens at 9005.
+     * Set the number that offsets the server port used for shutdown commands.
+     * For example, if port is 8005, and you set portOffset to 1000,
+     * connector listens at 9005.
      *
      * @param portOffset sets the port offset
      */
-    void setPortOffset(int portOffset);
+    public void setPortOffset(int portOffset);
 
     /**
-     * Get the actual port on which server is listening for the shutdown commands. If you do not set port offset, port
-     * is returned. If you set port offset, port offset + port is returned.
+     * Get the actual port on which server is listening for the shutdown commands.
+     * If you do not set port offset, port is returned. If you set
+     * port offset, port offset + port is returned.
      *
      * @return the port with offset
      */
-    int getPortWithOffset();
+    public int getPortWithOffset();
 
     /**
      * @return the address on which we listen to for shutdown commands.
      */
-    String getAddress();
+    public String getAddress();
 
 
     /**
@@ -114,13 +124,13 @@ public interface Server extends Lifecycle {
      *
      * @param address The new address
      */
-    void setAddress(String address);
+    public void setAddress(String address);
 
 
     /**
      * @return the shutdown command string we are waiting for.
      */
-    String getShutdown();
+    public String getShutdown();
 
 
     /**
@@ -128,15 +138,15 @@ public interface Server extends Lifecycle {
      *
      * @param shutdown The new shutdown command
      */
-    void setShutdown(String shutdown);
+    public void setShutdown(String shutdown);
 
 
     /**
-     * @return the parent class loader for this component. If not set, return {@link #getCatalina()}
-     *             {@link Catalina#getParentClassLoader()}. If catalina has not been set, return the system class
-     *             loader.
+     * @return the parent class loader for this component. If not set, return
+     * {@link #getCatalina()} {@link Catalina#getParentClassLoader()}. If
+     * catalina has not been set, return the system class loader.
      */
-    ClassLoader getParentClassLoader();
+    public ClassLoader getParentClassLoader();
 
 
     /**
@@ -144,63 +154,65 @@ public interface Server extends Lifecycle {
      *
      * @param parent The new parent class loader
      */
-    void setParentClassLoader(ClassLoader parent);
+    public void setParentClassLoader(ClassLoader parent);
 
 
     /**
      * @return the outer Catalina startup/shutdown component if present.
      */
-    Catalina getCatalina();
+    public Catalina getCatalina();
 
     /**
      * Set the outer Catalina startup/shutdown component if present.
      *
      * @param catalina the outer Catalina component
      */
-    void setCatalina(Catalina catalina);
+    public void setCatalina(Catalina catalina);
 
 
     /**
-     * @return the configured base (instance) directory. Note that home and base may be the same (and are by default).
-     *             If this is not set the value returned by {@link #getCatalinaHome()} will be used.
+     * @return the configured base (instance) directory. Note that home and base
+     * may be the same (and are by default). If this is not set the value
+     * returned by {@link #getCatalinaHome()} will be used.
      */
-    File getCatalinaBase();
+    public File getCatalinaBase();
 
     /**
-     * Set the configured base (instance) directory. Note that home and base may be the same (and are by default).
+     * Set the configured base (instance) directory. Note that home and base
+     * may be the same (and are by default).
      *
      * @param catalinaBase the configured base directory
      */
-    void setCatalinaBase(File catalinaBase);
+    public void setCatalinaBase(File catalinaBase);
 
 
     /**
-     * @return the configured home (binary) directory. Note that home and base may be the same (and are by default).
+     * @return the configured home (binary) directory. Note that home and base
+     * may be the same (and are by default).
      */
-    File getCatalinaHome();
+    public File getCatalinaHome();
 
     /**
-     * Set the configured home (binary) directory. Note that home and base may be the same (and are by default).
+     * Set the configured home (binary) directory. Note that home and base
+     * may be the same (and are by default).
      *
      * @param catalinaHome the configured home directory
      */
-    void setCatalinaHome(File catalinaHome);
+    public void setCatalinaHome(File catalinaHome);
 
 
     /**
      * Get the utility thread count.
-     *
      * @return the thread count
      */
-    int getUtilityThreads();
+    public int getUtilityThreads();
 
 
     /**
      * Set the utility thread count.
-     *
      * @param utilityThreads the new thread count
      */
-    void setUtilityThreads(int utilityThreads);
+    public void setUtilityThreads(int utilityThreads);
 
 
     // --------------------------------------------------------- Public Methods
@@ -211,47 +223,48 @@ public interface Server extends Lifecycle {
      *
      * @param service The Service to be added
      */
-    void addService(Service service);
+    public void addService(Service service);
 
 
     /**
      * Wait until a proper shutdown command is received, then return.
      */
-    void await();
+    public void await();
 
 
     /**
      * Find the specified Service
      *
      * @param name Name of the Service to be returned
-     *
      * @return the specified Service, or <code>null</code> if none exists.
      */
-    Service findService(String name);
+    public Service findService(String name);
 
 
     /**
-     * @return the array of Services defined within this Server.
+     * @return the set of Services defined within this Server.
      */
-    Service[] findServices();
+    public Service[] findServices();
 
 
     /**
-     * Remove the specified Service from the set associated from this Server.
+     * Remove the specified Service from the set associated from this
+     * Server.
      *
      * @param service The Service to be removed
      */
-    void removeService(Service service);
+    public void removeService(Service service);
 
 
     /**
-     * @return the token necessary for operations on the associated JNDI naming context.
+     * @return the token necessary for operations on the associated JNDI naming
+     * context.
      */
-    Object getNamingToken();
+    public Object getNamingToken();
 
     /**
      * @return the utility executor managed by the Service.
      */
-    ScheduledExecutorService getUtilityExecutor();
+    public ScheduledExecutorService getUtilityExecutor();
 
 }

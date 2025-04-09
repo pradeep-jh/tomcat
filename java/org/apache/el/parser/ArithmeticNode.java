@@ -16,7 +16,7 @@
  */
 package org.apache.el.parser;
 
-import jakarta.el.ELException;
+import javax.el.ELException;
 
 import org.apache.el.lang.EvaluationContext;
 
@@ -30,7 +30,8 @@ public abstract class ArithmeticNode extends SimpleNode {
     }
 
     @Override
-    public Class<?> getType(EvaluationContext ctx) throws ELException {
+    public Class<?> getType(EvaluationContext ctx)
+            throws ELException {
         return Number.class;
     }
 }

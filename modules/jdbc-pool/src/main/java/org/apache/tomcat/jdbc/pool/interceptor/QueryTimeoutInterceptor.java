@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.jdbc.pool.interceptor;
 
 import java.lang.reflect.Method;
@@ -33,9 +34,7 @@ public class QueryTimeoutInterceptor extends AbstractCreateStatementInterceptor 
     public void setProperties(Map<String,InterceptorProperty> properties) {
         super.setProperties(properties);
         InterceptorProperty p = properties.get("queryTimeout");
-        if (p!=null) {
-          timeout = p.getValueAsInt(timeout);
-        }
+        if (p!=null) timeout = p.getValueAsInt(timeout);
     }
 
     @Override

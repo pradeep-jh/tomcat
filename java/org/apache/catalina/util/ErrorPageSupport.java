@@ -24,15 +24,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.tomcat.util.descriptor.web.ErrorPage;
 
 /**
- * Provides support for tracking per exception type and per HTTP status code error pages.
+ * Provides support for tracking per exception type and per HTTP status code
+ * error pages.
  */
 public class ErrorPageSupport {
 
     // Fully qualified class name to error page
-    private final Map<String,ErrorPage> exceptionPages = new ConcurrentHashMap<>();
+    private Map<String, ErrorPage> exceptionPages = new ConcurrentHashMap<>();
 
     // HTTP status code to error page
-    private final Map<Integer,ErrorPage> statusPages = new ConcurrentHashMap<>();
+    private Map<Integer, ErrorPage> statusPages = new ConcurrentHashMap<>();
 
 
     public void add(ErrorPage errorPage) {
@@ -65,7 +66,8 @@ public class ErrorPageSupport {
      *
      * @param exceptionType The fully qualified class name of the exception type
      *
-     * @return The ErrorPage for the named exception type, or {@code null} if none is configured
+     * @return The ErrorPage for the named exception type, or {@code null} if
+     *         none is configured
      */
     public ErrorPage find(String exceptionType) {
         return exceptionPages.get(exceptionType);

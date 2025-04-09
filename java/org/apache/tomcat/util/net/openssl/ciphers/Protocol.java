@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.net.openssl.ciphers;
 
 import org.apache.tomcat.util.net.Constants;
@@ -28,7 +29,7 @@ public enum Protocol {
 
     private final String openSSLName;
 
-    Protocol(String openSSLName) {
+    private Protocol(String openSSLName) {
         this.openSSLName = openSSLName;
     }
 

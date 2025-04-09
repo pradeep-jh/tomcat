@@ -38,7 +38,12 @@ public final class TesterMapRealm extends RealmBase {
     }
 
     public void addUserRole(String username, String role) {
-        roles.computeIfAbsent(username, k -> new ArrayList<>()).add(role);
+        List<String> userRoles = roles.get(username);
+        if (userRoles == null) {
+            userRoles = new ArrayList<>();
+            roles.put(username, userRoles);
+        }
+        userRoles.add(role);
     }
 
     @Override
@@ -48,7 +53,7 @@ public final class TesterMapRealm extends RealmBase {
 
     @Override
     protected Principal getPrincipal(String username) {
-        return new GenericPrincipal(username,
+        return new GenericPrincipal(username, getPassword(username),
                 roles.get(username));
     }
 

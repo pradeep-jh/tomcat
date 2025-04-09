@@ -16,8 +16,8 @@
  */
 package org.apache.coyote.http2;
 
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -34,60 +34,63 @@ abstract class ConnectionSettingsBase<T extends Throwable> {
     static final int MAX_WINDOW_SIZE = (1 << 31) - 1;
     static final int MIN_MAX_FRAME_SIZE = 1 << 14;
     static final int MAX_MAX_FRAME_SIZE = (1 << 24) - 1;
-    static final long UNLIMITED = ((long) 1 << 32); // Use the maximum possible
+    static final long UNLIMITED = ((long)1 << 32); // Use the maximum possible
     static final int MAX_HEADER_TABLE_SIZE = 1 << 16;
 
     // Defaults (defined by the specification)
     static final int DEFAULT_HEADER_TABLE_SIZE = Hpack.DEFAULT_TABLE_SIZE;
+    static final boolean DEFAULT_ENABLE_PUSH = true;
     static final long DEFAULT_MAX_CONCURRENT_STREAMS = UNLIMITED;
     static final int DEFAULT_INITIAL_WINDOW_SIZE = (1 << 16) - 1;
     static final int DEFAULT_MAX_FRAME_SIZE = MIN_MAX_FRAME_SIZE;
     static final long DEFAULT_MAX_HEADER_LIST_SIZE = 1 << 15;
 
-    // Defaults (defined by Tomcat)
-    static final long DEFAULT_NO_RFC7540_PRIORITIES = 1;
-
-    Map<Setting,Long> current = new ConcurrentHashMap<>();
-    Map<Setting,Long> pending = new ConcurrentHashMap<>();
+    Map<Setting, Long> current = new EnumMap<>(Setting.class);
+    Map<Setting, Long> pending = new EnumMap<>(Setting.class);
 
 
     ConnectionSettingsBase(String connectionId) {
         this.connectionId = connectionId;
         // Set up the defaults
-        current.put(Setting.HEADER_TABLE_SIZE, Long.valueOf(DEFAULT_HEADER_TABLE_SIZE));
-        current.put(Setting.ENABLE_PUSH, Long.valueOf(0));
+        current.put(Setting.HEADER_TABLE_SIZE,      Long.valueOf(DEFAULT_HEADER_TABLE_SIZE));
+        current.put(Setting.ENABLE_PUSH,            Long.valueOf(DEFAULT_ENABLE_PUSH ? 1 : 0));
         current.put(Setting.MAX_CONCURRENT_STREAMS, Long.valueOf(DEFAULT_MAX_CONCURRENT_STREAMS));
-        current.put(Setting.INITIAL_WINDOW_SIZE, Long.valueOf(DEFAULT_INITIAL_WINDOW_SIZE));
-        current.put(Setting.MAX_FRAME_SIZE, Long.valueOf(DEFAULT_MAX_FRAME_SIZE));
-        current.put(Setting.MAX_HEADER_LIST_SIZE, Long.valueOf(DEFAULT_MAX_HEADER_LIST_SIZE));
-        current.put(Setting.NO_RFC7540_PRIORITIES, Long.valueOf(DEFAULT_NO_RFC7540_PRIORITIES));
+        current.put(Setting.INITIAL_WINDOW_SIZE,    Long.valueOf(DEFAULT_INITIAL_WINDOW_SIZE));
+        current.put(Setting.MAX_FRAME_SIZE,         Long.valueOf(DEFAULT_MAX_FRAME_SIZE));
+        current.put(Setting.MAX_HEADER_LIST_SIZE,   Long.valueOf(DEFAULT_MAX_HEADER_LIST_SIZE));
     }
 
 
     final void set(Setting setting, long value) throws T {
-        if (log.isTraceEnabled()) {
-            log.trace(sm.getString("connectionSettings.debug", connectionId, getEndpointName(), setting,
-                    Long.toString(value)));
+        if (log.isDebugEnabled()) {
+            log.debug(sm.getString("connectionSettings.debug",
+                    connectionId, getEndpointName(), setting, Long.toString(value)));
         }
 
-        switch (setting) {
-            case HEADER_TABLE_SIZE -> validateHeaderTableSize(value);
-            case ENABLE_PUSH -> validateEnablePush(value);
-            case MAX_CONCURRENT_STREAMS, MAX_HEADER_LIST_SIZE -> {
-                // No further validation required
-            }
-            case INITIAL_WINDOW_SIZE -> validateInitialWindowSize(value);
-            case MAX_FRAME_SIZE -> validateMaxFrameSize(value);
-            case NO_RFC7540_PRIORITIES -> validateNoRfc7540Priorities(value);
-            case ENABLE_CONNECT_PROTOCOL, TLS_RENEG_PERMITTED -> {
-                // Not supported. Ignore it.
-                return;
-                // Not supported. Ignore it.
-            }
-            case UNKNOWN -> {
-                // Unrecognised. Ignore it.
-                return;
-            }
+        switch(setting) {
+        case HEADER_TABLE_SIZE:
+            validateHeaderTableSize(value);
+            break;
+        case ENABLE_PUSH:
+            validateEnablePush(value);
+            break;
+        case MAX_CONCURRENT_STREAMS:
+            // No further validation required
+            break;
+        case INITIAL_WINDOW_SIZE:
+            validateInitialWindowSize(value);
+            break;
+        case MAX_FRAME_SIZE:
+            validateMaxFrameSize(value);
+            break;
+        case MAX_HEADER_LIST_SIZE:
+            // No further validation required
+            break;
+        case UNKNOWN:
+            // Unrecognised. Ignore it.
+            log.warn(sm.getString("connectionSettings.unknown",
+                    connectionId, setting, Long.toString(value)));
+            return;
         }
 
         set(setting, Long.valueOf(value));
@@ -174,8 +177,8 @@ abstract class ConnectionSettingsBase<T extends Throwable> {
 
     private void validateHeaderTableSize(long headerTableSize) throws T {
         if (headerTableSize > MAX_HEADER_TABLE_SIZE) {
-            String msg = sm.getString("connectionSettings.headerTableSizeLimit", connectionId,
-                    Long.toString(headerTableSize));
+            String msg = sm.getString("connectionSettings.headerTableSizeLimit",
+                    connectionId, Long.toString(headerTableSize));
             throwException(msg, Http2Error.PROTOCOL_ERROR);
         }
     }
@@ -185,7 +188,8 @@ abstract class ConnectionSettingsBase<T extends Throwable> {
         // Can't be less than zero since the result of the byte->long conversion
         // will never be negative
         if (enablePush > 1) {
-            String msg = sm.getString("connectionSettings.enablePushInvalid", connectionId, Long.toString(enablePush));
+            String msg = sm.getString("connectionSettings.enablePushInvalid",
+                    connectionId, Long.toString(enablePush));
             throwException(msg, Http2Error.PROTOCOL_ERROR);
         }
     }
@@ -193,8 +197,8 @@ abstract class ConnectionSettingsBase<T extends Throwable> {
 
     private void validateInitialWindowSize(long initialWindowSize) throws T {
         if (initialWindowSize > MAX_WINDOW_SIZE) {
-            String msg = sm.getString("connectionSettings.windowSizeTooBig", connectionId,
-                    Long.toString(initialWindowSize), Long.toString(MAX_WINDOW_SIZE));
+            String msg = sm.getString("connectionSettings.windowSizeTooBig",
+                    connectionId, Long.toString(initialWindowSize), Long.toString(MAX_WINDOW_SIZE));
             throwException(msg, Http2Error.FLOW_CONTROL_ERROR);
         }
     }
@@ -202,18 +206,9 @@ abstract class ConnectionSettingsBase<T extends Throwable> {
 
     private void validateMaxFrameSize(long maxFrameSize) throws T {
         if (maxFrameSize < MIN_MAX_FRAME_SIZE || maxFrameSize > MAX_MAX_FRAME_SIZE) {
-            String msg =
-                    sm.getString("connectionSettings.maxFrameSizeInvalid", connectionId, Long.toString(maxFrameSize),
-                            Integer.toString(MIN_MAX_FRAME_SIZE), Integer.toString(MAX_MAX_FRAME_SIZE));
-            throwException(msg, Http2Error.PROTOCOL_ERROR);
-        }
-    }
-
-
-    private void validateNoRfc7540Priorities(long noRfc7540Priorities) throws T {
-        if (noRfc7540Priorities < 0 || noRfc7540Priorities > 1) {
-            String msg = sm.getString("connectionSettings.noRfc7540PrioritiesInvalid", connectionId,
-                    Long.toString(noRfc7540Priorities));
+            String msg = sm.getString("connectionSettings.maxFrameSizeInvalid",
+                    connectionId, Long.toString(maxFrameSize), Integer.toString(MIN_MAX_FRAME_SIZE),
+                    Integer.toString(MAX_MAX_FRAME_SIZE));
             throwException(msg, Http2Error.PROTOCOL_ERROR);
         }
     }

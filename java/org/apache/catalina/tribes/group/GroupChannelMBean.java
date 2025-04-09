@@ -28,33 +28,35 @@ import org.apache.catalina.tribes.UniqueId;
 public interface GroupChannelMBean {
 
     // Attributes
-    boolean getOptionCheck();
+    public boolean getOptionCheck();
 
-    boolean getHeartbeat();
+    public boolean getHeartbeat();
 
-    long getHeartbeatSleeptime();
+    public long getHeartbeatSleeptime();
 
     // Operations
-    void start(int svc) throws ChannelException;
+    public void start(int svc) throws ChannelException;
 
-    void stop(int svc) throws ChannelException;
+    public void stop(int svc) throws ChannelException;
 
-    UniqueId send(Member[] destination, Serializable msg, int options) throws ChannelException;
+    public UniqueId send(Member[] destination, Serializable msg, int options)
+            throws ChannelException;
 
-    UniqueId send(Member[] destination, Serializable msg, int options, ErrorHandler handler) throws ChannelException;
+    public UniqueId send(Member[] destination, Serializable msg, int options, ErrorHandler handler)
+            throws ChannelException;
 
-    void addMembershipListener(MembershipListener listener);
+    public void addMembershipListener(MembershipListener listener);
 
-    void addChannelListener(ChannelListener listener);
+    public void addChannelListener(ChannelListener listener);
 
-    void removeMembershipListener(MembershipListener listener);
+    public void removeMembershipListener(MembershipListener listener);
 
-    void removeChannelListener(ChannelListener listener);
+    public void removeChannelListener(ChannelListener listener);
 
-    boolean hasMembers();
+    public boolean hasMembers() ;
 
-    Member[] getMembers();
+    public Member[] getMembers() ;
 
-    Member getLocalMember(boolean incAlive);
+    public Member getLocalMember(boolean incAlive);
 
 }

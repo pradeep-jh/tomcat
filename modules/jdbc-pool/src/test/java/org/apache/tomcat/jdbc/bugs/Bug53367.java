@@ -108,8 +108,7 @@ public class Bug53367 {
                 @Override
                 public void run() {
                     // Expected to fail
-                    try (@SuppressWarnings("unused")
-                    Connection c = ds.getConnection()) {
+                    try (Connection c = ds.getConnection()) {
                     } catch (Exception e) {
                         System.err.println("Step 2:"+e.getMessage());
                     }

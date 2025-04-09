@@ -28,7 +28,6 @@ import org.apache.catalina.tribes.ManagedChannel;
 import org.apache.catalina.tribes.Member;
 import org.apache.catalina.tribes.MembershipListener;
 import org.apache.catalina.tribes.TesterUtil;
-import org.apache.catalina.tribes.transport.ReceiverBase;
 
 public class TestGroupChannelMemberArrival {
     private static int count = 10;
@@ -39,7 +38,6 @@ public class TestGroupChannelMemberArrival {
     public void setUp() throws Exception {
         for (int i = 0; i < channels.length; i++) {
             channels[i] = new GroupChannel();
-            ((ReceiverBase) channels[i].getChannelReceiver()).setHost("localhost");
             channels[i].getMembershipService().setPayload( ("Channel-" + (i + 1)).getBytes("ASCII"));
             listeners[i] = new TestMbrListener( ("Listener-" + (i + 1)));
             channels[i].addMembershipListener(listeners[i]);
@@ -86,7 +84,7 @@ public class TestGroupChannelMemberArrival {
                     arrivalLengthErrors.append(listener.members.size());
                     arrivalLengthErrors.append("] but should have been [");
                     arrivalLengthErrors.append(channels.length - 1);
-                    arrivalLengthErrors.append(']');
+                    arrivalLengthErrors.append("]");
                     arrivalLengthErrors.append('\n');
                 }
             }

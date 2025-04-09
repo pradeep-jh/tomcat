@@ -14,17 +14,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.jni;
 
-/**
- * Tomcat Native 1.2.33 and earlier won't initialise unless this class is
- * present. This dummy class ensures initialisation gets as far as being able to
- * check the version of the Tomcat Native library and reporting a version error
- * if 1.2.33 or earlier is present.
+/** Sockaddr
+ *
+ * @author Mladen Turk
  */
 public class Sockaddr {
 
-    private Sockaddr() {
-        // Hide default constructor
-    }
+   /** The pool to use... */
+    public long pool;
+    /** The hostname */
+    public String hostname;
+    /** Either a string of the port number or the service name for the port */
+    public String servname;
+    /** The numeric port */
+    public int port;
+    /** The family */
+    public int family;
+    /** If multiple addresses were found by apr_sockaddr_info_get(), this
+     *  points to a representation of the next address. */
+    public long next;
+
 }

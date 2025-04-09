@@ -18,7 +18,7 @@ package org.apache.catalina.startup;
 
 import java.lang.reflect.Method;
 
-import jakarta.servlet.MultipartConfigElement;
+import javax.servlet.MultipartConfigElement;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,7 +77,7 @@ public class TestMultipartConfig {
     }
 
     @Test
-    public void testPartialMultipartConfigMaxRequestSize() throws Exception {
+    public void testPartialMultipartConfigMaxReqeustSize() throws Exception {
         MultipartDef multipartDef = new MultipartDef();
         multipartDef.setMaxRequestSize("10240");
 
@@ -149,7 +149,7 @@ public class TestMultipartConfig {
     }
 
     private static class MyContextConfig extends ContextConfig {
-        MyContextConfig() {
+        public MyContextConfig() {
             CustomContext context = new CustomContext();
             super.context = context;
             context.setConfigured(false);
@@ -164,6 +164,7 @@ public class TestMultipartConfig {
             Container parent = new StandardHost();
             parent.setParent(engine);
             super.context.setParent(parent);
+            context.getState().equals(LifecycleState.STARTING_PREP);
         }
         public Context getContext() {
             return super.context;
@@ -174,7 +175,7 @@ public class TestMultipartConfig {
         private volatile LifecycleState state;
 
         @Override
-        public synchronized LifecycleState getState() {
+        public LifecycleState getState() {
             return state;
         }
 

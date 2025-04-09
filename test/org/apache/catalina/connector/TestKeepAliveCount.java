@@ -18,10 +18,10 @@ package org.apache.catalina.connector;
 
 import java.io.IOException;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,9 +52,7 @@ public class TestKeepAliveCount extends TomcatBaseTest {
         private boolean init;
 
         private synchronized void init() {
-            if (init) {
-              return;
-            }
+            if (init) return;
 
             Tomcat tomcat = getTomcatInstance();
             Context root = tomcat.addContext("", TEMP_DIR);

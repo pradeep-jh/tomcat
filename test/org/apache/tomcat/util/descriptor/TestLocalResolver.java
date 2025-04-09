@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.servlet.ServletContext;
+import javax.servlet.ServletContext;
 
 import org.junit.Assert;
 import org.junit.Before;

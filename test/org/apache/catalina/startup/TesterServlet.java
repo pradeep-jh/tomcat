@@ -19,27 +19,14 @@ package org.apache.catalina.startup;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class TesterServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
-    private final boolean explicitClose;
-
-
-    public TesterServlet() {
-        this(false);
-    }
-
-
-    public TesterServlet(boolean explicitClose) {
-        this.explicitClose = explicitClose;
-    }
-
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -48,9 +35,5 @@ public class TesterServlet extends HttpServlet {
         resp.setContentType("text/plain");
         PrintWriter out = resp.getWriter();
         out.print("OK");
-
-        if (explicitClose) {
-            resp.setHeader("Connection", "close");
-        }
     }
 }

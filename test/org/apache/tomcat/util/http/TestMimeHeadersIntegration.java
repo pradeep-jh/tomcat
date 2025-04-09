@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.SocketException;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServlet;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -95,7 +95,7 @@ public class TestMimeHeadersIntegration extends TomcatBaseTest {
             Assert.assertEquals("OK", client.getResponseBody());
         } else {
             alv.validateAccessLog(1, 400, 0, 3000);
-            // Connection cancelled or response 400
+            // Connection aborted or response 400
             Assert.assertTrue("Response line is: " + client.getResponseLine(),
                     client.getResponseLine() == null || client.isResponse400());
         }
@@ -169,7 +169,7 @@ public class TestMimeHeadersIntegration extends TomcatBaseTest {
     }
 
     private static final class Client extends SimpleHttpClient {
-        Client(Tomcat tomcat) {
+        public Client(Tomcat tomcat) {
             setPort(tomcat.getConnector().getLocalPort());
         }
 

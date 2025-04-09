@@ -16,19 +16,17 @@
  */
 package org.apache.catalina.connector;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.security.Principal;
 
 /**
- * Generic implementation of <strong>java.security.Principal</strong> that is used to represent principals authenticated
- * at the protocol handler level.
+ * Generic implementation of <strong>java.security.Principal</strong> that
+ * is used to represent principals authenticated at the protocol handler level.
  *
  * @author Remy Maucherat
  */
 public class CoyotePrincipal implements Principal, Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
 
@@ -59,11 +57,15 @@ public class CoyotePrincipal implements Principal, Serializable {
 
 
     /**
-     * Return a String representation of this object, which exposes only information that should be public.
+     * Return a String representation of this object, which exposes only
+     * information that should be public.
      */
     @Override
     public String toString() {
-        return "CoyotePrincipal[" + this.name + "]";
+        StringBuilder sb = new StringBuilder("CoyotePrincipal[");
+        sb.append(this.name);
+        sb.append("]");
+        return sb.toString();
     }
 
 

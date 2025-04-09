@@ -14,12 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
-import java.io.Serial;
-
 import javax.management.MBeanParameterInfo;
+
 
 /**
  * <p>Internal configuration information for a <code>Parameter</code>
@@ -28,8 +29,7 @@ import javax.management.MBeanParameterInfo;
  * @author Craig R. McClanahan
  */
 public class ParameterInfo extends FeatureInfo {
-    @Serial
-    private static final long serialVersionUID = 2222796006787664020L;
+    static final long serialVersionUID = 2222796006787664020L;
     // ----------------------------------------------------------- Constructors
 
 

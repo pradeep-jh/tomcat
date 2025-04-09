@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2;
 
 import java.io.InputStream;
@@ -97,9 +98,7 @@ public class DelegatingCallableStatement extends DelegatingPreparedStatement imp
         }
     }
 
-    /**
-     * @deprecated Use {@link #getBigDecimal(int)} or {@link #getBigDecimal(String)}
-     */
+    /** @deprecated Use {@link #getBigDecimal(int)} or {@link #getBigDecimal(String)} */
     @Override
     @Deprecated
     public BigDecimal getBigDecimal(final int parameterIndex, final int scale) throws SQLException {

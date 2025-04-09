@@ -23,17 +23,18 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.CloseReason.CloseCode;
-import jakarta.websocket.CloseReason.CloseCodes;
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnError;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
-import jakarta.websocket.server.ServerEndpointConfig;
+import javax.websocket.CloseReason;
+import javax.websocket.CloseReason.CloseCode;
+import javax.websocket.CloseReason.CloseCodes;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpointConfig;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,7 +68,7 @@ public class TestClose extends WebSocketBaseTest {
         // Parameter of an @OnError call
         public volatile Throwable onErrorThrowable = null;
 
-        // This is set to true for tests where the @OnMessage should send a message
+        //This is set to true for tests where the @OnMessage should send a message
         public volatile boolean onMessageSends = false;
     }
 
@@ -114,6 +115,10 @@ public class TestClose extends WebSocketBaseTest {
 
     @Test
     public void testTcpClose() throws Exception {
+        // TODO
+        Assume.assumeFalse("This test currently fails for APR",
+                getTomcatInstance().getConnector().getProtocolHandlerClassName().contains("Apr"));
+
         startServer(TestEndpointConfig.class);
 
         TesterWsClient client = new TesterWsClient("localhost", getPort());
@@ -173,6 +178,10 @@ public class TestClose extends WebSocketBaseTest {
 
     @Test
     public void testTcpCloseInOnMessage() throws Exception {
+        // TODO
+        Assume.assumeFalse("This test currently fails for APR",
+                getTomcatInstance().getConnector().getProtocolHandlerClassName().contains("Apr"));
+
         startServer(TestEndpointConfig.class);
 
         TesterWsClient client = new TesterWsClient("localhost", getPort());
@@ -273,12 +282,12 @@ public class TestClose extends WebSocketBaseTest {
                 try {
                     int count = 0;
                     // The latches above are meant to ensure the correct
-                    // sequence of events but in some cases there is a short
-                    // delay between the client closing / resetting the
-                    // connection and the server recognising that fact. This
-                    // loop tries to ensure that it lasts much longer than that
-                    // delay so any close / reset from the client triggers an
-                    // error here.
+                    // sequence of events but in some cases, particularly with
+                    // APR, there is a short delay between the client closing /
+                    // resetting the connection and the server recognising that
+                    // fact. This loop tries to ensure that it lasts much longer
+                    // than that delay so any close / reset from the client
+                    // triggers an error here.
                     while (count < 10) {
                         count++;
                         session.getBasicRemote().sendText("Test reply");

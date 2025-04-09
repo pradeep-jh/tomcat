@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.util.modeler;
 
-import java.io.Serial;
-
 import javax.management.MBeanAttributeInfo;
+
 
 /**
  * <p>Internal configuration information for an <code>Attribute</code>
@@ -27,8 +27,7 @@ import javax.management.MBeanAttributeInfo;
  * @author Craig R. McClanahan
  */
 public class AttributeInfo extends FeatureInfo {
-    @Serial
-    private static final long serialVersionUID = -2511626862303972143L;
+    static final long serialVersionUID = -2511626862303972143L;
 
     // ----------------------------------------------------- Instance Variables
     protected String displayName = null;
@@ -57,9 +56,8 @@ public class AttributeInfo extends FeatureInfo {
      * @return the name of the property getter method, if non-standard.
      */
     public String getGetMethod() {
-        if(getMethod == null) {
+        if(getMethod == null)
             getMethod = getMethodName(getName(), true, isIs());
-        }
         return this.getMethod;
     }
 
@@ -98,9 +96,8 @@ public class AttributeInfo extends FeatureInfo {
      * @return the name of the property setter method, if non-standard.
      */
     public String getSetMethod() {
-        if( setMethod == null ) {
+        if( setMethod == null )
             setMethod = getMethodName(getName(), false, false);
-        }
         return this.setMethod;
     }
 
@@ -152,14 +149,12 @@ public class AttributeInfo extends FeatureInfo {
     private String getMethodName(String name, boolean getter, boolean is) {
         StringBuilder sb = new StringBuilder();
         if (getter) {
-            if (is) {
+            if (is)
                 sb.append("is");
-            } else {
+            else
                 sb.append("get");
-            }
-        } else {
+        } else
             sb.append("set");
-        }
         sb.append(Character.toUpperCase(name.charAt(0)));
         sb.append(name.substring(1));
         return sb.toString();

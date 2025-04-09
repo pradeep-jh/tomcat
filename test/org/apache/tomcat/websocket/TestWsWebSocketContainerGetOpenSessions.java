@@ -22,20 +22,20 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.websocket.ClientEndpointConfig;
-import jakarta.websocket.CloseReason;
-import jakarta.websocket.ContainerProvider;
-import jakarta.websocket.DeploymentException;
-import jakarta.websocket.Endpoint;
-import jakarta.websocket.EndpointConfig;
-import jakarta.websocket.MessageHandler;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.Session;
-import jakarta.websocket.WebSocketContainer;
-import jakarta.websocket.server.ServerContainer;
-import jakarta.websocket.server.ServerEndpoint;
-import jakarta.websocket.server.ServerEndpointConfig;
+import javax.servlet.ServletContextEvent;
+import javax.websocket.ClientEndpointConfig;
+import javax.websocket.CloseReason;
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.MessageHandler;
+import javax.websocket.OnMessage;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
+import javax.websocket.server.ServerContainer;
+import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -164,12 +164,12 @@ public class TestWsWebSocketContainerGetOpenSessions extends WebSocketBaseTest {
     }
 
 
-    private void doTest(Endpoint client1, Endpoint client2, String server1, String server2, int client1Count,
-            int client2Count, int server1Count, int server2Count) throws Exception {
+    private void doTest(Endpoint client1, Endpoint client2, String server1, String server2,
+            int client1Count, int client2Count, int server1Count, int server2Count) throws Exception {
         Tracker.reset();
         Tomcat tomcat = getTomcatInstance();
         // No file system docBase required
-        Context ctx = getProgrammaticRootContext();
+        Context ctx = tomcat.addContext("", null);
         ctx.addApplicationListener(Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMappingDecoded("/", "default");
@@ -205,10 +205,12 @@ public class TestWsWebSocketContainerGetOpenSessions extends WebSocketBaseTest {
     }
 
 
-    private Session createSession(WebSocketContainer wsContainer, Endpoint client, String clientName, String server)
+    private Session createSession(WebSocketContainer wsContainer, Endpoint client,
+            String clientName, String server)
             throws DeploymentException, IOException, URISyntaxException {
 
-        Session s = wsContainer.connectToServer(client, ClientEndpointConfig.Builder.create().build(),
+        Session s = wsContainer.connectToServer(client,
+                ClientEndpointConfig.Builder.create().build(),
                 new URI("ws://localhost:" + getPort() + server));
         Tracker.addRecord(clientName, s.getOpenSessions().size());
         s.getBasicRemote().sendText("X");
@@ -221,14 +223,17 @@ public class TestWsWebSocketContainerGetOpenSessions extends WebSocketBaseTest {
         @Override
         public void contextInitialized(ServletContextEvent sce) {
             super.contextInitialized(sce);
-            ServerContainer sc = (ServerContainer) sce.getServletContext()
-                    .getAttribute(Constants.SERVER_CONTAINER_SERVLET_CONTEXT_ATTRIBUTE);
+            ServerContainer sc =
+                    (ServerContainer) sce.getServletContext().getAttribute(
+                            Constants.SERVER_CONTAINER_SERVLET_CONTEXT_ATTRIBUTE);
 
             try {
                 sc.addEndpoint(PojoEndpointA.class);
                 sc.addEndpoint(PojoEndpointB.class);
-                sc.addEndpoint(ServerEndpointConfig.Builder.create(ServerEndpointA.class, "/progA").build());
-                sc.addEndpoint(ServerEndpointConfig.Builder.create(ServerEndpointB.class, "/progB").build());
+                sc.addEndpoint(ServerEndpointConfig.Builder.create(
+                        ServerEndpointA.class, "/progA").build());
+                sc.addEndpoint(ServerEndpointConfig.Builder.create(
+                        ServerEndpointB.class, "/progB").build());
             } catch (DeploymentException e) {
                 throw new IllegalStateException(e);
             }
@@ -267,7 +272,7 @@ public class TestWsWebSocketContainerGetOpenSessions extends WebSocketBaseTest {
     }
 
 
-    public abstract static class ServerEndpointBase extends Endpoint {
+    public abstract static class ServerEndpointBase extends Endpoint{
 
         @Override
         public void onOpen(Session session, EndpointConfig config) {

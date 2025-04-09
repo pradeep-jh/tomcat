@@ -20,13 +20,11 @@ import java.security.Principal;
 import java.util.Iterator;
 
 /**
- * <p>
- * Abstract representation of a group of {@link User}s in a {@link UserDatabase}. Each user that is a member of this
- * group inherits the {@link Role}s assigned to the group.
- * </p>
+ * <p>Abstract representation of a group of {@link User}s in a
+ * {@link UserDatabase}.  Each user that is a member of this group
+ * inherits the {@link Role}s assigned to the group.</p>
  *
  * @author Craig R. McClanahan
- *
  * @since 4.1
  */
 public interface Group extends Principal {
@@ -36,7 +34,7 @@ public interface Group extends Principal {
     /**
      * @return the description of this group.
      */
-    String getDescription();
+    public String getDescription();
 
 
     /**
@@ -44,39 +42,41 @@ public interface Group extends Principal {
      *
      * @param description The new description
      */
-    void setDescription(String description);
+    public void setDescription(String description);
 
 
     /**
-     * @return the group name of this group, which must be unique within the scope of a {@link UserDatabase}.
+     * @return the group name of this group, which must be unique
+     * within the scope of a {@link UserDatabase}.
      */
-    String getGroupname();
+    public String getGroupname();
 
 
     /**
-     * Set the group name of this group, which must be unique within the scope of a {@link UserDatabase}.
+     * Set the group name of this group, which must be unique
+     * within the scope of a {@link UserDatabase}.
      *
      * @param groupname The new group name
      */
-    void setGroupname(String groupname);
+    public void setGroupname(String groupname);
 
 
     /**
      * @return the set of {@link Role}s assigned specifically to this group.
      */
-    Iterator<Role> getRoles();
+    public Iterator<Role> getRoles();
 
 
     /**
      * @return the {@link UserDatabase} within which this Group is defined.
      */
-    UserDatabase getUserDatabase();
+    public UserDatabase getUserDatabase();
 
 
     /**
      * @return the set of {@link User}s that are members of this group.
      */
-    Iterator<User> getUsers();
+    public Iterator<User> getUsers();
 
 
     // --------------------------------------------------------- Public Methods
@@ -86,7 +86,7 @@ public interface Group extends Principal {
      *
      * @param role The new role
      */
-    void addRole(Role role);
+    public void addRole(Role role);
 
 
     /**
@@ -94,9 +94,10 @@ public interface Group extends Principal {
      *
      * @param role The role to check
      *
-     * @return <code>true</code> if the group is assigned to the specified role otherwise <code>false</code>
+     * @return <code>true</code> if the group is assigned to the specified role
+     *         otherwise <code>false</code>
      */
-    boolean isInRole(Role role);
+    public boolean isInRole(Role role);
 
 
     /**
@@ -104,13 +105,13 @@ public interface Group extends Principal {
      *
      * @param role The old role
      */
-    void removeRole(Role role);
+    public void removeRole(Role role);
 
 
     /**
      * Remove all {@link Role}s from those assigned to this group.
      */
-    void removeRoles();
+    public void removeRoles();
 
 
 }

@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
 
@@ -23,8 +25,10 @@ import javax.management.ObjectName;
 
 /**
  * Interface for modeler MBeans.
+ *
  * This is the main entry point into modeler. It provides methods to create
  * and manipulate model mbeans and simplify their use.
+ *
  * Starting with version 1.1, this is no longer a singleton and the static
  * methods are strongly deprecated. In a container environment we can expect
  * different applications to use different registries.
@@ -45,21 +49,26 @@ public interface RegistryMBean {
      *      errors
      * @throws Exception Error invoking operation
      */
-    void invoke(List<ObjectName> mbeans, String operation, boolean failFirst)
+    public void invoke(List<ObjectName> mbeans, String operation, boolean failFirst)
             throws Exception;
 
     /**
      * Register a bean by creating a modeler mbean and adding it to the
      * MBeanServer.
+     *
      * If metadata is not loaded, we'll look up and read a file named
      * "mbeans-descriptors.ser" or "mbeans-descriptors.xml" in the same package
      * or parent.
+     *
      * If the bean is an instance of DynamicMBean. it's metadata will be converted
-     * to a model mbean, and we'll wrap it - so modeler services will be supported
+     * to a model mbean and we'll wrap it - so modeler services will be supported
+     *
      * If the metadata is still not found, introspection will be used to extract
      * it automatically.
-     * If a mbean is already registered under this name, it'll be first
+     *
+     * If an mbean is already registered under this name, it'll be first
      * unregistered.
+     *
      * If the component implements MBeanRegistration, the methods will be called.
      * If the method has a method "setRegistry" that takes a RegistryMBean as
      * parameter, it'll be called with the current registry.
@@ -74,7 +83,7 @@ public interface RegistryMBean {
      *
      * @since 1.1
      */
-    void registerComponent(Object bean, String oname, String type)
+    public void registerComponent(Object bean, String oname, String type)
            throws Exception;
 
     /**
@@ -85,7 +94,7 @@ public interface RegistryMBean {
      *
      * @since 1.1
      */
-    void unregisterComponent(String oname);
+    public void unregisterComponent(String oname);
 
 
      /**
@@ -97,14 +106,15 @@ public interface RegistryMBean {
       * @return  A unique id for the domain:name combination
       * @since 1.1
       */
-    int getId(String domain, String name);
+    public int getId(String domain, String name);
 
 
     /**
      * Reset all metadata cached by this registry. Should be called
      * to support reloading. Existing mbeans will not be affected or modified.
+     *
      * It will be called automatically if the Registry is unregistered.
      * @since 1.1
      */
-    void stop();
+    public void stop();
 }

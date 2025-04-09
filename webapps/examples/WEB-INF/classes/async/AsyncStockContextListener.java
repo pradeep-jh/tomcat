@@ -16,9 +16,9 @@
  */
 package async;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 /*
  * Ensures the Stockticker is shut down cleanly when the context stops. This

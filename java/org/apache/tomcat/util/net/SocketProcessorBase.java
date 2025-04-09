@@ -17,7 +17,6 @@
 package org.apache.tomcat.util.net;
 
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
 
 public abstract class SocketProcessorBase<S> implements Runnable {
 
@@ -38,11 +37,9 @@ public abstract class SocketProcessorBase<S> implements Runnable {
 
     @Override
     public final void run() {
-        Lock lock = socketWrapper.getLock();
-        lock.lock();
-        try {
+        synchronized (socketWrapper) {
             // It is possible that processing may be triggered for read and
-            // write at the same time. The lock above makes sure that processing
+            // write at the same time. The sync above makes sure that processing
             // does not occur in parallel. The test below ensures that if the
             // first event to be processed results in the socket being closed,
             // the subsequent events are not processed.
@@ -50,8 +47,6 @@ public abstract class SocketProcessorBase<S> implements Runnable {
                 return;
             }
             doRun();
-        } finally {
-            lock.unlock();
         }
     }
 

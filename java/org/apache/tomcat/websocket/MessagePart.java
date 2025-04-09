@@ -18,9 +18,9 @@ package org.apache.tomcat.websocket;
 
 import java.nio.ByteBuffer;
 
-import jakarta.websocket.SendHandler;
+import javax.websocket.SendHandler;
 
-public class MessagePart {
+class MessagePart {
     private final boolean fin;
     private final int rsv;
     private final byte opCode;
@@ -29,8 +29,9 @@ public class MessagePart {
     private volatile SendHandler endHandler;
     private final long blockingWriteTimeoutExpiry;
 
-    MessagePart(boolean fin, int rsv, byte opCode, ByteBuffer payload, SendHandler intermediateHandler,
-            SendHandler endHandler, long blockingWriteTimeoutExpiry) {
+    public MessagePart( boolean fin, int rsv, byte opCode, ByteBuffer payload,
+            SendHandler intermediateHandler, SendHandler endHandler,
+            long blockingWriteTimeoutExpiry) {
         this.fin = fin;
         this.rsv = rsv;
         this.opCode = opCode;
@@ -40,25 +41,31 @@ public class MessagePart {
         this.blockingWriteTimeoutExpiry = blockingWriteTimeoutExpiry;
     }
 
+
     public boolean isFin() {
         return fin;
     }
+
 
     public int getRsv() {
         return rsv;
     }
 
+
     public byte getOpCode() {
         return opCode;
     }
+
 
     public ByteBuffer getPayload() {
         return payload;
     }
 
+
     public SendHandler getIntermediateHandler() {
         return intermediateHandler;
     }
+
 
     public SendHandler getEndHandler() {
         return endHandler;
@@ -72,4 +79,5 @@ public class MessagePart {
         return blockingWriteTimeoutExpiry;
     }
 }
+
 

@@ -22,7 +22,7 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
- * Authenticator supporting the BASIC authentication method.
+ * Authenticator supporting the BASIC auth method.
  */
 public class BasicAuthenticator extends Authenticator {
 
@@ -30,21 +30,24 @@ public class BasicAuthenticator extends Authenticator {
     public static final String charsetparam = "charset";
 
     @Override
-    public String getAuthorization(String requestUri, String authenticateHeader, String userName, String userPassword,
-            String userRealm) throws AuthenticationException {
+    public String getAuthorization(String requestUri, String WWWAuthenticate,
+            Map<String, Object> userProperties) throws AuthenticationException {
 
-        validateUsername(userName);
-        validatePassword(userPassword);
+        String userName = (String) userProperties.get(Constants.WS_AUTHENTICATION_USER_NAME);
+        String password = (String) userProperties.get(Constants.WS_AUTHENTICATION_PASSWORD);
 
-        Map<String, String> parameterMap = parseAuthenticateHeader(authenticateHeader);
-        String realm = parameterMap.get("realm");
+        if (userName == null || password == null) {
+            throw new AuthenticationException(
+                    "Failed to perform Basic authentication due to  missing user/password");
+        }
 
-        validateRealm(userRealm, realm);
+        Map<String, String> wwwAuthenticate = parseWWWAuthenticateHeader(WWWAuthenticate);
 
-        String userPass = userName + ":" + userPassword;
+        String userPass = userName + ":" + password;
         Charset charset;
 
-        if (parameterMap.get(charsetparam) != null && parameterMap.get(charsetparam).equalsIgnoreCase("UTF-8")) {
+        if (wwwAuthenticate.get(charsetparam) != null
+                && wwwAuthenticate.get(charsetparam).equalsIgnoreCase("UTF-8")) {
             charset = StandardCharsets.UTF_8;
         } else {
             charset = StandardCharsets.ISO_8859_1;

@@ -14,11 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.tomcat.dbcp.dbcp2;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.tomcat.dbcp.pool2.KeyedObjectPool;
 
@@ -44,7 +48,7 @@ public class PoolableCallableStatement extends DelegatingCallableStatement {
     private final PStmtKey key;
 
     /**
-     * Constructs a new instance.
+     * Constructor.
      *
      * @param callableStatement
      *            the underlying {@link CallableStatement}
@@ -64,20 +68,7 @@ public class PoolableCallableStatement extends DelegatingCallableStatement {
 
         // Remove from trace now because this statement will be
         // added by the activate method.
-        removeThisTrace(connection);
-    }
-
-    /**
-     * Activates after retrieval from the pool. Adds a trace for this CallableStatement to the Connection that created
-     * it.
-     *
-     * @since 2.4.0 made public, was protected in 2.3.0.
-     */
-    @Override
-    public void activate() throws SQLException {
-        setClosedInternal(false);
-        add(getConnectionInternal(), this);
-        super.activate();
+        removeThisTrace(getConnectionInternal());
     }
 
     /**
@@ -89,12 +80,29 @@ public class PoolableCallableStatement extends DelegatingCallableStatement {
         if (!isClosed()) {
             try {
                 pool.returnObject(key, this);
-            } catch (final SQLException | RuntimeException e) {
+            } catch (final SQLException e) {
+                throw e;
+            } catch (final RuntimeException e) {
                 throw e;
             } catch (final Exception e) {
                 throw new SQLException("Cannot close CallableStatement (return to pool failed)", e);
             }
         }
+    }
+
+    /**
+     * Activates after retrieval from the pool. Adds a trace for this CallableStatement to the Connection that created
+     * it.
+     *
+     * @since 2.4.0 made public, was protected in 2.3.0.
+     */
+    @Override
+    public void activate() throws SQLException {
+        setClosedInternal(false);
+        if (getConnectionInternal() != null) {
+            getConnectionInternal().addTrace(this);
+        }
+        super.activate();
     }
 
     /**
@@ -105,7 +113,33 @@ public class PoolableCallableStatement extends DelegatingCallableStatement {
      */
     @Override
     public void passivate() throws SQLException {
-        prepareToReturn();
+        setClosedInternal(true);
+        removeThisTrace(getConnectionInternal());
+
+        // The JDBC spec requires that a statement close any open
+        // ResultSet's when it is closed.
+        // FIXME The PreparedStatement we're wrapping should handle this for us.
+        // See DBCP-10 for what could happen when ResultSets are closed twice.
+        final List<AbandonedTrace> resultSetList = getTrace();
+        if (resultSetList != null) {
+            final List<Exception> thrownList = new ArrayList<>();
+            final ResultSet[] resultSets = resultSetList.toArray(new ResultSet[0]);
+            for (final ResultSet resultSet : resultSets) {
+                if (resultSet != null) {
+                    try {
+                        resultSet.close();
+                    } catch (Exception e) {
+                        thrownList.add(e);
+                    }
+                }
+            }
+            clearTrace();
+            if (!thrownList.isEmpty()) {
+                throw new SQLExceptionList(thrownList);
+            }
+        }
+
+        super.passivate();
     }
 
 }

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.storeconfig;
 
 import java.io.PrintWriter;
@@ -35,15 +36,24 @@ public class StandardEngineSF extends StoreFactoryBase {
 
     /**
      * Store the specified Engine properties.
-     * <p>
-     * {@inheritDoc}
+     *
+     * @param aWriter
+     *            PrintWriter to which we are storing
+     * @param indent
+     *            Number of spaces to indent this element
+     * @param aEngine
+     *            Object whose properties are being stored
+     *
+     * @exception Exception
+     *                if an exception occurs while storing
      */
     @Override
-    public void storeChildren(PrintWriter aWriter, int indent, Object aEngine, StoreDescription parentDesc)
-            throws Exception {
-        if (aEngine instanceof StandardEngine engine) {
+    public void storeChildren(PrintWriter aWriter, int indent, Object aEngine,
+            StoreDescription parentDesc) throws Exception {
+        if (aEngine instanceof StandardEngine) {
+            StandardEngine engine = (StandardEngine) aEngine;
             // Store nested <Listener> elements
-            LifecycleListener[] listeners = engine.findLifecycleListeners();
+            LifecycleListener listeners[] = engine.findLifecycleListeners();
             storeElementArray(aWriter, indent, listeners);
 
             // Store nested <Realm> element
@@ -59,13 +69,12 @@ public class StandardEngineSF extends StoreFactoryBase {
             }
 
             // Store nested <Valve> elements
-            Valve[] valves = engine.getPipeline().getValves();
-            if (valves != null && valves.length > 0) {
-                List<Valve> engineValves = new ArrayList<>();
+            Valve valves[] = engine.getPipeline().getValves();
+            if(valves != null && valves.length > 0 ) {
+                List<Valve> engineValves = new ArrayList<>() ;
                 for (Valve valve : valves) {
-                    if (!(valve instanceof ClusterValve)) {
+                    if (!(valve instanceof ClusterValve))
                         engineValves.add(valve);
-                    }
                 }
                 storeElementArray(aWriter, indent, engineValves.toArray());
             }
@@ -76,9 +85,9 @@ public class StandardEngineSF extends StoreFactoryBase {
                 storeElement(aWriter, indent, cluster);
             }
             // store all <Host> elements
-            Container[] children = engine.findChildren();
+            Container children[] = engine.findChildren();
             storeElementArray(aWriter, indent, children);
 
-        }
+       }
     }
 }

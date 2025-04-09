@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.buf;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 import org.apache.tomcat.util.res.StringManager;
@@ -26,14 +25,14 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public abstract class AbstractChunk implements Cloneable, Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     protected static final StringManager sm = StringManager.getManager(AbstractChunk.class);
 
     /*
-     * JVMs may limit the maximum array size to slightly less than Integer.MAX_VALUE. On markt's desktop the limit is
-     * MAX_VALUE - 2. Comments in the JRE source code for ArrayList and other classes indicate that it may be as low as
-     * MAX_VALUE - 8 on some systems.
+     * JVMs may limit the maximum array size to slightly less than
+     * Integer.MAX_VALUE. On markt's desktop the limit is MAX_VALUE - 2.
+     * Comments in the JRE source code for ArrayList and other classes indicate
+     * that it may be as low as MAX_VALUE - 8 on some systems.
      */
     public static final int ARRAY_MAX_SIZE = Integer.MAX_VALUE - 8;
 
@@ -49,9 +48,10 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
 
 
     /**
-     * Maximum amount of data in this buffer. If -1 or not set, the buffer will grow to {{@link #ARRAY_MAX_SIZE}. Can be
-     * smaller than the current buffer size ( which will not shrink ). When the limit is reached, the buffer will be
-     * flushed (if out is set) or throw exception.
+     * Maximum amount of data in this buffer. If -1 or not set, the buffer will
+     * grow to {{@link #ARRAY_MAX_SIZE}. Can be smaller than the current buffer
+     * size ( which will not shrink ). When the limit is reached, the buffer
+     * will be flushed (if out is set) or throw exception.
      *
      * @param limit The new limit
      */
@@ -60,9 +60,6 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
     }
 
 
-    /**
-     * @return the maximum amount of data in the buffer, and -1 if it has not been set
-     */
     public int getLimit() {
         return limit;
     }
@@ -85,32 +82,28 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
     }
 
 
-    /**
-     * Set the start position of the data in the buffer.
-     * @param start the new start position
-     */
-    public void setStart(int start) {
-        if (end < start) {
-            end = start;
-        }
-        this.start = start;
-    }
-
-
-    /**
-     * @return the end position of the data in the buffer
-     */
     public int getEnd() {
         return end;
     }
 
 
-    /**
-     * Set the end position of the data in the buffer.
-     * @param end the new end position
-     */
-    public void setEnd(int end) {
-        this.end = end;
+    public void setEnd(int i) {
+        end = i;
+    }
+
+
+    // TODO: Deprecate offset and use start
+
+    public int getOffset() {
+        return start;
+    }
+
+
+    public void setOffset(int off) {
+        if (end < off) {
+            end = off;
+        }
+        start = off;
     }
 
 
@@ -122,9 +115,6 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
     }
 
 
-    /**
-     * @return {@code true} if the buffer contains no data
-     */
     public boolean isNull() {
         if (end > 0) {
             return false;
@@ -133,30 +123,19 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
     }
 
 
-    /**
-     * Return the index of the first occurrence of the subsequence of
-     * the given String, or -1 if it is not found.
-     *
-     * @param src the String to look for
-     * @param srcStart the subsequence start in the String
-     * @param srcLen the subsequence length in the String
-     * @param myOffset the index on which to start the search in the buffer
-     * @return the position of the first character of the first occurrence
-     *         of the subsequence in the buffer, or -1 if not found
-     */
-    public int indexOf(String src, int srcStart, int srcLen, int myOffset) {
-        char first = src.charAt(srcStart);
+    public int indexOf(String src, int srcOff, int srcLen, int myOff) {
+        char first = src.charAt(srcOff);
 
         // Look for first char
-        int srcEnd = srcStart + srcLen;
+        int srcEnd = srcOff + srcLen;
 
-        mainLoop: for (int i = myOffset + start; i <= (end - srcLen); i++) {
+        mainLoop: for (int i = myOff + start; i <= (end - srcLen); i++) {
             if (getBufferElement(i) != first) {
                 continue;
             }
             // found first char, now look for a match
             int myPos = i + 1;
-            for (int srcPos = srcStart + 1; srcPos < srcEnd;) {
+            for (int srcPos = srcOff + 1; srcPos < srcEnd;) {
                 if (getBufferElement(myPos++) != src.charAt(srcPos++)) {
                     continue mainLoop;
                 }
@@ -183,16 +162,15 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
         if (hasHashCode) {
             return hashCode;
         }
-        int code = hash();
+        int code = 0;
+
+        code = hash();
         hashCode = code;
         hasHashCode = true;
         return code;
     }
 
 
-    /**
-     * @return the hash code for this buffer
-     */
     public int hash() {
         int code = 0;
         for (int i = start; i < end; i++) {
@@ -202,9 +180,5 @@ public abstract class AbstractChunk implements Cloneable, Serializable {
     }
 
 
-    /**
-     * @param index the element location in the buffer
-     * @return the element
-     */
     protected abstract int getBufferElement(int index);
 }

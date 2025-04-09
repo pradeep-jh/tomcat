@@ -16,7 +16,6 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -39,7 +38,6 @@ import org.apache.tomcat.util.buf.UDecoder;
  */
 public class SecurityCollection extends XmlEncodingBase implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // ----------------------------------------------------------- Constructors
@@ -82,13 +80,13 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
     /**
      * The HTTP methods explicitly covered by this web resource collection.
      */
-    private String[] methods = new String[0];
+    private String methods[] = new String[0];
 
 
     /**
      * The HTTP methods explicitly excluded from this web resource collection.
      */
-    private String[] omittedMethods = new String[0];
+    private String omittedMethods[] = new String[0];
 
     /**
      * The name of this web resource collection.
@@ -99,7 +97,7 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
     /**
      * The URL patterns protected by this security collection.
      */
-    private String[] patterns = new String[0];
+    private String patterns[] = new String[0];
 
 
     /**
@@ -174,9 +172,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public void addMethod(String method) {
 
-        if (method == null) {
+        if (method == null)
             return;
-        }
         String[] results = Arrays.copyOf(methods, methods.length + 1);
         results[methods.length] = method;
         methods = results;
@@ -190,9 +187,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      * @param method The method
      */
     public void addOmittedMethod(String method) {
-        if (method == null) {
+        if (method == null)
             return;
-        }
         String[] results = Arrays.copyOf(omittedMethods, omittedMethods.length + 1);
         results[omittedMethods.length] = method;
         omittedMethods = results;
@@ -207,9 +203,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
     }
     public void addPatternDecoded(String pattern) {
 
-        if (pattern == null) {
+        if (pattern == null)
             return;
-        }
 
         String decodedPattern = UDecoder.URLDecode(pattern, getCharset());
         String[] results = Arrays.copyOf(patterns, patterns.length + 1);
@@ -226,20 +221,19 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public boolean findMethod(String method) {
 
-        if (methods.length == 0 && omittedMethods.length == 0) {
+        if (methods.length == 0 && omittedMethods.length == 0)
             return true;
-        }
         if (methods.length > 0) {
             for (String s : methods) {
-                if (s.equals(method)) {
+                if (s.equals(method))
                     return true;
-                }
             }
             return false;
         }
-        for (String omittedMethod : omittedMethods) {
-            if (omittedMethod.equals(method)) {
-                return false;
+        if (omittedMethods.length > 0) {
+            for (String omittedMethod : omittedMethods) {
+                if (omittedMethod.equals(method))
+                    return false;
             }
         }
         return true;
@@ -247,7 +241,7 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
 
 
     /**
-     * @return the array of HTTP request methods that are part of this web
+     * @return the set of HTTP request methods that are part of this web
      * resource collection, or a zero-length array if no methods have been
      * explicitly included.
      */
@@ -257,7 +251,7 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
 
 
     /**
-     * @return the array of HTTP request methods that are explicitly excluded from
+     * @return the set of HTTP request methods that are explicitly excluded from
      * this web resource collection, or a zero-length array if no request
      * methods are excluded.
      */
@@ -274,16 +268,15 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public boolean findPattern(String pattern) {
         for (String s : patterns) {
-            if (s.equals(pattern)) {
+            if (s.equals(pattern))
                 return true;
-            }
         }
         return false;
     }
 
 
     /**
-     * @return the array of URL patterns that are part of this web resource
+     * @return the set of URL patterns that are part of this web resource
      * collection.  If none have been specified, a zero-length array is
      * returned.
      */
@@ -300,9 +293,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public void removeMethod(String method) {
 
-        if (method == null) {
+        if (method == null)
             return;
-        }
         int n = -1;
         for (int i = 0; i < methods.length; i++) {
             if (methods[i].equals(method)) {
@@ -312,11 +304,10 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
         }
         if (n >= 0) {
             int j = 0;
-            String[] results = new String[methods.length - 1];
+            String results[] = new String[methods.length - 1];
             for (int i = 0; i < methods.length; i++) {
-                if (i != n) {
+                if (i != n)
                     results[j++] = methods[i];
-                }
             }
             methods = results;
         }
@@ -332,9 +323,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public void removeOmittedMethod(String method) {
 
-        if (method == null) {
+        if (method == null)
             return;
-        }
         int n = -1;
         for (int i = 0; i < omittedMethods.length; i++) {
             if (omittedMethods[i].equals(method)) {
@@ -344,11 +334,10 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
         }
         if (n >= 0) {
             int j = 0;
-            String[] results = new String[omittedMethods.length - 1];
+            String results[] = new String[omittedMethods.length - 1];
             for (int i = 0; i < omittedMethods.length; i++) {
-                if (i != n) {
+                if (i != n)
                     results[j++] = omittedMethods[i];
-                }
             }
             omittedMethods = results;
         }
@@ -364,9 +353,8 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
      */
     public void removePattern(String pattern) {
 
-        if (pattern == null) {
+        if (pattern == null)
             return;
-        }
         int n = -1;
         for (int i = 0; i < patterns.length; i++) {
             if (patterns[i].equals(pattern)) {
@@ -376,11 +364,10 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
         }
         if (n >= 0) {
             int j = 0;
-            String[] results = new String[patterns.length - 1];
+            String results[] = new String[patterns.length - 1];
             for (int i = 0; i < patterns.length; i++) {
-                if (i != n) {
+                if (i != n)
                     results[j++] = patterns[i];
-                }
             }
             patterns = results;
         }
@@ -399,7 +386,7 @@ public class SecurityCollection extends XmlEncodingBase implements Serializable 
             sb.append(", ");
             sb.append(description);
         }
-        sb.append(']');
+        sb.append("]");
         return sb.toString();
     }
 

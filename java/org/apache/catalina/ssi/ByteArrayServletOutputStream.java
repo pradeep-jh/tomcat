@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.ssi;
 
 import java.io.ByteArrayOutputStream;
 
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.WriteListener;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 
 
 /**
- * Class that extends ServletOutputStream, used as a wrapper from within <code>SsiInclude</code>
+ * Class that extends ServletOuputStream, used as a wrapper from within
+ * <code>SsiInclude</code>
  *
  * @author Bip Thelin
- *
  * @see ServletOutputStream and ByteArrayOutputStream
  */
 public class ByteArrayServletOutputStream extends ServletOutputStream {

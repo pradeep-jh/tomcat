@@ -16,7 +16,7 @@
  */
 package org.apache.jasper.tagplugins.jstl.core;
 
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,7 +38,6 @@ public class TestOut extends AbstractTestTag {
         Assert.assertTrue(body.contains("OK - 1"));
         Assert.assertTrue(body.contains("OK - 2"));
     }
-
 
     @Test
     public void testBug54144() throws Exception {

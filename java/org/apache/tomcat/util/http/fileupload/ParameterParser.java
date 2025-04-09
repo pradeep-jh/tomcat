@@ -22,7 +22,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.apache.tomcat.util.http.fileupload.util.mime.MimeUtility;
-import org.apache.tomcat.util.http.fileupload.util.mime.RFC2231Utility;
 
 /**
  * A simple parser intended to parse sequences of name/value pairs.
@@ -32,7 +31,7 @@ import org.apache.tomcat.util.http.fileupload.util.mime.RFC2231Utility;
  * Parameter values are optional and can be omitted.
  *
  * <p>
- *  {@code param1 = value; param2 = "anything goes; really"; param3}
+ *  <code>param1 = value; param2 = "anything goes; really"; param3</code>
  * </p>
  */
 public class ParameterParser {
@@ -71,6 +70,7 @@ public class ParameterParser {
      * Default ParameterParser constructor.
      */
     public ParameterParser() {
+        super();
     }
 
     /**
@@ -92,7 +92,7 @@ public class ParameterParser {
      *               {@code false} otherwise.
      * @return the token
      */
-    private String getToken(final boolean quoted) {
+    private String getToken(boolean quoted) {
         // Trim leading white spaces
         while ((i1 < i2) && (Character.isWhitespace(chars[i1]))) {
             i1++;
@@ -125,9 +125,9 @@ public class ParameterParser {
      * @return {@code true} if the character is present in the array of
      *   characters, {@code false} otherwise.
      */
-    private boolean isOneOf(final char ch, final char[] charray) {
+    private boolean isOneOf(char ch, final char[] charray) {
         boolean result = false;
-        for (final char element : charray) {
+        for (char element : charray) {
             if (ch == element) {
                 result = true;
                 break;
@@ -212,7 +212,7 @@ public class ParameterParser {
      * converted to lower case when name/value pairs are parsed.
      * {@code false} otherwise.
      */
-    public void setLowerCaseNames(final boolean b) {
+    public void setLowerCaseNames(boolean b) {
         this.lowerCaseNames = b;
     }
 
@@ -226,15 +226,15 @@ public class ParameterParser {
      *
      * @return a map of name/value pairs
      */
-    public Map<String, String> parse(final String str, final char[] separators) {
+    public Map<String, String> parse(final String str, char[] separators) {
         if (separators == null || separators.length == 0) {
             return new HashMap<>();
         }
         char separator = separators[0];
         if (str != null) {
             int idx = str.length();
-            for (final char separator2 : separators) {
-                final int tmp = str.indexOf(separator2);
+            for (char separator2 : separators) {
+                int tmp = str.indexOf(separator2);
                 if (tmp != -1 && tmp < idx) {
                     idx = tmp;
                     separator = separator2;
@@ -253,7 +253,7 @@ public class ParameterParser {
      *
      * @return a map of name/value pairs
      */
-    public Map<String, String> parse(final String str, final char separator) {
+    public Map<String, String> parse(final String str, char separator) {
         if (str == null) {
             return new HashMap<>();
         }
@@ -270,7 +270,7 @@ public class ParameterParser {
      *
      * @return a map of name/value pairs
      */
-    public Map<String, String> parse(final char[] charArray, final char separator) {
+    public Map<String, String> parse(final char[] charArray, char separator) {
         if (charArray == null) {
             return new HashMap<>();
         }
@@ -291,20 +291,20 @@ public class ParameterParser {
      */
     public Map<String, String> parse(
         final char[] charArray,
-        final int offset,
-        final int length,
-        final char separator) {
+        int offset,
+        int length,
+        char separator) {
 
         if (charArray == null) {
             return new HashMap<>();
         }
-        final HashMap<String, String> params = new HashMap<>();
-        this.chars = charArray.clone();
+        HashMap<String, String> params = new HashMap<>();
+        this.chars = charArray;
         this.pos = offset;
         this.len = length;
 
-        String paramName;
-        String paramValue;
+        String paramName = null;
+        String paramValue = null;
         while (hasChar()) {
             paramName = parseToken(new char[] {
                     '=', separator });
@@ -316,9 +316,8 @@ public class ParameterParser {
 
                 if (paramValue != null) {
                     try {
-                        paramValue = RFC2231Utility.hasEncodedValue(paramName) ? RFC2231Utility.decodeText(paramValue)
-                                : MimeUtility.decodeText(paramValue);
-                    } catch (final UnsupportedEncodingException e) {
+                        paramValue = MimeUtility.decodeText(paramValue);
+                    } catch (UnsupportedEncodingException e) {
                         // let's keep the original value in this case
                     }
                 }
@@ -326,11 +325,11 @@ public class ParameterParser {
             if (hasChar() && (charArray[pos] == separator)) {
                 pos++; // skip separator
             }
-            if ((paramName != null) && !paramName.isEmpty()) {
-                paramName = RFC2231Utility.stripDelimiter(paramName);
+            if ((paramName != null) && (paramName.length() > 0)) {
                 if (this.lowerCaseNames) {
                     paramName = paramName.toLowerCase(Locale.ENGLISH);
                 }
+
                 params.put(paramName, paramValue);
             }
         }
